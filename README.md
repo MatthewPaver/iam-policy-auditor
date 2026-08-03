@@ -34,10 +34,15 @@ Supports **AWS IAM JSON** (identity, resource, and trust policies) deeply, plus 
 
 ## Quick start (stranger-usable in ~90 seconds)
 
+**Live demo (LinkedIn / share link):** once deployed, open `https://<host>/?demo=1` — the Org path auto-runs.
+
+**Repo:** https://github.com/MatthewPaver/iam-policy-auditor
+
 ```bash
 cd iam-policy-auditor
 ./demo.sh                 # → http://localhost:4177  (binds 0.0.0.0 by default)
 # or: npm start           # → 127.0.0.1 only unless HOST=0.0.0.0
+# hosted locally: npm run start:hosted   # privacy banner + auto-demo
 ```
 
 1. Open the app.
