@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PolicyLens — ask who can do what in IAM</title>
+<meta name="description" content="Ask who can delete prod in AWS IAM — get cited, deterministic answers. Engine decides; LLM only explains.">
+<meta property="og:title" content="PolicyLens — who can do what in IAM, with receipts">
+<meta property="og:description" content="Load an account snapshot → who can delete prod → multi-hop reach-admin → resource exposures. Every answer cites a source line.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+</head>
+<body>
+<div id="hostedBanner" class="hosted-banner" hidden>
+  Public demo — analysis is deterministic and free to try. <b>Do not paste production secrets or customer policies.</b>
+  Use a synthetic snapshot, or run locally via the GitHub repo.
+</div>
+<header>
+  <div class="brand">
+    <span class="logo">🔍</span>
+    <div>
+      <h1>PolicyLens</h1>
+      <p class="tag">Ask who can do what in IAM — get cited, deterministic answers</p>
+    </div>
+  </div>
+  <div class="pills">
+    <span id="aiPill" class="pill">checking AI…</span>
+    <span class="pill local">🔒 analysis runs locally</span>
+  </div>
+</header>
+
+<section id="hero" class="hero" aria-label="Product pitch">
+  <div class="hero-copy">
+    <p class="hero-kicker">IBM AI Security track · AWS-first</p>
+    <h2 class="hero-title">Who can delete prod — with receipts</h2>
+    <p class="hero-sub">The engine produces the facts. The LLM only explains them. Every answer cites a source line.</p>
+    <div class="hero-actions">
+      <button id="runDemoBtn" class="btn primary">Run the 90-second demo</button>
+      <button id="heroAnalyzeHint" class="btn secondary" type="button">Or paste a single policy →</button>
+    </div>
+    <p id="demoStatus" class="demo-status" hidden></p>
+  </div>
+  <ol class="hero-steps">
+    <li><span>1</span> Load a demo account snapshot</li>
+    <li><span>2</span> Who can delete the prod DB?</li>
+    <li><span>3</span> Reach-admin paths (multi-hop)</li>
+    <li><span>4</span> Resource-policy exposures</li>
+  </ol>
+</section>
+
+<main>
+  <aside id="inputPanel">
+    <h2>Policies</h2>
+    <div id="docChips" class="chips"></div>
+    <textarea id="pasteBox" spellcheck="false" placeholder='Paste an IAM policy (JSON) here…&#10;&#10;AWS identity/resource/trust policies,&#10;GCP IAM bindings, Azure role definitions,&#10;IBM Cloud access policies.'></textarea>
+    <div class="row">
+      <input id="pasteName" type="text" value="pasted-policy.json" title="Document name">
+      <button id="addPaste" class="btn secondary">Add</button>
+    </div>
+    <div class="row">
+      <label class="btn secondary file-btn">Upload files<input id="fileInput" type="file" multiple accept=".json,application/json" hidden></label>
+      <select id="sampleSelect"><option value="">Load a sample…</option></select>
+    </div>
+    <button id="analyzeBtn" class="btn primary">Analyze policies</button>
+    <p class="fineprint">Nothing is uploaded anywhere: parsing and rules run in the local server. If the Claude layer is enabled, only pseudonymized policy structure is sent to the API.</p>
+  </aside>
+
+  <section id="results">
+    <nav id="tabs">
+      <button data-tab="findings" class="tab active">Findings <span id="findingCount" class="count"></span></button>
+      <button data-tab="ask" class="tab">Ask</button>
+      <button data-tab="statements" class="tab">Statements</button>
+      <button data-tab="org" class="tab">Org</button>
+      <button data-tab="compare" class="tab">Compare</button>
+    </nav>
+
+    <div id="panel-findings" class="panel active">
+      <div id="severitySummary" class="sev-summary"></div>
+      <div id="findingsList"><p class="empty">Add a policy and hit <b>Analyze</b> — findings appear here with severity, evidence lines, and suggested fixes.</p></div>
+    </div>
+
+    <div id="panel-ask" class="panel">
+      <div id="chipsAsk" class="suggest">
+        <button class="suggest-chip">Who can delete production databases?</button>
+        <button class="suggest-chip">Is this policy overly permissive?</button>
+        <button class="suggest-chip">Who has admin access?</button>
+        <button class="suggest-chip">Who can assume roles from other accounts?</button>
+        <button class="suggest-chip">Who can read secrets?</button>
+        <button class="suggest-chip">Who can change IAM permissions?</button>
+      </div>
+      <div id="askScope" class="scope-banner" hidden></div>
+      <div id="chatLog"></div>
+      <div class="ask-row">
+        <input id="askInput" type="text" placeholder="Ask in plain English… e.g. who can delete logs?" autocomplete="off">
+        <button id="askBtn" class="btn primary">Ask</button>
+      </div>
+      <label class="fineprint checkbox"><input type="checkbox" id="redactToggle" checked> Pseudonymize account IDs / emails before sending to Claude</label>
+    </div>
+
+    <div id="panel-statements" class="panel">
+      <p class="empty" id="stmtEmpty">Normalized statements appear here after analysis — the exact model the engine reasons over, so you can verify every answer.</p>
+      <div id="stmtTableWrap"></div>
+    </div>
+
+    <div id="panel-org" class="panel">
+      <p class="org-intro">Answer "who can do X" across a whole account, not one pasted policy. Load an account snapshot (the shape of <code>aws iam get-account-authorization-details</code>) — analysis stays fully deterministic and cites the granting statement or escalation path. Prefer <b>Run the 90-second demo</b> above for a stranger-usable walkthrough.</p>
+
+      <div class="org-source">
+        <button id="loadDemoSnapshot" class="btn secondary">Load demo snapshot</button>
+        <label class="btn secondary file-btn">Upload snapshot<input id="snapshotFile" type="file" accept=".json,application/json" hidden></label>
+        <span id="snapshotStatus" class="org-status">No snapshot loaded.</span>
+      </div>
+      <div id="orgCaveat" class="scope-banner scope-warn" hidden>ℹ Models identity + group + role-trust only. <b>SCPs, permission boundaries and session policies are not evaluated</b> — results show what identity policies allow.</div>
+
+      <div class="org-block">
+        <h3>Who can…</h3>
+        <div class="org-query">
+          <input id="orgAction" type="text" value="rds:DeleteDBInstance" placeholder="action, e.g. s3:DeleteObject" autocomplete="off">
+          <input id="orgResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" placeholder="resource ARN (optional)" autocomplete="off">
+          <button id="orgWhoCanBtn" class="btn primary">Run</button>
+        </div>
+        <div id="orgWhoCanResult"></div>
+      </div>
+
+      <div class="org-block">
+        <h3>Reach administrator</h3>
+        <p class="org-sub">Which principals can become admin — directly, by assuming a role, or via a privilege-escalation technique — with the path shown.</p>
+        <button id="orgReachBtn" class="btn primary">Compute reach-admin</button>
+        <div id="orgReachResult"></div>
+      </div>
+
+      <div class="org-block">
+        <h3>Resource-policy exposures</h3>
+        <p class="org-sub">KMS key policies, S3 bucket policies and similar in the snapshot that grant access to an external account or the public — reported as cited findings, not reach-admin paths.</p>
+        <button id="orgResourceBtn" class="btn primary">Scan resource policies</button>
+        <div id="orgResourceResult"></div>
+      </div>
+    </div>
+
+    <div id="panel-compare" class="panel">
+      <div class="compare-inputs">
+        <div><h3>Before</h3><textarea id="beforeBox" spellcheck="false" placeholder="Paste the current policy…"></textarea></div>
+        <div><h3>After</h3><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
+      </div>
+      <button id="compareBtn" class="btn primary">Compare risk</button>
+      <div id="compareResult"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

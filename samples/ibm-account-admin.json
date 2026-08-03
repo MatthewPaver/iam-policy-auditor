@@ -1,0 +1,21 @@
+{
+  "type": "access",
+  "description": "Contractor access for migration project",
+  "subjects": [
+    {
+      "attributes": [
+        { "name": "iam_id", "value": "IBMid-655000ABCD" }
+      ]
+    }
+  ],
+  "roles": [
+    { "role_id": "crn:v1:bluemix:public:iam::::role:Administrator" }
+  ],
+  "resources": [
+    {
+      "attributes": [
+        { "name": "accountId", "value": "9f6d8c2e6b7a4c1d" }
+      ]
+    }
+  ]
+}

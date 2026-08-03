@@ -1,0 +1,18 @@
+{
+  "Name": "SupportOps",
+  "properties": {
+    "roleName": "support-ops",
+    "description": "Custom role for the support tooling team",
+    "assignableScopes": [
+      "/subscriptions/0000aaaa-11bb-cc22-dd33-444444eeeeee"
+    ],
+    "permissions": [
+      {
+        "actions": ["*"],
+        "notActions": ["Microsoft.Authorization/*/write"],
+        "dataActions": [],
+        "notDataActions": []
+      }
+    ]
+  }
+}

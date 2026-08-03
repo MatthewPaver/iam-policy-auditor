@@ -1,0 +1,21 @@
+{
+  "resource": "projects/acme-prod",
+  "bindings": [
+    {
+      "role": "roles/editor",
+      "members": ["user:sam@acme.io"]
+    },
+    {
+      "role": "roles/storage.objectViewer",
+      "members": ["allUsers"]
+    },
+    {
+      "role": "roles/iam.serviceAccountTokenCreator",
+      "members": ["group:contractors@acme.io"]
+    },
+    {
+      "role": "roles/custom.deployHelper",
+      "members": ["serviceAccount:deploy@acme-prod.iam.gserviceaccount.com"]
+    }
+  ]
+}

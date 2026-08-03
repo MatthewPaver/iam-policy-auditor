@@ -1,0 +1,41 @@
+{
+  "PolicyName": "developer-power-policy",
+  "PolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AdminEverything",
+        "Effect": "Allow",
+        "Action": "*",
+        "Resource": "*"
+      },
+      {
+        "Sid": "PassAnyRole",
+        "Effect": "Allow",
+        "Action": ["iam:PassRole", "lambda:CreateFunction", "lambda:InvokeFunction"],
+        "Resource": "*"
+      },
+      {
+        "Sid": "DbCleanup",
+        "Effect": "Allow",
+        "Action": ["rds:DeleteDBInstance", "dynamodb:DeleteTable"],
+        "Resource": [
+          "arn:aws:rds:us-east-1:111122223333:db:prod-*",
+          "arn:aws:dynamodb:us-east-1:111122223333:table/prod-*"
+        ]
+      },
+      {
+        "Sid": "EverythingButIam",
+        "Effect": "Allow",
+        "NotAction": ["iam:*", "organizations:*"],
+        "Resource": "*"
+      },
+      {
+        "Sid": "SelfEscalate",
+        "Effect": "Allow",
+        "Action": ["iam:CreatePolicyVersion", "iam:AttachUserPolicy"],
+        "Resource": "arn:aws:iam::111122223333:user/${aws:username}"
+      }
+    ]
+  }
+}

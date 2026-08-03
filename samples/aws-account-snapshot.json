@@ -1,0 +1,78 @@
+{
+  "_about": "Fictional account snapshot in `aws iam get-account-authorization-details` shape. Exercises group inheritance (alice/dave → developers), an assume-role chain (carol → admin-role), single-step escalation (bob via iam:AttachUserPolicy), and TRANSITIVE multi-hop escalation: erin → (create-access-key) → frank → (put-user-policy self) → admin; grace → (update-assume-role-policy) → ci-deploy → (pass-role) → admin-role.",
+  "UserDetailList": [
+    { "UserName": "alice", "Arn": "arn:aws:iam::111122223333:user/alice", "GroupList": ["developers"], "UserPolicyList": [], "AttachedManagedPolicies": [] },
+    { "UserName": "dave", "Arn": "arn:aws:iam::111122223333:user/dave", "GroupList": ["developers"],
+      "UserPolicyList": [
+        { "PolicyName": "DaveDbCleanup", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": ["rds:DeleteDBInstance", "rds:DeleteDBCluster"], "Resource": "arn:aws:rds:*:111122223333:db:prod-*" }] } }
+      ], "AttachedManagedPolicies": [] },
+    { "UserName": "bob", "Arn": "arn:aws:iam::111122223333:user/bob", "GroupList": ["ci-admins"], "UserPolicyList": [], "AttachedManagedPolicies": [] },
+    { "UserName": "carol", "Arn": "arn:aws:iam::111122223333:user/carol", "GroupList": [], "UserPolicyList": [], "AttachedManagedPolicies": [] },
+    { "UserName": "erin", "Arn": "arn:aws:iam::111122223333:user/erin", "GroupList": [],
+      "UserPolicyList": [
+        { "PolicyName": "ErinKeyForge", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": "iam:CreateAccessKey", "Resource": "arn:aws:iam::111122223333:user/frank" }] } }
+      ], "AttachedManagedPolicies": [] },
+    { "UserName": "frank", "Arn": "arn:aws:iam::111122223333:user/frank", "GroupList": [],
+      "UserPolicyList": [
+        { "PolicyName": "FrankSelfAdmin", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": "iam:PutUserPolicy", "Resource": "arn:aws:iam::111122223333:user/frank" }] } }
+      ], "AttachedManagedPolicies": [] },
+    { "UserName": "grace", "Arn": "arn:aws:iam::111122223333:user/grace", "GroupList": [],
+      "UserPolicyList": [
+        { "PolicyName": "GraceTrustEdit", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": "iam:UpdateAssumeRolePolicy", "Resource": "arn:aws:iam::111122223333:role/ci-deploy" }] } }
+      ], "AttachedManagedPolicies": [] }
+  ],
+  "GroupDetailList": [
+    { "GroupName": "developers", "Arn": "arn:aws:iam::111122223333:group/developers", "GroupPolicyList": [],
+      "AttachedManagedPolicies": [{ "PolicyName": "ReadOnlyAccess", "PolicyArn": "arn:aws:iam::aws:policy/ReadOnlyAccess" }] },
+    { "GroupName": "ci-admins", "Arn": "arn:aws:iam::111122223333:group/ci-admins",
+      "GroupPolicyList": [
+        { "PolicyName": "CiAdminEscalate", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": "iam:AttachUserPolicy", "Resource": "*" }] } }
+      ], "AttachedManagedPolicies": [] }
+  ],
+  "RoleDetailList": [
+    { "RoleName": "admin-role", "Arn": "arn:aws:iam::111122223333:role/admin-role",
+      "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [
+        { "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::111122223333:user/carol" }, "Action": "sts:AssumeRole" }] },
+      "RolePolicyList": [],
+      "AttachedManagedPolicies": [{ "PolicyName": "AdministratorAccess", "PolicyArn": "arn:aws:iam::aws:policy/AdministratorAccess" }] },
+    { "RoleName": "ci-deploy", "Arn": "arn:aws:iam::111122223333:role/ci-deploy",
+      "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [
+        { "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::111122223333:user/bob" }, "Action": "sts:AssumeRole" }] },
+      "RolePolicyList": [
+        { "PolicyName": "CiDeployPass", "PolicyDocument": { "Version": "2012-10-17", "Statement": [
+          { "Effect": "Allow", "Action": ["iam:PassRole", "lambda:CreateFunction", "lambda:InvokeFunction"], "Resource": "*" }] } }
+      ],
+      "AttachedManagedPolicies": [] }
+  ],
+  "Policies": [
+    { "PolicyName": "AdministratorAccess", "Arn": "arn:aws:iam::aws:policy/AdministratorAccess", "DefaultVersionId": "v1",
+      "PolicyVersionList": [{ "VersionId": "v1", "IsDefaultVersion": true, "Document": { "Version": "2012-10-17", "Statement": [
+        { "Effect": "Allow", "Action": "*", "Resource": "*" }] } }] },
+    { "PolicyName": "ReadOnlyAccess", "Arn": "arn:aws:iam::aws:policy/ReadOnlyAccess", "DefaultVersionId": "v1",
+      "PolicyVersionList": [{ "VersionId": "v1", "IsDefaultVersion": true, "Document": { "Version": "2012-10-17", "Statement": [
+        { "Effect": "Allow", "Action": ["s3:Get*", "s3:List*", "ec2:Describe*", "rds:Describe*"], "Resource": "*" }] } }] }
+  ],
+  "ResourcePolicies": [
+    { "service": "kms", "resource": "arn:aws:kms:eu-west-1:111122223333:key/1234abcd-key-exports",
+      "policy": { "Version": "2012-10-17", "Statement": [
+        { "Sid": "ExternalDecrypt", "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::999988887777:root" },
+          "Action": ["kms:Decrypt", "kms:ReEncryptFrom"], "Resource": "*" }] } },
+    { "service": "s3", "resource": "arn:aws:s3:::acme-prod-exports",
+      "policy": { "Version": "2012-10-17", "Statement": [
+        { "Sid": "PublicRead", "Effect": "Allow", "Principal": "*", "Action": "s3:GetObject", "Resource": "arn:aws:s3:::acme-prod-exports/*" }] } },
+    { "service": "s3", "resource": "arn:aws:s3:::acme-partner-share",
+      "policy": { "Version": "2012-10-17", "Statement": [
+        { "Sid": "PartnerRead", "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::888877776666:root" },
+          "Action": "s3:GetObject", "Resource": "arn:aws:s3:::acme-partner-share/*",
+          "Condition": { "StringEquals": { "aws:PrincipalOrgID": "o-acme12345" } } }] } },
+    { "service": "kms", "resource": "arn:aws:kms:eu-west-1:111122223333:key/internal-only",
+      "policy": { "Version": "2012-10-17", "Statement": [
+        { "Sid": "SameAccount", "Effect": "Allow", "Principal": { "AWS": "arn:aws:iam::111122223333:role/admin-role" },
+          "Action": "kms:Decrypt", "Resource": "*" }] } }
+  ]
+}

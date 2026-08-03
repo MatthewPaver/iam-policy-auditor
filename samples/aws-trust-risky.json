@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PartnerAssume",
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::444455556666:root" },
+      "Action": "sts:AssumeRole"
+    },
+    {
+      "Sid": "AnyoneWithToken",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "sts:AssumeRoleWithWebIdentity"
+    },
+    {
+      "Sid": "LambdaService",
+      "Effect": "Allow",
+      "Principal": { "Service": "lambda.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
