@@ -8,25 +8,24 @@ Do **not** pitch “AI IAM auditor that replaces Access Analyzer.” Pitch: **wh
 
 ## The link people actually open
 
-Use a **hosted** URL, not `localhost`:
+**Stable (recommended for LinkedIn):** deploy to Fly, then use:
 
 ```
-https://<YOUR_DEMO_HOST>/?demo=1
+https://policylens-demo.fly.dev/?demo=1
 ```
 
-That query auto-runs the Org demo (who-can → reach-admin → exposures). Hosted mode also auto-runs on cold visit.
-
-Deploy:
+One-time setup in your own terminal (needs interactive login):
 
 ```bash
-# once: fly auth login
-fly launch --copy-config --name policylens-demo --region lhr --yes
+cd ~/iam-policy-auditor
+fly auth login
+fly apps create policylens-demo --org personal   # or pick your org
 fly deploy
 ```
 
-Or: push to GitHub and connect Render/Railway with `Dockerfile` (set `HOSTED=1`).
+**Temporary share link (machine must stay on):** a Cloudflare quick tunnel can expose local hosted mode. It dies when the process stops — fine for testing DMs, not for a LinkedIn post.
 
-Until the host is live, say “DM for the demo link” — do **not** post localhost.
+Repo: https://github.com/MatthewPaver/iam-policy-auditor
 
 ---
 
