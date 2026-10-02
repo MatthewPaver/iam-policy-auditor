@@ -1,14 +1,17 @@
-# PolicyLens — ask who can do what in IAM
+# PolicyLens: evidence-first IAM change review
 
 **Product story:** [docs/PRODUCT.md](docs/PRODUCT.md) · **LinkedIn kit:** [docs/LINKEDIN.md](docs/LINKEDIN.md)
 
+**Try the included example:** [Quick start](#quick-start). It runs on your own computer with Node.js, without an AWS account, API key or package installation. You will see a permission change turn a denied action into an allowed one, then test a correction. Start with the sample policies before using any sensitive inputs.
 
-Ask plain-English questions about IAM and get **grounded, cited, actionable** answers.
-Built for the IBM AI Security track: *make cloud IAM policies understandable and safer*.
+**Release boundary:** this checkout includes local change-review work. It is not evidence that a hosted deployment or the previously published release contains that interface. Clone-and-run is the supported entry point; no hosted availability is promised. Label screenshots with the commit used to generate them. Reuse terms are in [LICENSE](LICENSE); support is best-effort prototype maintenance.
 
-**Thesis:** the engine produces the facts; the LLM only explains them; every answer cites a source line.
 
-Supports **AWS IAM JSON** (identity, resource, and trust policies) deeply, plus **GCP / Azure / IBM** policy documents in Analyze.
+Review an AWS IAM policy change before it is approved. PolicyLens shows whether a declared sensitive action became reachable, cites the exact statement, and verifies that a proposed correction closes the path without removing access that must still work.
+
+**The so what:** a reviewer can turn “this diff looks risky” into a reproducible stop or pass decision with evidence. The engine produces the facts. The LLM may explain them, but its answer is withheld if it fails the grounding eval.
+
+AWS change review is the primary workflow. Org-wide “who can” and reach-admin analysis are the second workflow. GCP, Azure, and IBM policy documents remain available in the supporting Analyze view but are not presented as equivalent in depth.
 
 ```
 ┌────────────┐   ┌──────────────────────┐   ┌────────────────────────────┐
@@ -16,10 +19,10 @@ Supports **AWS IAM JSON** (identity, resource, and trust policies) deeply, plus 
 │ upload     │   │ parser (line-mapped)  │   │ (S1, S2, … with lines)     │
 └────────────┘   └──────────────────────┘   └──────────┬─────────────────┘
                                                         │
-                    ┌───────────────────────────────────┼──────────────────┐
+                    ┌───────────────────────────────────┼────────────────────┐
                     ▼                                   ▼                  ▼
           ┌──────────────────┐              ┌────────────────────┐  ┌──────────────┐
-          │ rule engine       │              │ effective-permission│  │ before/after │
+          │ rule engine       │              │ effective-permission│  │ change review │
           │ + preflight lint  │              │ query engine        │  │ risk diff    │
           │ patterns          │              │ (who-can / can-X)   │  └──────────────┘
           └────────┬─────────┘              └─────────┬──────────┘
@@ -27,31 +30,34 @@ Supports **AWS IAM JSON** (identity, resource, and trust policies) deeply, plus 
           findings w/ severity,            deterministic answer w/ citations
           evidence lines, fixes                        │
                                             ┌──────────▼──────────┐
-                                            │ optional Claude layer│  ← only rephrases
-                                            │ (grounded, redacted) │    engine facts
+                                            │ optional Claude layer│  ← shown only when
+                                            │ + grounding eval     │    its claims pass
                                             └─────────────────────┘
 ```
 
-## Quick start (stranger-usable in ~90 seconds)
+## Quick start
 
-**Live demo (LinkedIn / share link):** once deployed, open `https://<host>/?demo=1` — the Org path auto-runs.
-
-**Repo:** https://github.com/MatthewPaver/iam-policy-auditor
+The example runs locally without a cloud account or an API key. Use a Node.js version supported by [`package.json`](package.json).
 
 ```bash
+git clone https://github.com/MatthewPaver/iam-policy-auditor.git
 cd iam-policy-auditor
-./demo.sh                 # → http://localhost:4177  (binds 0.0.0.0 by default)
-# or: npm start           # → 127.0.0.1 only unless HOST=0.0.0.0
-# hosted locally: npm run start:hosted   # privacy banner + auto-demo
+npm run demo              # http://127.0.0.1:4177, local machine only
 ```
 
-1. Open the app.
-2. Click **Run the 90-second demo**.
-3. Org tab fills with who-can / reach-admin / resource-policy results — each with citations.
+1. Open the app and select **Change review**.
+2. Click **Load example**, then **Review this change**.
+3. Inspect the `ImplicitDeny → Allow` stop verdict and its source statement.
+4. Open **Verify a proposed correction** and check that the risk closes while report access still works.
+
+The original **Run the 90-second demo** remains available for org-wide who-can, reach-admin, and resource-policy results.
+
+For an intentional LAN demonstration, `./demo.sh` binds to `0.0.0.0` by default. That exposes the server beyond localhost; do not use it with sensitive policies on an untrusted network.
 
 ```bash
 npm test                  # correctness suite (rules + evaluator + graph + lint + …)
-npm run benchmark         # G1 ground-truth benchmark (engine vs documented AWS semantics)
+npm run benchmark         # authored regression corpus, not independent AWS validation
+npm run eval              # offline AI grounding contract, including adversarial failures
 ```
 
 Docker (optional):
@@ -60,6 +66,22 @@ Docker (optional):
 docker build -t policylens .
 docker run --rm -p 4177:4177 policylens
 ```
+
+No cloud account or API key is needed for the example, tests, benchmark, or AI-eval fixtures. `ANTHROPIC_API_KEY` enables optional explanations. Policy data is pseudonymized before that call.
+
+## What is reproducible
+
+| Claim | Evidence in this repository |
+|---|---|
+| The checked request became reachable | `src/change_review.js` evaluates the same action and resource before and after |
+| A correction closes the path | `POST /api/change/verify` re-runs the sensitive request against the candidate |
+| Required access still works | the same correction check evaluates declared required-access cases |
+| Authored supported-case expectations have not regressed | `npm run benchmark`, with a separate optional AWS simulator comparison |
+| AI explanations stay grounded | `npm run eval` rejects invented citations, uncited claims, wrong verdicts, and safety overclaims |
+
+This is a local decision-support tool, not an authorization oracle. SCPs, permission boundaries, session policies, and some cross-account interactions remain outside the current model and are named in every review.
+
+The [AWS comparison status](docs/AWS_SIMULATOR_STATUS.md) records the outstanding independent-validation gate. An explicitly requested AWS benchmark exits nonzero if unavailable, blocked, incomplete or mismatched; an offline corpus pass cannot make that check green.
 
 ### Enterprise hardening (G1 — in progress)
 
@@ -70,13 +92,11 @@ Beyond the hackathon build, three pieces of the [enterprise roadmap](ROADMAP.md)
   `ForAllValues`/`ForAnyValue`) with correct explicit-deny > allow > implicit-deny ordering.
   A missing context key is surfaced as `ConditionalAllow`, never silently denied.
 - **Real action catalogue** (`scripts/ingest-aws-actions.js` → `data/aws-actions.json`) —
-  21,625 AWS actions / 452 services ingested from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset)
-  (MIT) with authoritative access levels, replacing the name-verb heuristic. Refresh with
-  `npm run ingest`.
-- **Ground-truth benchmark** (`benchmark/`) — 23 cases encoding documented AWS semantics
-  (100% agreement), plus a pluggable AWS oracle. `npm run benchmark:aws` diffs the engine
-  against live `iam:SimulateCustomPolicy` when you have credentials with that permission —
-  this is the roadmap's G1 exit gate.
+  21,656 AWS actions / 453 services ingested from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset)
+  (MIT) with catalogue access levels, replacing the name-verb heuristic. The ingest URL is pinned to an upstream commit; source and output SHA-256 values live in `data/aws-actions.provenance.json`. Refresh with `npm run ingest`.
+- **Authored regression corpus** (`benchmark/`) — 55 cases encoding the author's interpretation of documented AWS semantics
+  (55/55 regression agreement, not independent accuracy), plus a pluggable AWS oracle. `npm run benchmark:aws` diffs the engine
+  against live `iam:SimulateCustomPolicy` when you have credentials with that permission. The committed oracle manifest says not run, so the repository does not currently claim AWS-validated agreement.
 - **Blast radius in the UI** — the Findings tab, Ask panel and Statements table now show
   catalogue-backed grant scope at a glance ("grants N actions · X write · Y
   permissions-management"; a `2P` in the Grants column means two permissions-management

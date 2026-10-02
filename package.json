@@ -1,11 +1,13 @@
 {
   "name": "policylens",
   "version": "1.0.0",
-  "description": "Natural-language IAM policy auditor — AWS, GCP, Azure, IBM Cloud. Deterministic analysis engine with an optional Claude explanation layer.",
+  "description": "Evidence-first AWS IAM change review with deterministic correction checks and evaluated AI explanations.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/run.js && node test/evaluate.test.js && node test/actions.test.js && node test/graph.test.js && node test/resource_policy.test.js && node test/lint.test.js && node test/demo-api.test.js",
+    "test": "node test/run.js && node test/evaluate.test.js && node test/actions.test.js && node test/graph.test.js && node test/resource_policy.test.js && node test/lint.test.js && node test/change_review.test.js && node test/ai_eval.test.js && node test/provenance.test.js && node test/benchmark-contract.test.js && node test/demo-api.test.js",
+    "eval": "node evals/run.js",
+    "eval:live": "node evals/live-run.js",
     "demo": "HOST=127.0.0.1 node server.js",
     "start:hosted": "HOSTED=1 HOST=0.0.0.0 node server.js",
     "benchmark": "node benchmark/run.js",
