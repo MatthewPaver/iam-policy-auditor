@@ -1,14 +1,14 @@
 # PolicyLens — product story
 
-**One line:** Ask *who can do what* in AWS IAM and get a cited, deterministic answer — not a chatbot guess.
+**One line:** Review an IAM change before approval, show the new access path with citations, and verify the correction without trusting a chatbot verdict.
 
 ## The problem we sell against
 
-Security and platform teams already have scanners (Prowler, Access Analyzer, CSPM). What they still struggle with in an incident or change review is a **workflow question with receipts**:
+Security and platform teams already have policy validators, scanners, and cloud security platforms. PolicyLens is not another findings feed. It addresses a narrower review question with receipts:
 
-> “Who can delete `prod-1`, and how did they get there?”
+> “Did this proposed change make `rds:DeleteDBInstance` reachable on `prod-1`, and does the correction remove that path without breaking the report reader?”
 
-Answers today are either tribal knowledge, a half-day of IAM console archaeology, or an LLM that invents permissions. PolicyLens is built for that question.
+That question is small enough to evaluate deterministically and important enough to block a change. A reviewer gets a scoped verdict, the matching statement, declared limits, and a repeatable correction check.
 
 ## Thesis (non-negotiable)
 
@@ -18,19 +18,19 @@ Answers today are either tribal knowledge, a half-day of IAM console archaeology
 
 If a claim cannot be cited, it does not ship as a fact.
 
-## The 90-second demo (what a stranger should feel)
+## The primary demo
 
-1. Open the app → **Run the 90-second demo**.
-2. Org tab loads a baked-in account snapshot.
-3. **Who can** `rds:DeleteDBInstance` on the prod DB — principals + granting statements.
-4. **Reach administrator** — direct, assume-role, and multi-hop escalation paths.
-5. **Resource-policy exposures** — external/public grants on KMS/S3-style policies in the snapshot.
+1. Open **Change review** and load the example.
+2. Review `rds:DeleteDBInstance` on the production database.
+3. See the access change from `ImplicitDeny` to `Allow`, with the granting statement and introduced finding.
+4. Verify a correction closes that request while `s3:GetObject` on the reports bucket remains allowed.
+5. If AI is enabled, show its explanation only after the grounding evaluator passes it.
 
-That path is the product. Single-policy Analyze / Ask / Compare are supporting tools.
+That path is the product. Org-wide who-can and reach-admin are a second evidence workflow. Single-policy Analyze and Ask are supporting tools.
 
 ## Design-partner pitch (copy/paste)
 
-> PolicyLens answers “who can do X in this AWS account?” from an IAM authorization-details snapshot, with citations to the granting statement or escalation path. Analysis is local and deterministic; Claude is optional and only rephrases engine facts. We are looking for a design partner who will (a) export a real snapshot weekly, (b) tell us which escalation paths we still miss, and (c) use the Org tab in a change review. In return you get early influence on the roadmap and a private deploy (Docker / LAN bind). Honest limits today: no SCPs, permission boundaries, or session policies; no live collector yet; Access Analyzer oracle needs `iam:SimulateCustomPolicy`.
+> PolicyLens checks one sensitive IAM request before and after a proposed policy change, cites the statement that changed the decision, and verifies a correction against both the risk and access that must remain. Analysis is local and deterministic. Claude is optional, cannot alter the verdict, and is hidden if its explanation fails the grounding checks. We are looking for a design partner willing to replay real, sanitized IAM changes and label where the scoped review helps or misses context. Honest limits today: no SCPs, permission boundaries, or session policies; no live collector yet; the AWS simulator oracle needs `iam:SimulateCustomPolicy`.
 
 ## LinkedIn (credibility + conversations)
 
@@ -48,11 +48,12 @@ One-line stance for comments: *engine decides, LLM explains, every answer cites 
 
 | Bar | Status |
 |---|---|
-| Cold start → value in &lt; 2 minutes | One-click Org demo |
+| Cold start → value in &lt; 2 minutes | One-click change-review example |
 | Shareable on a LAN / tunnel | `HOST=0.0.0.0 npm start` |
 | Policy samples ≠ account snapshot | Snapshot filtered from Analyze dropdown |
 | Preflight before risk rules | `src/lint.js` (typos / star-admin / bad ARNs) |
 | Packaging | `Dockerfile` + `./demo.sh` |
+| AI quality gate | Offline adversarial fixtures + runtime grounding check |
 | Not a startup yet | Needs design partner + live ingest |
 
 ## What we are not claiming

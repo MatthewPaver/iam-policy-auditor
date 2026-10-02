@@ -13,7 +13,9 @@ const { buildOrg, whoCan, reachAdmin } = require('./src/graph');
 const { analyzeResourcePolicies } = require('./src/resource_policy');
 const { lintModel } = require('./src/lint');
 const actionsCatalogue = require('./src/actions');
-const { askAI, aiAvailable, MODEL } = require('./src/ai');
+const { askAI, explainChangeAI, aiAvailable, MODEL } = require('./src/ai');
+const { reviewChange, verifyCorrection } = require('./src/change_review');
+const { evaluateExplanation } = require('./src/ai_eval');
 
 const PORT = Number(process.env.PORT || 4177);
 // Platforms (Fly/Render) set PORT — bind all interfaces so the app is reachable.
@@ -324,6 +326,43 @@ const routes = {
       afterStatements: publicStatements(after.model),
     };
   },
+
+  'POST /api/change/review': async (body) => {
+    const review = reviewChange({
+      before: body.before,
+      after: body.after,
+      request: {
+        action: body.action,
+        resource: body.resource,
+        context: body.context,
+      },
+    });
+    const out = { ...review, ai: null, aiEvaluation: null, aiError: null };
+    if (body.useAI !== false && aiAvailable()) {
+      const ai = await explainChangeAI({
+        review,
+        redactIdentifiers: body.redactIdentifiers !== false,
+      });
+      if (ai?.text) {
+        const evaluation = evaluateExplanation({
+          text: ai.text,
+          facts: ai.facts,
+          expectedStatus: review.verdict.status,
+        });
+        out.aiEvaluation = evaluation;
+        if (evaluation.passed) out.ai = { text: ai.text, model: ai.model };
+        else out.aiError = 'The model explanation failed the grounding gate, so PolicyLens withheld it.';
+      } else if (ai?.error) out.aiError = ai.error;
+    }
+    return out;
+  },
+
+  'POST /api/change/verify': async (body) => verifyCorrection({
+    proposed: body.proposed,
+    candidate: body.candidate,
+    riskRequest: body.riskRequest,
+    requiredAccess: Array.isArray(body.requiredAccess) ? body.requiredAccess : [],
+  }),
 };
 
 const server = http.createServer(async (req, res) => {

@@ -73,7 +73,7 @@
       <button data-tab="ask" class="tab">Ask</button>
       <button data-tab="statements" class="tab">Statements</button>
       <button data-tab="org" class="tab">Org</button>
-      <button data-tab="compare" class="tab">Compare</button>
+      <button data-tab="compare" class="tab">Change review</button>
     </nav>
 
     <div id="panel-findings" class="panel active">
@@ -140,12 +140,33 @@
     </div>
 
     <div id="panel-compare" class="panel">
-      <div class="compare-inputs">
-        <div><h3>Before</h3><textarea id="beforeBox" spellcheck="false" placeholder="Paste the current policy…"></textarea></div>
-        <div><h3>After</h3><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
+      <div class="workflow-intro">
+        <p class="workflow-kicker">Pre-merge evidence check</p>
+        <h3>Did this change introduce a sensitive access path?</h3>
+        <p>Check one action and resource before approval. The verdict comes from the policy engine. AI can explain it only if its citations and claims pass the grounding gate.</p>
       </div>
-      <button id="compareBtn" class="btn primary">Compare risk</button>
+      <div class="review-query">
+        <label>Action<input id="compareAction" type="text" value="rds:DeleteDBInstance" autocomplete="off"></label>
+        <label>Resource<input id="compareResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" autocomplete="off"></label>
+        <button id="loadChangeExample" class="btn secondary" type="button">Load example</button>
+      </div>
+      <div class="compare-inputs">
+        <div><h3>Current policy</h3><textarea id="beforeBox" spellcheck="false" placeholder="Paste the current policy…"></textarea></div>
+        <div><h3>Proposed policy</h3><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
+      </div>
+      <button id="compareBtn" class="btn primary">Review this change</button>
       <div id="compareResult"></div>
+      <details id="correctionCheck" class="correction-check" hidden>
+        <summary>Verify a proposed correction</summary>
+        <p>Paste a corrected policy, then declare access that must still work. PolicyLens checks both sides before marking the correction verified.</p>
+        <textarea id="candidateBox" spellcheck="false" placeholder="Paste the corrected policy…"></textarea>
+        <div class="review-query required-query">
+          <label>Required action<input id="requiredAction" type="text" value="s3:GetObject" autocomplete="off"></label>
+          <label>Required resource<input id="requiredResource" type="text" value="arn:aws:s3:::reports/daily.csv" autocomplete="off"></label>
+          <button id="verifyCorrectionBtn" class="btn secondary" type="button">Verify correction</button>
+        </div>
+        <div id="correctionResult"></div>
+      </details>
     </div>
   </section>
 </main>

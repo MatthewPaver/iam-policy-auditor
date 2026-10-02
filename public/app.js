@@ -379,28 +379,79 @@ $('#compareBtn').onclick = async () => {
   const before = $('#beforeBox').value;
   const after = $('#afterBox').value;
   if (!before.trim() || !after.trim()) { alert('Paste both a before and an after policy.'); return; }
+  const action = $('#compareAction').value.trim();
+  const resource = $('#compareResource').value.trim();
+  if (!action) { alert('Enter the sensitive action to review.'); return; }
   const btn = $('#compareBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spin">◐</span> Comparing…';
+  btn.disabled = true; btn.innerHTML = '<span class="spin">◐</span> Reviewing…';
   try {
-    const r = await api('/api/compare', { before, after });
+    const r = await api('/api/change/review', { before, after, action, resource, redactIdentifiers: true });
     const wrap = $('#compareResult');
     const card = (f) => `<div class="finding ${f.severity}">
-      <h3><span class="badge ${f.severity}">${f.severity}</span> ${esc(f.title)}</h3>
+      <h3><span class="badge ${f.severity}">${f.severity}</span> ${esc(f.title)} <span class="rule-id">${esc(f.ruleId)}</span></h3>
       <p class="desc">${md(f.description)}</p></div>`;
+    const accessTone = r.verdict.status === 'stop' ? 'review-stop' : (r.verdict.status === 'review' ? 'review-context' : 'review-pass');
+    const ai = r.ai
+      ? `<div class="review-explanation"><div class="mode"><span class="m-ai">◆ ${esc(r.ai.model)}</span> · passed grounding gate (${Math.round(r.aiEvaluation.score * 100)}%)</div>${md(r.ai.text)}</div>`
+      : `<div class="review-explanation deterministic"><div class="mode"><span class="m-det">◆ deterministic review</span></div><p>${esc(r.verdict.reason)}</p>${r.aiError ? `<p class="ai-error">${esc(r.aiError)}</p>` : ''}</div>`;
+    const evidence = r.evidence.length
+      ? r.evidence.map((item) => `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${item.line}${item.sid ? ` (${esc(item.sid)})` : ''}</li>`).join('')
+      : '<li>No matching allow or deny statement for the checked request.</li>';
+    const corrections = r.suggestedCorrections.length
+      ? r.suggestedCorrections.map((item) => `<li><b>${esc(item.title)}</b>: ${esc(item.summary || 'Review the introduced statement.')}</li>`).join('')
+      : '<li>No automatic rewrite is offered. Narrow or remove the statement that introduced the checked access.</li>';
     wrap.innerHTML = `
-      <div class="verdict">${esc(r.verdict)}</div>
-      <div class="sev-summary">
-        <span class="sev-chip">before: ${fmtCounts(r.beforeCounts)}</span>
-        <span class="sev-chip">after: ${fmtCounts(r.afterCounts)}</span>
+      <div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
+      ${ai}
+      <div class="review-grid">
+        <div><h4>Evidence</h4><ul>${evidence}</ul></div>
+        <div><h4>Candidate correction</h4><ul>${corrections}</ul></div>
       </div>
-      <div class="cmp-col cmp-intro"><h4>⬆ Introduced by the change (${r.introduced.length})</h4>
-        ${r.introduced.map(card).join('') || '<p class="empty">None</p>'}</div>
-      <div class="cmp-col cmp-res"><h4>⬇ Resolved by the change (${r.resolved.length})</h4>
-        ${r.resolved.map(card).join('') || '<p class="empty">None</p>'}</div>`;
+      <div class="cmp-col cmp-intro"><h4>⬆ Introduced by the change (${r.findings.introduced.length})</h4>
+        ${r.findings.introduced.map(card).join('') || '<p class="empty">None</p>'}</div>
+      <div class="cmp-col cmp-res"><h4>⬇ Resolved by the change (${r.findings.resolved.length})</h4>
+        ${r.findings.resolved.map(card).join('') || '<p class="empty">None</p>'}</div>
+      <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
+    $('#correctionCheck').hidden = false;
   } catch (e) {
     $('#compareResult').innerHTML = `<div class="ai-error">${esc(e.message)}</div>`;
   } finally {
-    btn.disabled = false; btn.textContent = 'Compare risk';
+    btn.disabled = false; btn.textContent = 'Review this change';
+  }
+};
+
+$('#loadChangeExample').onclick = async () => {
+  const [before, after, corrected] = await Promise.all([
+    fetch('/samples/aws-change-before.json').then((response) => response.text()),
+    fetch('/samples/aws-change-after.json').then((response) => response.text()),
+    fetch('/samples/aws-change-corrected.json').then((response) => response.text()),
+  ]);
+  $('#beforeBox').value = before;
+  $('#afterBox').value = after;
+  $('#candidateBox').value = corrected;
+};
+
+$('#verifyCorrectionBtn').onclick = async () => {
+  const proposed = $('#afterBox').value;
+  const candidate = $('#candidateBox').value;
+  if (!proposed.trim() || !candidate.trim()) { alert('Paste the proposed and corrected policies first.'); return; }
+  const riskRequest = { action: $('#compareAction').value.trim(), resource: $('#compareResource').value.trim() };
+  const requiredAction = $('#requiredAction').value.trim();
+  const requiredAccess = requiredAction ? [{ action: requiredAction, resource: $('#requiredResource').value.trim() }] : [];
+  const button = $('#verifyCorrectionBtn');
+  button.disabled = true;
+  try {
+    const r = await api('/api/change/verify', { proposed, candidate, riskRequest, requiredAccess });
+    const tone = r.verified ? 'review-pass' : 'review-stop';
+    $('#correctionResult').innerHTML = `<div class="verdict ${tone}">
+      <span>${r.verified ? 'Correction verified' : 'Correction not verified'}</span>
+      <b>risk closed: ${r.riskClosed ? 'yes' : 'no'} · required access preserved: ${r.requiredPreserved ? 'yes' : 'no'}</b>
+      <p>${esc(r.limits.join(' '))}</p>
+    </div>`;
+  } catch (e) {
+    $('#correctionResult').innerHTML = `<div class="ai-error">${esc(e.message)}</div>`;
+  } finally {
+    button.disabled = false;
   }
 };
 

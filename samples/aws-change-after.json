@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadReports",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::reports/*"
+    },
+    {
+      "Sid": "DeleteProductionDatabase",
+      "Effect": "Allow",
+      "Action": "rds:DeleteDBInstance",
+      "Resource": "arn:aws:rds:eu-west-1:111122223333:db:prod-1"
+    }
+  ]
+}
