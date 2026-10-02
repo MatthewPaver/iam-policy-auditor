@@ -17,9 +17,12 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
 
-const SRC_URL = 'https://raw.githubusercontent.com/iann0036/iam-dataset/main/aws/iam_definition.json';
+const SOURCE_COMMIT = '14982bbe1ce61089f8e66c07781ba63eed2d946a';
+const SRC_URL = `https://raw.githubusercontent.com/iann0036/iam-dataset/${SOURCE_COMMIT}/aws/iam_definition.json`;
 const OUT = path.join(__dirname, '..', 'data', 'aws-actions.json');
+const PROVENANCE_OUT = path.join(__dirname, '..', 'data', 'aws-actions.provenance.json');
 
 // Some entries carry compound levels (e.g. "Tagging, Write", "Permissions
 // management, Write"). Collapse to the single most-significant code by priority
@@ -85,6 +88,9 @@ async function main() {
     _meta: {
       source: 'iann0036/iam-dataset (MIT) — aws/iam_definition.json',
       sourceUrl: SRC_URL,
+      sourceCommit: SOURCE_COMMIT,
+      sourceSha256: crypto.createHash('sha256').update(raw).digest('hex'),
+      generatedAt: new Date().toISOString(),
       services: Object.keys(index).length,
       actions: actionCount,
       levelTally,
@@ -95,12 +101,26 @@ async function main() {
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out));
+  const outputSha256 = crypto.createHash('sha256').update(fs.readFileSync(OUT)).digest('hex');
+  fs.writeFileSync(PROVENANCE_OUT, `${JSON.stringify({
+    schemaVersion: 1,
+    sourceRepository: 'https://github.com/iann0036/iam-dataset',
+    sourceCommit: SOURCE_COMMIT,
+    sourcePath: 'aws/iam_definition.json',
+    sourceSha256: out._meta.sourceSha256,
+    outputPath: 'data/aws-actions.json',
+    outputSha256,
+    generatedAt: out._meta.generatedAt,
+    licence: 'MIT',
+  }, null, 2)}\n`);
   const kb = Math.round(fs.statSync(OUT).size / 1024);
   console.log(`\nWrote ${OUT}`);
   console.log(`  services: ${out._meta.services}`);
   console.log(`  actions:  ${actionCount}`);
   console.log(`  levels:   ${Object.entries(levelTally).map(([k, v]) => `${k}=${v}`).join(', ')}`);
   console.log(`  size:     ${kb} KB`);
+  console.log(`  commit:   ${SOURCE_COMMIT}`);
+  console.log(`  sha256:   ${outputSha256}`);
 }
 
 main().catch((e) => { console.error('Ingestion failed:', e.message); process.exit(1); });

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "oracle": "AWS IAM SimulateCustomPolicy",
+  "adapter": "benchmark/oracle-aws.js",
+  "status": "not-run-in-repository",
+  "reason": "The repository has no AWS credentials and does not claim an AWS-validated score until a credentialed run is captured.",
+  "command": "npm run benchmark:aws -- --json",
+  "requiredPermission": "iam:SimulateCustomPolicy",
+  "scope": "Single custom identity-policy action/resource/context cases. It is not a live-account authorization proof.",
+  "resultContract": {
+    "required": ["checked", "engineVsAws", "agreementPct", "mismatches", "skipped"],
+    "prohibited": ["access keys", "session tokens", "account policy contents"]
+  }
+}

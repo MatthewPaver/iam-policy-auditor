@@ -1,5 +1,5 @@
 {
-  "_about": "Ground-truth cases for the AWS policy evaluator. Each `expected` decision is derived from AWS's documented IAM evaluation semantics (deny > allow > implicit-deny, wildcard/NotAction/NotResource matching, condition operators). Cases with `oracleSkip` intentionally diverge from AWS SimulateCustomPolicy (which cannot express our informative 'ConditionalAllow') and are excluded from oracle diffing. Policies are stored as objects and stringified by the runner so line citations work.",
+  "_about": "Authored regression cases for the AWS policy evaluator, not independent ground truth. Each `expected` decision is the author's interpretation of AWS's documented IAM evaluation semantics (deny > allow > implicit-deny, wildcard/NotAction/NotResource matching, condition operators). Cases with `oracleSkip` intentionally diverge from AWS SimulateCustomPolicy (which cannot express our informative 'ConditionalAllow') and are excluded from oracle diffing. Policies are stored as objects and stringified by the runner so line citations work.",
   "cases": [
     { "id": "allow-basic", "note": "explicit allow, resource matches",
       "policy": { "Version": "2012-10-17", "Statement": [{ "Sid": "R", "Effect": "Allow", "Action": "s3:GetObject", "Resource": "arn:aws:s3:::data/*" }] },

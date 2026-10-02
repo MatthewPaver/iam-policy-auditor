@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "https://github.com/iann0036/iam-dataset",
+  "sourceCommit": "14982bbe1ce61089f8e66c07781ba63eed2d946a",
+  "sourcePath": "aws/iam_definition.json",
+  "sourceSha256": "44e7b9a4fa63377e41daabd1926fcb658a97ce735bb0c29869a1738dcab93117",
+  "outputPath": "data/aws-actions.json",
+  "outputSha256": "c6c5eb6ec221b1def0d1b1cd9a117864eb2f7ddffd7d80c360e8d38ed44814f1",
+  "generatedAt": "2026-08-11T04:17:46.766Z",
+  "licence": "MIT"
+}
