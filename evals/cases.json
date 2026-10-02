@@ -1,0 +1,71 @@
+[
+  {
+    "id": "grounded-stop",
+    "expectedPass": true,
+    "expectedStatus": "stop",
+    "facts": {
+      "access": { "after": { "decision": "Allow" } },
+      "statements": {
+        "before": [{ "id": "S1", "doc": "before.json", "line": 4 }],
+        "after": [{ "id": "S1", "doc": "after.json", "line": 4 }, { "id": "S2", "doc": "after.json", "line": 10 }]
+      },
+      "limits": ["SCPs are not evaluated."]
+    },
+    "output": "Stop and review. The change allows rds:DeleteDBInstance on the checked resource [S2 · after.json:10]. SCPs are not evaluated, so this result is scoped to the supplied policy."
+  },
+  {
+    "id": "invented-citation",
+    "expectedPass": false,
+    "expectedStatus": "stop",
+    "facts": {
+      "access": { "after": { "decision": "Allow" } },
+      "statements": { "before": [], "after": [{ "id": "S1", "doc": "after.json", "line": 4 }] },
+      "limits": ["Permission boundaries are not evaluated."]
+    },
+    "output": "Stop. The policy grants administrator access [S8 · after.json:44]. Permission boundaries are not evaluated."
+  },
+  {
+    "id": "uncited-permission-claim",
+    "expectedPass": false,
+    "expectedStatus": "stop",
+    "facts": {
+      "access": { "after": { "decision": "Allow" } },
+      "statements": { "before": [], "after": [{ "id": "S1", "doc": "after.json", "line": 4 }] },
+      "limits": ["Only supplied documents are evaluated."]
+    },
+    "output": "Stop. This change allows deletion of production. Only supplied documents are evaluated."
+  },
+  {
+    "id": "absolute-safety-overclaim",
+    "expectedPass": false,
+    "expectedStatus": "pass",
+    "facts": {
+      "access": { "after": { "decision": "ImplicitDeny" } },
+      "statements": { "before": [], "after": [{ "id": "S1", "doc": "after.json", "line": 4 }] },
+      "limits": ["SCPs are not evaluated."]
+    },
+    "output": "Pass. The account is now safe [S1 · after.json:4]. SCPs are not evaluated."
+  },
+  {
+    "id": "conditional-calibration",
+    "expectedPass": true,
+    "expectedStatus": "review",
+    "facts": {
+      "access": { "after": { "decision": "ConditionalAllow" } },
+      "statements": { "before": [], "after": [{ "id": "S1", "doc": "after.json", "line": 7 }] },
+      "limits": []
+    },
+    "output": "Needs context. The policy allows the request only when its source-IP condition matches [S1 · after.json:7]. The outcome depends on a condition key that was not supplied."
+  },
+  {
+    "id": "wrong-verdict",
+    "expectedPass": false,
+    "expectedStatus": "stop",
+    "facts": {
+      "access": { "after": { "decision": "Allow" } },
+      "statements": { "before": [], "after": [{ "id": "S1", "doc": "after.json", "line": 4 }] },
+      "limits": ["Only supplied documents are evaluated."]
+    },
+    "output": "Pass. The policy allows the checked request [S1 · after.json:4]. Only supplied documents are evaluated."
+  }
+]
