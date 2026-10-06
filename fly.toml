@@ -1,4 +1,4 @@
-# Fly.io — public LinkedIn demo
+# Fly.io — public hosted demo
 app = "policylens-demo"
 primary_region = "lhr"
 

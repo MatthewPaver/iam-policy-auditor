@@ -2,7 +2,7 @@
 const assert = require('assert');
 const http = require('http');
 
-// Spin a one-off server on a free port with HOSTED=1 so LinkedIn path is on.
+// Spin a one-off server on a free port with HOSTED=1 so the hosted demo path is on.
 process.env.HOSTED = '1';
 process.env.HOST = '127.0.0.1';
 process.env.PORT = '0'; // we'll bind manually — actually server reads PORT at load

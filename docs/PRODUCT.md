@@ -32,18 +32,6 @@ That path is the product. Org-wide who-can and reach-admin are a second evidence
 
 > PolicyLens checks one sensitive IAM request before and after a proposed policy change, cites the statement that changed the decision, and verifies a correction against both the risk and access that must remain. Analysis is local and deterministic. Claude is optional, cannot alter the verdict, and is hidden if its explanation fails the grounding checks. We are looking for a design partner willing to replay real, sanitized IAM changes and label where the scoped review helps or misses context. Honest limits today: no SCPs, permission boundaries, or session policies; no live collector yet; the AWS simulator oracle needs `iam:SimulateCustomPolicy`.
 
-## LinkedIn (credibility + conversations)
-
-Full kit: **[LINKEDIN.md](LINKEDIN.md)** — primary post, first comment, reply templates, DM script, Day-5 follow-up, success metrics.
-
-Attach when you post:
-
-- `docs/assets/demo-org.png` — Org results after the 90-second demo (best still)
-- `docs/assets/demo-hero.png` — landing / CTA
-- Or a 20–40s screen recording of **Run the 90-second demo**
-
-One-line stance for comments: *engine decides, LLM explains, every answer cites a line.*
-
 ## What “usable product” means here
 
 | Bar | Status |

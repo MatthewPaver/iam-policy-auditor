@@ -35,7 +35,7 @@ const POLICY_SAMPLE_SKIP = new Set(['aws-account-snapshot.json']);
 const DEMO_ACTION = 'rds:DeleteDBInstance';
 const DEMO_RESOURCE = 'arn:aws:rds:eu-west-1:111122223333:db:prod-1';
 
-// Tiny per-IP throttle so a public LinkedIn demo isn't trivial to DOS.
+// Tiny per-IP throttle so a public hosted demo isn't trivial to DOS.
 const RATE = new Map();
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = HOSTED ? 60 : 1000;
@@ -167,7 +167,7 @@ const routes = {
       : { loaded: false },
   }),
 
-  /** One-shot LinkedIn path: no client upload of the snapshot. */
+  /** One-shot hosted demo path: no client upload of the snapshot. */
   'GET /api/demo/run': async () => runOrgDemo(loadDemoSnapshot()),
 
   'GET /api/samples': async () => {
@@ -372,7 +372,7 @@ const server = http.createServer(async (req, res) => {
     || req.socket.remoteAddress
     || 'unknown';
 
-  // Hosted LinkedIn demos get a soft POST throttle (GET demo stays free).
+  // Hosted demos get a soft POST throttle (GET demo stays free).
   if (HOSTED && req.method === 'POST' && !rateOk(ip)) {
     return send(res, 429, { error: 'Too many requests — try again in a minute.' });
   }
@@ -418,6 +418,6 @@ server.listen(PORT, HOST, () => {
   │  Mode: ${(HOSTED ? 'HOSTED public demo' : 'local').padEnd(44)}│
   │                                                       │
   │  AI layer: ${aiAvailable() ? `ENABLED (${MODEL})`.padEnd(41) : 'disabled — set ANTHROPIC_API_KEY to enable'.padEnd(41)} │
-  │  LinkedIn path: /?demo=1  →  GET /api/demo/run        │
+  │  Hosted demo: /?demo=1  →  GET /api/demo/run          │
   └──────────────────────────────────────────────────────┘`);
 });

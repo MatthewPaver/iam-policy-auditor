@@ -169,7 +169,7 @@ function setDemoStatus(msg, done) {
 
 /**
  * One-click stranger path: Org tab → who-can → reach-admin → resource scan.
- * Uses GET /api/demo/run so LinkedIn visitors don't upload the snapshot 3×.
+ * Uses GET /api/demo/run so hosted-demo visitors don't upload the snapshot 3×.
  */
 async function runNinetySecondDemo() {
   if (state.demoRunning) return;
@@ -647,7 +647,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
     if (h.ai) { pill.textContent = `✨ AI: ${h.model}`; pill.classList.add('on'); }
     else { pill.textContent = 'AI off — deterministic mode'; pill.title = 'Set ANTHROPIC_API_KEY and restart to enable free-form questions.'; }
 
-    // Public demo: swap the “local” claim so LinkedIn visitors aren't misled
+    // Public demo: swap the “local” claim so hosted-demo visitors aren't misled
     const localPill = document.querySelector('.pill.local');
     if (state.hosted && localPill) {
       localPill.textContent = '⚠ public demo — don’t paste secrets';
@@ -657,7 +657,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
     const banner = $('#hostedBanner');
     if (banner) banner.hidden = !state.hosted;
 
-    // LinkedIn link is /?demo=1 — auto-run so one click = value
+    // Hosted demo link is /?demo=1 — auto-run so one click = value
     // Hosted cold start also auto-runs unless ?skipdemo=1
     const skip = params.has('skipdemo');
     if (wantDemo || (state.hosted && !skip)) {
