@@ -1,15 +1,16 @@
 # PolicyLens: evidence-first IAM change review
 
-**Product story:** [docs/PRODUCT.md](docs/PRODUCT.md) · **LinkedIn kit:** [docs/LINKEDIN.md](docs/LINKEDIN.md)
+**Product story:** [docs/PRODUCT.md](docs/PRODUCT.md)
 
 **Try the included example:** [Quick start](#quick-start). It runs on your own computer with Node.js, without an AWS account, API key or package installation. You will see a permission change turn a denied action into an allowed one, then test a correction. Start with the sample policies before using any sensitive inputs.
-
-**Release boundary:** this checkout includes local change-review work. It is not evidence that a hosted deployment or the previously published release contains that interface. Clone-and-run is the supported entry point; no hosted availability is promised. Label screenshots with the commit used to generate them. Reuse terms are in [LICENSE](LICENSE); support is best-effort prototype maintenance.
-
 
 Review an AWS IAM policy change before it is approved. PolicyLens shows whether a declared sensitive action became reachable, cites the exact statement, and verifies that a proposed correction closes the path without removing access that must still work.
 
 **The so what:** a reviewer can turn “this diff looks risky” into a reproducible stop or pass decision with evidence. The engine produces the facts. The LLM may explain them, but its answer is withheld if it fails the grounding eval.
+
+![PolicyLens change review: the proposed policy turns rds:DeleteDBInstance on prod-1 from ImplicitDeny to Allow, citing statement S2 at after.json:10](docs/assets/change-review.png)
+
+*Change review on the bundled example, local mode with AI off.*
 
 AWS change review is the primary workflow. Org-wide “who can” and reach-admin analysis are the second workflow. GCP, Azure, and IBM policy documents remain available in the supporting Analyze view but are not presented as equivalent in depth.
 
@@ -205,7 +206,11 @@ src/resource_policy.js  external/public grants on resource policies
 src/ai.js          optional Claude layer: grounding prompt, redaction, timeout handling
 public/            web UI (hero demo, findings, Ask, Org, compare)
 samples/           demo policies + aws-account-snapshot.json for the Org path
-docs/PRODUCT.md    product story, design-partner pitch, LinkedIn copy
+docs/PRODUCT.md    product story and design-partner pitch
 demo.sh / Dockerfile  stranger-usable local / LAN / container demo
 test/              correctness suite (rules, evaluate, graph, resource, lint)
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE). Support is best-effort prototype maintenance.
