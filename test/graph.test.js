@@ -1,6 +1,6 @@
 'use strict';
 
-// G2 entity-graph tests: group inheritance, org-wide "who can X", assume-role
+// Entity-graph tests: group inheritance, org-wide "who can X", assume-role
 // edges, and reach-to-admin (direct / assume-chain / escalation).
 
 const fs = require('fs');

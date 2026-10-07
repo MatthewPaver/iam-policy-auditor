@@ -5,7 +5,7 @@
  * without pulling in a Python dependency. Catches the mistakes that make
  * the rest of the engine look "wrong" when the JSON was already broken.
  *
- * undergrad note: we only inspect the normalised statement model the
+ * We only inspect the normalised statement model the
  * parser already produced, so line numbers stay honest.
  */
 

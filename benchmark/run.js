@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// G1 correctness benchmark.
+// Correctness benchmark for the AWS evaluator.
 //
 //   node benchmark/run.js               # corpus-only: engine vs documented AWS semantics
 //   node benchmark/run.js --oracle aws  # also diff engine vs live AWS SimulateCustomPolicy
@@ -9,7 +9,7 @@
 //
 // Exit code is non-zero if engine↔corpus agreement is below --threshold (default 100),
 // so this can gate CI. When the AWS oracle is available it additionally reports
-// engine↔AWS agreement — the metric the roadmap's G1 exit criterion is written against.
+// engine↔AWS agreement, which is the independent check the corpus cannot provide.
 
 const fs = require('fs');
 const path = require('path');

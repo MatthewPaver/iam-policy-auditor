@@ -18,11 +18,9 @@ const { reviewChange, verifyCorrection } = require('./src/change_review');
 const { evaluateExplanation } = require('./src/ai_eval');
 
 const PORT = Number(process.env.PORT || 4177);
-// Platforms (Fly/Render) set PORT — bind all interfaces so the app is reachable.
-const HOSTED = process.env.HOSTED === '1'
-  || Boolean(process.env.FLY_APP_NAME)
-  || Boolean(process.env.RENDER)
-  || Boolean(process.env.RAILWAY_ENVIRONMENT);
+// HOSTED=1 (set by the Dockerfile) is shared-demo mode: bind all interfaces,
+// throttle POSTs, and show the "do not paste real policies" banner.
+const HOSTED = process.env.HOSTED === '1';
 const HOST = process.env.HOST || (HOSTED ? '0.0.0.0' : '127.0.0.1');
 const PUB = path.join(__dirname, 'public');
 const SAMPLES = path.join(__dirname, 'samples');
@@ -35,7 +33,7 @@ const POLICY_SAMPLE_SKIP = new Set(['aws-account-snapshot.json']);
 const DEMO_ACTION = 'rds:DeleteDBInstance';
 const DEMO_RESOURCE = 'arn:aws:rds:eu-west-1:111122223333:db:prod-1';
 
-// Tiny per-IP throttle so a public hosted demo isn't trivial to DOS.
+// Tiny per-IP throttle so a shared demo isn't trivial to DOS.
 const RATE = new Map();
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = HOSTED ? 60 : 1000;
@@ -261,7 +259,7 @@ const routes = {
     });
   },
 
-  // --- G2: org-wide entity graph over an account snapshot -------------------
+  // --- Org-wide entity graph over an account snapshot ------------------------
   // Snapshot is the shape of `aws iam get-account-authorization-details`.
   'POST /api/org/whocan': async (body) => {
     if (!body.snapshot || typeof body.snapshot !== 'object') throw new Error('Provide an account snapshot (aws iam get-account-authorization-details JSON)');
@@ -415,9 +413,9 @@ server.listen(PORT, HOST, () => {
   │  PolicyLens — ask IAM questions, get cited answers     │
   │                                                       │
   │  ${where.padEnd(51)}│
-  │  Mode: ${(HOSTED ? 'HOSTED public demo' : 'local').padEnd(44)}│
+  │  Mode: ${(HOSTED ? 'HOSTED shared demo' : 'local').padEnd(44)}│
   │                                                       │
   │  AI layer: ${aiAvailable() ? `ENABLED (${MODEL})`.padEnd(41) : 'disabled — set ANTHROPIC_API_KEY to enable'.padEnd(41)} │
-  │  Hosted demo: /?demo=1  →  GET /api/demo/run          │
+  │  One-click demo: /?demo=1  →  GET /api/demo/run       │
   └──────────────────────────────────────────────────────┘`);
 });

@@ -1,7 +1,7 @@
 'use strict';
 
 // Pluggable AWS ground-truth oracle. Shells out to `aws iam simulate-custom-policy`
-// (no SDK dependency). This is the G1 correctness gate: diff our offline
+// (no SDK dependency). It is the independent correctness check: diff our offline
 // evaluator against AWS's own authorization engine on a real policy corpus.
 //
 // It degrades gracefully: if the AWS CLI or credentials are absent, isAvailable()

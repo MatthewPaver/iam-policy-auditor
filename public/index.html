@@ -14,7 +14,7 @@
 </head>
 <body>
 <div id="hostedBanner" class="hosted-banner" hidden>
-  Public demo — analysis is deterministic and free to try. <b>Do not paste production secrets or customer policies.</b>
+  Shared demo — analysis is deterministic and free to try. <b>Do not paste production secrets or customer policies.</b>
   Use a synthetic snapshot, or run locally via the GitHub repo.
 </div>
 <header>
@@ -33,7 +33,7 @@
 
 <section id="hero" class="hero" aria-label="Product pitch">
   <div class="hero-copy">
-    <p class="hero-kicker">IBM AI Security track · AWS-first</p>
+    <p class="hero-kicker">AWS IAM · evidence-first</p>
     <h2 class="hero-title">Who can delete prod — with receipts</h2>
     <p class="hero-sub">The engine produces the facts. The LLM only explains them. Every answer cites a source line.</p>
     <div class="hero-actions">
@@ -63,8 +63,8 @@
       <label class="btn secondary file-btn">Upload files<input id="fileInput" type="file" multiple accept=".json,application/json" hidden></label>
       <select id="sampleSelect"><option value="">Load a sample…</option></select>
     </div>
-    <button id="analyzeBtn" class="btn primary">Analyze policies</button>
-    <p class="fineprint">Nothing is uploaded anywhere: parsing and rules run in the local server. If the Claude layer is enabled, only pseudonymized policy structure is sent to the API.</p>
+    <button id="analyzeBtn" class="btn primary">Analyse policies</button>
+    <p class="fineprint">Nothing is uploaded anywhere: parsing and rules run in the local server. If the Claude layer is enabled, only pseudonymised policy structure is sent to the API.</p>
   </aside>
 
   <section id="results">
@@ -78,7 +78,7 @@
 
     <div id="panel-findings" class="panel active">
       <div id="severitySummary" class="sev-summary"></div>
-      <div id="findingsList"><p class="empty">Add a policy and hit <b>Analyze</b> — findings appear here with severity, evidence lines, and suggested fixes.</p></div>
+      <div id="findingsList"><p class="empty">Add a policy and hit <b>Analyse</b> — findings appear here with severity, evidence lines, and suggested fixes.</p></div>
     </div>
 
     <div id="panel-ask" class="panel">

@@ -1,6 +1,6 @@
 'use strict';
 
-// G2 — entity graph and org-wide reachability (AWS-first).
+// Entity graph and org-wide reachability (AWS-first).
 //
 // Given a parsed account snapshot, answer questions across the WHOLE org rather
 // than one pasted policy: "who can delete production databases?", "who can reach
@@ -14,7 +14,7 @@
 // catalogue. It does not yet model SCPs, permission boundaries, or session
 // policies — those are labelled "not evaluated", never silently ignored. The
 // escalation catalogue is a documented starter set (well-known public
-// techniques), to be widened as the roadmap's G2 edge-catalogue work continues.
+// techniques); it is not an exhaustive escalation catalogue.
 
 const { analyzeDocuments } = require('./engine');
 const { evaluateRequest } = require('./evaluate');

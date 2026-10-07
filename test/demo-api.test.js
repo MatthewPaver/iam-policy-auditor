@@ -7,7 +7,7 @@ process.env.HOSTED = '1';
 process.env.HOST = '127.0.0.1';
 process.env.PORT = '0'; // we'll bind manually — actually server reads PORT at load
 
-// Undergrad note: require after env so HOSTED flags stick
+// Require after setting env so the HOSTED flag is read at load time.
 delete require.cache[require.resolve('../server.js')];
 // server.js listens immediately — test via spawning is cleaner
 const { spawn } = require('child_process');
