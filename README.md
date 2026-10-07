@@ -1,216 +1,131 @@
 # PolicyLens: evidence-first IAM change review
 
-**Product story:** [docs/PRODUCT.md](docs/PRODUCT.md)
+[![CI](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml)
+[![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-**Try the included example:** [Quick start](#quick-start). It runs on your own computer with Node.js, without an AWS account, API key or package installation. You will see a permission change turn a denied action into an allowed one, then test a correction. Start with the sample policies before using any sensitive inputs.
-
-Review an AWS IAM policy change before it is approved. PolicyLens shows whether a declared sensitive action became reachable, cites the exact statement, and verifies that a proposed correction closes the path without removing access that must still work.
-
-**The so what:** a reviewer can turn “this diff looks risky” into a reproducible stop or pass decision with evidence. The engine produces the facts. The LLM may explain them, but its answer is withheld if it fails the grounding eval.
+For engineers and security reviewers approving AWS IAM policy changes: PolicyLens shows whether a change makes a sensitive action reachable, cites the statement responsible, and checks that a proposed fix closes the path without breaking access that must keep working.
 
 ![PolicyLens change review: the proposed policy turns rds:DeleteDBInstance on prod-1 from ImplicitDeny to Allow, citing statement S2 at after.json:10](docs/assets/change-review.png)
 
-*Change review on the bundled example, local mode with AI off.*
+*Change review on the bundled example, running locally with the AI layer off. The verdict, the evidence line and the candidate correction all come from the deterministic engine.*
 
-AWS change review is the primary workflow. Org-wide “who can” and reach-admin analysis are the second workflow. GCP, Azure, and IBM policy documents remain available in the supporting Analyze view but are not presented as equivalent in depth.
+## The problem
 
-```
-┌────────────┐   ┌──────────────────────┐   ┌────────────────────────────┐
-│ paste /    │ → │ position-aware JSON   │ → │ normalized statement model │
-│ upload     │   │ parser (line-mapped)  │   │ (S1, S2, … with lines)     │
-└────────────┘   └──────────────────────┘   └──────────┬─────────────────┘
-                                                        │
-                    ┌───────────────────────────────────┼────────────────────┐
-                    ▼                                   ▼                  ▼
-          ┌──────────────────┐              ┌────────────────────┐  ┌──────────────┐
-          │ rule engine       │              │ effective-permission│  │ change review │
-          │ + preflight lint  │              │ query engine        │  │ risk diff    │
-          │ patterns          │              │ (who-can / can-X)   │  └──────────────┘
-          └────────┬─────────┘              └─────────┬──────────┘
-                   ▼                                   ▼
-          findings w/ severity,            deterministic answer w/ citations
-          evidence lines, fixes                        │
-                                            ┌──────────▼──────────┐
-                                            │ optional Claude layer│  ← shown only when
-                                            │ + grounding eval     │    its claims pass
-                                            └─────────────────────┘
-```
+A pull request adds a statement to a role's policy. The reviewer has to answer a narrow question before approving it:
 
-## Quick start
+> Did this change make `rds:DeleteDBInstance` reachable on `prod-1`, and does the correction remove that path without breaking the report reader?
 
-The example runs locally without a cloud account or an API key. Use a Node.js version supported by [`package.json`](package.json).
+Scanners such as Access Analyzer, Prowler and Cloudsplaining produce findings feeds. They do not answer "is this specific request allowed now, when it was not before?" for one change. Pasting the diff into a chatbot gives a fluent answer that cannot be checked and may cite statements that do not exist.
+
+PolicyLens turns "this diff looks risky" into a reproducible **stop**, **needs context** or **pass** verdict for a declared request, with the source line that caused it. It then re-runs the same request against a candidate correction, alongside the access that has to survive. An LLM may explain the result, but it is shown only if its explanation passes a grounding check.
+
+## Quickstart
+
+Node.js 18 or later (CI uses Node 22). No `npm install`, AWS account or API key is needed to run it.
 
 ```bash
 git clone https://github.com/MatthewPaver/iam-policy-auditor.git
 cd iam-policy-auditor
-npm run demo              # http://127.0.0.1:4177, local machine only
+npm run demo        # serves http://127.0.0.1:4177, this machine only
 ```
 
-1. Open the app and select **Change review**.
-2. Click **Load example**, then **Review this change**.
-3. Inspect the `ImplicitDeny → Allow` stop verdict and its source statement.
-4. Open **Verify a proposed correction** and check that the risk closes while report access still works.
+The terminal prints `Mode: local` and `AI layer: disabled — set ANTHROPIC_API_KEY to enable`. Then, in the browser:
 
-The original **Run the 90-second demo** remains available for org-wide who-can, reach-admin, and resource-policy results.
+1. Open the **Change review** tab, click **Load example**, then **Review this change**.
+2. Expected result: **Stop and review**, `ImplicitDeny → Allow`, with evidence `S2 after.json:10 (DeleteProductionDatabase)`.
+3. Open **Verify a proposed correction** (the corrected policy is pre-filled) and click **Verify correction**. Expected result: **Correction verified**, with `risk closed: yes · required access preserved: yes` for `s3:GetObject` on the reports bucket.
 
-For an intentional LAN demonstration, `./demo.sh` binds to `0.0.0.0` by default. That exposes the server beyond localhost; do not use it with sensitive policies on an untrusted network.
+The same check is available over HTTP (`POST /api/change/review`, `POST /api/change/verify`).
+
+**Optional AI explanations.** Set `ANTHROPIC_API_KEY` before starting the server. `AUDITOR_MODEL` overrides the default model (`claude-sonnet-5`). Account IDs, emails and IBM IAM IDs are pseudonymised (`«ACCT_1»`) before the call and restored afterwards.
+
+**Docker (optional).** `docker build -t policylens . && docker run --rm -p 4177:4177 policylens` runs it in shared-demo mode (`HOSTED=1`): it binds all interfaces, throttles POST requests and shows a "do not paste real policies" banner.
+
+## How it works
+
+```mermaid
+flowchart LR
+    B[before.json] --> P
+    A[after.json] --> P[Line-mapped JSON parser]
+    P --> M[Statement model<br/>S1, S2 … with source lines]
+    M --> E[Condition-aware evaluator<br/>for the declared request]
+    M --> R[Rules + preflight lint]
+    E --> V{Verdict<br/>stop / needs context / pass}
+    R --> V
+    V --> C[Verify correction<br/>risk closed AND required access kept]
+    V -. optional .-> L[Claude explanation<br/>of the engine's facts]
+    L --> G{Grounding gate}
+    G -- passes --> S[Shown beside the verdict]
+    G -- fails --> W[Withheld, with the reason]
+```
+
+- **Parser and model** (`src/parse.js`, `src/engine.js`). A position-aware JSON parser maps every statement to its file and line, then normalises it into one statement model (effect, principals, actions, resources, conditions).
+- **Evaluator** (`src/evaluate.js`, `src/actions.js`). Evaluates a request with explicit deny > allow > implicit deny, `NotAction`/`NotResource`, wildcard matching and condition operators (String, Bool, Ip, Arn, Numeric, Date, Null, `IfExists`, `ForAllValues`/`ForAnyValue`). A missing context key gives `ConditionalAllow`, never a silent deny. Wildcards expand against 21,656 AWS actions from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset) (MIT), pinned to a commit with SHA-256 values in `data/aws-actions.provenance.json`.
+- **Change review** (`src/change_review.js`). Evaluates the declared request before and after. **Stop** if the decision broadens (for example `ImplicitDeny → Allow`) or the change introduces a high or critical finding; **needs context** if the result depends on condition keys that were not supplied; otherwise **pass**. Correction verification passes only if the risky request is no longer permitted and every declared required-access request still is.
+- **Rules and lint** (`src/rules.js`, `src/lint.js`). Wildcard admin, `Allow` + `NotAction`, privilege escalation (`iam:PassRole` on `*`, `iam:CreatePolicyVersion`, …), risky trust policies, unconditioned destructive actions and public exposure. Each finding has a severity, the source lines and a least-privilege rewrite.
+- **Optional AI layer** (`src/ai.js`, `src/ai_eval.js`). Claude receives only the engine's facts and must cite `[S2 · file:line]`. The gate withholds the explanation unless the verdict matches, every citation resolves to a supplied statement, permission claims are cited, uncertainty is named where the decision is conditional, and nothing is called "safe" or "compliant".
+
+**Second workflow: org-wide reachability** (`src/snapshot.js`, `src/graph.js`, `src/resource_policy.js`, the **Org** tab). From an exported `aws iam get-account-authorization-details` snapshot it answers "who can do X on Y" with group inheritance resolved, finds who can reach administrator (direct, assume-role chains and named escalation techniques, including multi-hop paths with per-step citations), and flags resource policies that grant access to a foreign account or the public. **Run the 90-second demo** loads `samples/aws-account-snapshot.json`. GCP, Azure and IBM policy documents are parsed and rule-checked in the single-policy **Analyse** view, at less depth than AWS.
+
+## Results
+
+All three checks run offline in CI on every push.
+
+| Check | Command | Result | What it does not show |
+|---|---|---|---|
+| Unit and contract tests | `npm test` | 118 tests in 11 suites pass | Behaviour on real account data; the fixtures are synthetic. |
+| AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
+| Authored regression corpus | `npm run benchmark` | Engine agrees with 55/55 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
+
+The independent check is `npm run benchmark:aws`, which compares the engine with AWS's `iam:SimulateCustomPolicy`. It needs credentials with that permission and **has not been run**; [docs/AWS_SIMULATOR_STATUS.md](docs/AWS_SIMULATOR_STATUS.md) records the status and what a run must report. An explicit AWS run fails closed if the CLI, credentials or any comparison is missing, so an offline pass cannot make it green. [docs/AI_EVALS.md](docs/AI_EVALS.md) sets out the pass bar for a live model release.
+
+## Design decisions and trade-offs
+
+- **The engine decides; the LLM only explains.** Rejected: asking an LLM whether the diff is risky. A permission verdict has to be reproducible and point at a statement, and a model answer varies between runs and can invent statements. The explanation is withheld when it fails the gate, not repaired. Cost: questions outside the engine's model get "not evaluated" rather than an answer.
+- **Check a declared request, not the whole policy.** Rejected: a full semantic diff or a single risk score. A reviewer can act on "this request went from denied to allowed"; a diff across 21,656 actions is noise. Cost: the reviewer must name the sensitive action and resource. The rules still flag any new high or critical finding outside that request.
+- **Verify the fix against the risk and the access that must survive.** Rejected: suggesting a rewrite and stopping there. Least-privilege fixes often break the legitimate reader, so the correction is tested both ways. Cost: required-access cases have to be declared.
+- **Zero runtime dependencies.** Rejected: Express and TypeScript. A tool that reads policy data benefits from a small supply-chain surface, and clone-and-run needs no install. Cost: hand-written routing, a 5 MB body cap and a per-IP throttle instead of middleware. ESLint is a dev-only dependency.
+- **AWS depth before multi-cloud breadth.** Rejected: equal support for AWS, GCP, Azure and IBM. Evaluation semantics matter more to a security reviewer than coverage, so change review and condition-aware evaluation are AWS-only. Other clouds get parsing and rules.
+
+## Limits and non-goals
+
+- It evaluates only the supplied documents. SCPs, permission boundaries, session policies and cross-account resource-policy interplay are not evaluated, and every review says so.
+- A **pass** means no increase for the checked request under the rules that ran. It is not proof that a policy is safe, and a clean scan says it "does not certify the policy safe".
+- The grounding gate checks citations, verdict wording and claim patterns. It cannot tell whether a cited statement actually supports the sentence that cites it.
+- The escalation catalogue is a documented starter set of well-known techniques, not an exhaustive one. Instance-profile and SSM paths need data that the snapshot does not hold.
+- There is no live collector. Org analysis reads an exported snapshot.
+- GCP custom roles outside the built-in role map return "cannot determine", not a guess.
+- It runs locally by default (`127.0.0.1`). `./demo.sh` binds `0.0.0.0` for a LAN demo; do not use that with real policies on an untrusted network.
+- Non-goals: replacing Access Analyzer, Prowler or a CSPM; posting PR comments; hosting it as a multi-tenant service.
+
+## Repository layout and tests
+
+```
+server.js                 zero-dependency HTTP server and JSON API
+src/change_review.js      before/after verdict and correction verification
+src/evaluate.js           condition-aware request evaluation
+src/parse.js, engine.js   line-mapped parser, normalised statement model
+src/rules.js, lint.js     risk rules and preflight lint
+src/actions.js            AWS action catalogue lookup (data/aws-actions.json)
+src/graph.js, snapshot.js org-wide who-can and reach-admin
+src/resource_policy.js    foreign-account and public resource-policy grants
+src/ai.js, ai_eval.js     optional Claude layer and its grounding gate
+public/                   web UI
+samples/                  example policies, change pair and account snapshot
+test/                     11 test suites
+evals/                    AI grounding fixtures (offline) and live runner
+benchmark/                authored corpus and AWS simulator adapter
+scripts/                  action-catalogue ingest (npm run ingest)
+docs/                     AI eval strategy, AWS simulator status, screenshot
+```
 
 ```bash
-npm test                  # correctness suite (rules + evaluator + graph + lint + …)
-npm run benchmark         # authored regression corpus, not independent AWS validation
-npm run eval              # offline AI grounding contract, including adversarial failures
+npm run lint        # ESLint (needs npm ci)
+npm test            # unit and contract tests
+npm run eval        # offline AI grounding contract
+npm run benchmark   # authored regression corpus
 ```
 
-Docker (optional):
+## Licence
 
-```bash
-docker build -t policylens .
-docker run --rm -p 4177:4177 policylens
-```
-
-No cloud account or API key is needed for the example, tests, benchmark, or AI-eval fixtures. `ANTHROPIC_API_KEY` enables optional explanations. Policy data is pseudonymized before that call.
-
-## What is reproducible
-
-| Claim | Evidence in this repository |
-|---|---|
-| The checked request became reachable | `src/change_review.js` evaluates the same action and resource before and after |
-| A correction closes the path | `POST /api/change/verify` re-runs the sensitive request against the candidate |
-| Required access still works | the same correction check evaluates declared required-access cases |
-| Authored supported-case expectations have not regressed | `npm run benchmark`, with a separate optional AWS simulator comparison |
-| AI explanations stay grounded | `npm run eval` rejects invented citations, uncited claims, wrong verdicts, and safety overclaims |
-
-This is a local decision-support tool, not an authorization oracle. SCPs, permission boundaries, session policies, and some cross-account interactions remain outside the current model and are named in every review.
-
-The [AWS comparison status](docs/AWS_SIMULATOR_STATUS.md) records the outstanding independent-validation gate. An explicitly requested AWS benchmark exits nonzero if unavailable, blocked, incomplete or mismatched; an offline corpus pass cannot make that check green.
-
-### Enterprise hardening (G1 — in progress)
-
-Beyond the hackathon build, three pieces of the [enterprise roadmap](ROADMAP.md) are now in:
-
-- **Condition-aware evaluation** (`src/evaluate.js`, `POST /api/simulate`) — actually
-  *evaluates* the `Condition` block (Ip/Bool/Arn/Numeric/Date/Null, `IfExists`,
-  `ForAllValues`/`ForAnyValue`) with correct explicit-deny > allow > implicit-deny ordering.
-  A missing context key is surfaced as `ConditionalAllow`, never silently denied.
-- **Real action catalogue** (`scripts/ingest-aws-actions.js` → `data/aws-actions.json`) —
-  21,656 AWS actions / 453 services ingested from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset)
-  (MIT) with catalogue access levels, replacing the name-verb heuristic. The ingest URL is pinned to an upstream commit; source and output SHA-256 values live in `data/aws-actions.provenance.json`. Refresh with `npm run ingest`.
-- **Authored regression corpus** (`benchmark/`) — 55 cases encoding the author's interpretation of documented AWS semantics
-  (55/55 regression agreement, not independent accuracy), plus a pluggable AWS oracle. `npm run benchmark:aws` diffs the engine
-  against live `iam:SimulateCustomPolicy` when you have credentials with that permission. The committed oracle manifest says not run, so the repository does not currently claim AWS-validated agreement.
-- **Blast radius in the UI** — the Findings tab, Ask panel and Statements table now show
-  catalogue-backed grant scope at a glance ("grants N actions · X write · Y
-  permissions-management"; a `2P` in the Grants column means two permissions-management
-  actions), so a reviewer sees how far a statement reaches without reading raw JSON.
-
-### Org-wide reachability (G2 — started)
-
-`src/graph.js` answers questions across a whole account, not one pasted policy. Feed it an
-account snapshot (`aws iam get-account-authorization-details` JSON — no live access needed):
-
-- **`POST /api/org/whocan`** `{ snapshot, action, resource?, context? }` — every principal that
-  can perform the action, with group inheritance resolved and the granting statement cited.
-- **`POST /api/org/reach-admin`** `{ snapshot }` — who can reach administrator and how, over a
-  principal→principal edge graph: direct admin, assume-role chains, and named
-  privilege-escalation techniques (self-admin, become-user, become-role incl. pass-role to
-  lambda/ec2/ecs/glue/cloudformation/datapipeline). **Transitive multi-hop** paths (escalate →
-  assume → escalate) are resolved and returned node-by-node with per-step citations.
-
-- **`POST /api/org/resource-exposure`** `{ snapshot }` — scans resource policies supplied in a
-  `ResourcePolicies` array (KMS key policies, S3 bucket policies, or any service policy —
-  `{ service, resource, policy }`) for grants to a foreign account or the public, returned as
-  cited findings. External grants scoped by an org/source condition are downgraded. These are
-  reported as exposures, **not** reach-admin paths (the foreign principal's permissions aren't
-  in the snapshot).
-
-Both the queries and the resource-policy scan are driveable from the **Org tab** in the web UI:
-load the demo snapshot (or upload your own), run "who can `<action>` on `<resource>`", compute
-reach-admin, and scan resource-policy exposures — each result shows the granting statement or
-the escalation/assume-role path. Sample snapshot:
-`samples/aws-account-snapshot.json`. Scope note: identity + group + role-trust only — SCPs,
-permission boundaries and session policies are labelled "not evaluated", never silently ignored.
-
-Optional AI layer (free-form questions, better phrasing — never required):
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-# optional: export AUDITOR_MODEL=claude-opus-4-8   (default: claude-sonnet-5)
-node server.js
-```
-
-Load a sample from the dropdown (or paste your own policy), hit **Analyze**, then triage in
-the **Findings** tab or interrogate in the **Ask** tab. **Compare** diffs the risk of a
-before/after policy pair. **Statements** shows the exact normalized model the engine reasons
-over, so every answer is verifiable.
-
-## How it answers without hallucinating
-
-This is the core design decision: **the LLM never decides what a policy permits.**
-
-1. A position-aware JSON parser maps every statement to its source lines.
-2. Policies normalize into a common statement model (effect, principals, actions,
-   resources, conditions) across all four providers.
-3. A deterministic engine evaluates questions: IAM-style glob matching for actions
-   (`s3:*` vs `s3:DeleteBucket`), NotAction inversion, explicit-Deny overrides,
-   resource-scope matching (e.g. "production" → ARNs containing `prod`), and a
-   concept knowledge base mapping intents like *"delete databases"* to concrete
-   permissions per provider (`rds:DeleteDBInstance`, `cloudsql.instances.delete`,
-   `Microsoft.Sql/servers/databases/delete`, IBM role thresholds).
-4. If `ANTHROPIC_API_KEY` is set, Claude receives ONLY the engine's facts (statements,
-   findings, deterministic answer) with a hard system prompt: cite `[S2 · file:line]`,
-   never assert permissions the facts don't show, state what is unknown. The raw engine
-   answer stays one click away ("Show raw engine facts") for verification.
-5. **Uncertainty is explicit by construction**: GCP custom roles outside the built-in
-   role→permission map produce *"cannot determine — verify against the role reference"*,
-   never a guess. Every answer carries the caveat that only the supplied documents are
-   visible (group memberships / other attachments are not).
-
-## Security depth (what the rules catch)
-
-| Area | Examples |
-|---|---|
-| Wildcards | `Action:"*"` + `Resource:"*"` (admin), service wildcards, Azure `actions:["*"]` |
-| Hidden breadth | `Allow` + `NotAction` (grants everything not listed — incl. future AWS services) |
-| Privilege escalation | `iam:PassRole` on `*` (+compute-launch combo), `iam:CreatePolicyVersion`, `iam:AttachUserPolicy`, GCP `serviceAccountTokenCreator` impersonation |
-| Trust / cross-account | `Principal:"*"` on trust or resource policies, cross-account root trust without `sts:ExternalId`, service principals without `aws:SourceAccount` (confused deputy) |
-| Missing guardrails | destructive actions (`DeleteDBInstance`, `ScheduleKeyDeletion`, `DeleteTrail`…) with no Condition |
-| Public exposure | GCP `allUsers` / `allAuthenticatedUsers`, IBM Public Access group |
-| Provider-specific | GCP primitive roles (owner/editor), Azure subscription/tenant-root scopes, IBM account-wide Administrator |
-
-Every finding carries: severity, plain-language blast-radius description, the exact
-source lines as evidence, and a least-privilege rewrite or guardrail condition.
-
-## Responsible AI & sensitive-input handling
-
-- **Local by default** — `npm start` binds to 127.0.0.1; `./demo.sh` binds `0.0.0.0` for LAN/tunnels.
-- **Preflight lint** — malformed Effects, suspicious actions, bad ARNs, unknown condition operators, and unconditional `*/*` admin land as findings before risk rules.
-- **Pseudonymization before the API** — account IDs, emails, and IBM IAM IDs are replaced
-  with placeholders (`«ACCT_1»`) before any Claude call and restored in the response, so
-  real identifiers never reach the API. Toggleable in the UI.
-- **Citations everywhere** — statement IDs + file:line on findings and answers; the
-  Statements tab exposes the full model for human verification.
-- **Honest limits** — a clean scan is reported as "no high-risk patterns *in the checks
-  this engine runs*", never "safe"; unknown roles produce explicit uncertainty.
-
-## Project layout
-
-```
-server.js          zero-dependency HTTP server + API (analyze / ask / compare / org / samples)
-src/parse.js       position-aware JSON parser (line-mapped JSON pointers)
-src/engine.js      provider detection + normalization to the common statement model
-src/rules.js       misconfiguration rules for AWS / GCP / Azure / IBM
-src/lint.js        parliament-style preflight (grammar / star-admin / bad ARNs)
-src/query.js       concept KB + deterministic who-can / can-X / risk-summary answering
-src/graph.js       org snapshot: who-can + reach-admin (multi-hop)
-src/resource_policy.js  external/public grants on resource policies
-src/ai.js          optional Claude layer: grounding prompt, redaction, timeout handling
-public/            web UI (hero demo, findings, Ask, Org, compare)
-samples/           demo policies + aws-account-snapshot.json for the Org path
-docs/PRODUCT.md    product story and design-partner pitch
-demo.sh / Dockerfile  stranger-usable local / LAN / container demo
-test/              correctness suite (rules, evaluate, graph, resource, lint)
-```
-
-## License
-
-MIT, see [LICENSE](LICENSE). Support is best-effort prototype maintenance.
+MIT. See [LICENSE](LICENSE).
