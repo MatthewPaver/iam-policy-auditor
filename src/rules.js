@@ -1,6 +1,6 @@
 'use strict';
 
-const { asArray, uniq, globMatch } = require('./util');
+const { uniq, globMatch } = require('./util');
 const actions = require('./actions');
 
 const SEV_ORDER = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };

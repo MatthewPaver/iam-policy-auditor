@@ -6,15 +6,22 @@
   "scripts": {
     "start": "node server.js",
     "test": "node test/run.js && node test/evaluate.test.js && node test/actions.test.js && node test/graph.test.js && node test/resource_policy.test.js && node test/lint.test.js && node test/change_review.test.js && node test/ai_eval.test.js && node test/provenance.test.js && node test/benchmark-contract.test.js && node test/demo-api.test.js",
+    "lint": "eslint .",
     "eval": "node evals/run.js",
     "eval:live": "node evals/live-run.js",
     "demo": "HOST=127.0.0.1 node server.js",
-    "start:hosted": "HOSTED=1 HOST=0.0.0.0 node server.js",
     "benchmark": "node benchmark/run.js",
     "benchmark:aws": "node benchmark/run.js --oracle aws",
     "ingest": "node scripts/ingest-aws-actions.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "license": "MIT",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0"
+  }
 }

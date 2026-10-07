@@ -8,7 +8,7 @@ const state = {
   analysis: null,    // last /api/analyze response
   snapshot: null,    // account auth-details JSON for Org tab
   aiEnabled: false,
-  hosted: false,     // public demo (Fly/Render) — auto-runs + privacy banner
+  hosted: false,     // shared demo mode (HOSTED=1, e.g. Docker) — auto-runs + privacy banner
   demoRunning: false,
 };
 
@@ -216,17 +216,17 @@ async function analyze() {
   if (!state.docs.length) { alert('Add at least one policy document first.'); return; }
   const btn = $('#analyzeBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin">◐</span> Analyzing…';
+  btn.innerHTML = '<span class="spin">◐</span> Analysing…';
   try {
     state.analysis = await api('/api/analyze', { documents: state.docs });
     renderFindings();
     renderStatements();
     activateTab('findings');
   } catch (e) {
-    alert(`Analyze failed: ${e.message}`);
+    alert(`Analysis failed: ${e.message}`);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Analyze policies';
+    btn.textContent = 'Analyse policies';
   }
 }
 
@@ -345,7 +345,7 @@ async function ask() {
   $('#askInput').value = '';
   const log = $('#chatLog');
   log.appendChild(el('div', 'msg q', esc(q)));
-  const pending = el('div', 'msg a', '<span class="spin">◐</span> Analyzing…');
+  const pending = el('div', 'msg a', '<span class="spin">◐</span> Analysing…');
   log.appendChild(pending);
   pending.scrollIntoView({ behavior: 'smooth' });
   try {
@@ -454,10 +454,6 @@ $('#verifyCorrectionBtn').onclick = async () => {
     button.disabled = false;
   }
 };
-
-function fmtCounts(c) {
-  return ['critical', 'high', 'medium', 'low'].map((s) => `${c[s] || 0}${s[0].toUpperCase()}`).join(' / ');
-}
 
 // ---------------------------------------------------------------------------
 // Org tab — whole-account reachability over a snapshot
