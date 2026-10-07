@@ -137,7 +137,7 @@ h1 { font-size: 19px; letter-spacing: .3px; }
 }
 
 main { display: grid; grid-template-columns: 330px 1fr; gap: 18px; padding: 18px 22px; max-width: 1500px; margin: 0 auto; }
-@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } main > #inputPanel { position: static; } }
 
 #inputPanel {
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -185,7 +185,7 @@ select {
 .checkbox { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
 
 #results { min-width: 0; }
-#tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+#tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
 .tab {
   background: none; border: none; color: var(--muted); padding: 9px 16px; cursor: pointer;
   font-size: 14px; border-bottom: 2px solid transparent;
