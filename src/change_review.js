@@ -131,7 +131,7 @@ function reviewChange({ before, after, request }) {
     limits: [
       'Only the supplied policy documents are evaluated.',
       'SCPs, permission boundaries, session policies, and cross-account resource-policy interplay are not evaluated.',
-      'A pass means no increase for the checked request and rule set. It is not a proof that the policy is safe.',
+      'A pass means no increase for the checked request and rule set. It does not prove the policy is safe.',
     ],
   };
 }
@@ -167,7 +167,7 @@ function verifyCorrection({ proposed, candidate, riskRequest, requiredAccess = [
     candidateFindings: candidatePolicy.findings,
     limits: [
       'Verification covers the declared risk request and required-access checks only.',
-      'Production approval still needs the organization controls omitted from this local model.',
+      'Production approval still needs the organisation-level controls that this local model does not evaluate.',
     ],
   };
 }

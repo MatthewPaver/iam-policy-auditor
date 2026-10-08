@@ -3,50 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PolicyLens — ask who can do what in IAM</title>
-<meta name="description" content="Ask who can delete prod in AWS IAM — get cited, deterministic answers. Engine decides; LLM only explains.">
-<meta property="og:title" content="PolicyLens — who can do what in IAM, with receipts">
-<meta property="og:description" content="Load an account snapshot → who can delete prod → multi-hop reach-admin → resource exposures. Every answer cites a source line.">
+<title>PolicyLens: AWS IAM policy review</title>
+<meta name="description" content="Review AWS IAM policy changes and check who can perform an action. A deterministic engine makes each decision and cites the policy line. Optional AI only explains the result.">
+<meta property="og:title" content="PolicyLens: AWS IAM policy review">
+<meta property="og:description" content="Check a policy change, list who can perform an action across an account snapshot, and find paths to administrator. Each result cites the statement and line that grants it.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='13' cy='13' r='8.5' fill='none' stroke='%234da3ff' stroke-width='3.5'/><path d='M19.5 19.5 28 28' stroke='%234da3ff' stroke-width='4' stroke-linecap='round'/></svg>">
 </head>
 <body>
 <div id="hostedBanner" class="hosted-banner" hidden>
-  Shared demo — analysis is deterministic and free to try. <b>Do not paste production secrets or customer policies.</b>
-  Use a synthetic snapshot, or run locally via the GitHub repo.
+  Shared demo. Analysis is deterministic. <b>Do not paste production secrets or customer policies.</b>
+  Use a synthetic snapshot, or run PolicyLens locally from the GitHub repo.
 </div>
 <header>
   <div class="brand">
-    <span class="logo">🔍</span>
+    <svg class="logo" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="13" cy="13" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M19.5 19.5 27 27" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>
     <div>
       <h1>PolicyLens</h1>
-      <p class="tag">Ask who can do what in IAM — get cited, deterministic answers</p>
+      <p class="tag">AWS IAM policy review with line citations</p>
     </div>
   </div>
   <div class="pills">
-    <span id="aiPill" class="pill">checking AI…</span>
-    <span class="pill local">🔒 analysis runs locally</span>
+    <span id="aiPill" class="pill">Checking AI…</span>
+    <span class="pill local">Analysis runs locally</span>
   </div>
 </header>
 
-<section id="hero" class="hero" aria-label="Product pitch">
+<section id="hero" class="hero" aria-label="Sample account check">
   <div class="hero-copy">
-    <p class="hero-kicker">AWS IAM · evidence-first</p>
-    <h2 class="hero-title">Who can delete prod — with receipts</h2>
-    <p class="hero-sub">The engine produces the facts. The LLM only explains them. Every answer cites a source line.</p>
+    <h2 class="hero-title">Check who can do what in an AWS account</h2>
+    <p class="hero-sub">A deterministic policy engine makes each decision and cites the statement and line behind it. If you enable Claude, it only explains the engine's results.</p>
     <div class="hero-actions">
-      <button id="runDemoBtn" class="btn primary">Run the 90-second demo</button>
-      <button id="heroAnalyzeHint" class="btn secondary" type="button">Or paste a single policy →</button>
+      <button id="runDemoBtn" class="btn primary">Run sample account check</button>
+      <button id="heroAnalyzeHint" class="btn secondary" type="button">Analyse a single policy</button>
     </div>
     <p id="demoStatus" class="demo-status" hidden></p>
   </div>
   <ol class="hero-steps">
-    <li><span>1</span> Load a demo account snapshot</li>
-    <li><span>2</span> Who can delete the prod DB?</li>
-    <li><span>3</span> Reach-admin paths (multi-hop)</li>
-    <li><span>4</span> Resource-policy exposures</li>
+    <li><span>1</span> Loads the sample account snapshot</li>
+    <li><span>2</span> Lists who can delete the prod-1 database</li>
+    <li><span>3</span> Finds paths to administrator, including role chains</li>
+    <li><span>4</span> Lists resource policies open to other accounts</li>
   </ol>
 </section>
 
@@ -64,7 +63,7 @@
       <select id="sampleSelect"><option value="">Load a sample…</option></select>
     </div>
     <button id="analyzeBtn" class="btn primary">Analyse policies</button>
-    <p class="fineprint">Nothing is uploaded anywhere: parsing and rules run in the local server. If the Claude layer is enabled, only pseudonymised policy structure is sent to the API.</p>
+    <p class="fineprint">Parsing and rule checks run in the local server. If Claude is enabled, PolicyLens sends the extracted policy facts to the Anthropic API, with account IDs and emails pseudonymised unless you turn that off in the Ask tab.</p>
   </aside>
 
   <section id="results">
@@ -78,7 +77,7 @@
 
     <div id="panel-findings" class="panel active">
       <div id="severitySummary" class="sev-summary"></div>
-      <div id="findingsList"><p class="empty">Add a policy and hit <b>Analyse</b> — findings appear here with severity, evidence lines, and suggested fixes.</p></div>
+      <div id="findingsList"><p class="empty">Add a policy and select <b>Analyse policies</b>. Findings appear here with severity, evidence lines and a suggested fix.</p></div>
     </div>
 
     <div id="panel-ask" class="panel">
@@ -93,29 +92,29 @@
       <div id="askScope" class="scope-banner" hidden></div>
       <div id="chatLog"></div>
       <div class="ask-row">
-        <input id="askInput" type="text" placeholder="Ask in plain English… e.g. who can delete logs?" autocomplete="off">
+        <input id="askInput" type="text" placeholder="Ask a question, for example: who can delete logs?" autocomplete="off">
         <button id="askBtn" class="btn primary">Ask</button>
       </div>
-      <label class="fineprint checkbox"><input type="checkbox" id="redactToggle" checked> Pseudonymize account IDs / emails before sending to Claude</label>
+      <label class="fineprint checkbox"><input type="checkbox" id="redactToggle" checked> Pseudonymise account IDs and emails before sending to Claude</label>
     </div>
 
     <div id="panel-statements" class="panel">
-      <p class="empty" id="stmtEmpty">Normalized statements appear here after analysis — the exact model the engine reasons over, so you can verify every answer.</p>
+      <p class="empty" id="stmtEmpty">After analysis, this tab lists the normalised statements the engine works from. Use it to check any cited answer.</p>
       <div id="stmtTableWrap"></div>
     </div>
 
     <div id="panel-org" class="panel">
-      <p class="org-intro">Answer "who can do X" across a whole account, not one pasted policy. Load an account snapshot (the shape of <code>aws iam get-account-authorization-details</code>) — analysis stays fully deterministic and cites the granting statement or escalation path. Prefer <b>Run the 90-second demo</b> above for a stranger-usable walkthrough.</p>
+      <p class="org-intro">Check who can perform an action across a whole account. Load an account snapshot in the format of <code>aws iam get-account-authorization-details</code>. Analysis is deterministic and cites the granting statement or escalation path. <b>Run sample account check</b> above runs all three checks on a sample account.</p>
 
       <div class="org-source">
-        <button id="loadDemoSnapshot" class="btn secondary">Load demo snapshot</button>
+        <button id="loadDemoSnapshot" class="btn secondary">Load sample snapshot</button>
         <label class="btn secondary file-btn">Upload snapshot<input id="snapshotFile" type="file" accept=".json,application/json" hidden></label>
         <span id="snapshotStatus" class="org-status">No snapshot loaded.</span>
       </div>
-      <div id="orgCaveat" class="scope-banner scope-warn" hidden>ℹ Models identity + group + role-trust only. <b>SCPs, permission boundaries and session policies are not evaluated</b> — results show what identity policies allow.</div>
+      <div id="orgCaveat" class="scope-banner scope-warn" hidden>Covers identity, group and role-trust policies only. <b>SCPs, permission boundaries and session policies are not evaluated.</b> Results show what identity policies allow.</div>
 
       <div class="org-block">
-        <h3>Who can…</h3>
+        <h3>Who can perform an action</h3>
         <div class="org-query">
           <input id="orgAction" type="text" value="rds:DeleteDBInstance" placeholder="action, e.g. s3:DeleteObject" autocomplete="off">
           <input id="orgResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" placeholder="resource ARN (optional)" autocomplete="off">
@@ -126,14 +125,14 @@
 
       <div class="org-block">
         <h3>Reach administrator</h3>
-        <p class="org-sub">Which principals can become admin — directly, by assuming a role, or via a privilege-escalation technique — with the path shown.</p>
-        <button id="orgReachBtn" class="btn primary">Compute reach-admin</button>
+        <p class="org-sub">Lists principals that can become administrator directly, by assuming a role, or through a privilege-escalation technique, with the path for each.</p>
+        <button id="orgReachBtn" class="btn primary">Find admin paths</button>
         <div id="orgReachResult"></div>
       </div>
 
       <div class="org-block">
         <h3>Resource-policy exposures</h3>
-        <p class="org-sub">KMS key policies, S3 bucket policies and similar in the snapshot that grant access to an external account or the public — reported as cited findings, not reach-admin paths.</p>
+        <p class="org-sub">Finds KMS key policies, S3 bucket policies and other resource policies in the snapshot that grant access to an external account or the public. Each result is a cited finding, listed separately from admin paths.</p>
         <button id="orgResourceBtn" class="btn primary">Scan resource policies</button>
         <div id="orgResourceResult"></div>
       </div>
@@ -141,9 +140,8 @@
 
     <div id="panel-compare" class="panel">
       <div class="workflow-intro">
-        <p class="workflow-kicker">Pre-merge evidence check</p>
-        <h3>Did this change introduce a sensitive access path?</h3>
-        <p>Check one action and resource before approval. The verdict comes from the policy engine. AI can explain it only if its citations and claims pass the grounding gate.</p>
+        <h3>Check a policy change before you approve it</h3>
+        <p>Enter one action and resource, then compare the current and proposed policy. The policy engine decides the verdict. If Claude is enabled, PolicyLens shows its explanation only when the citations and claims pass the grounding gate.</p>
       </div>
       <div class="review-query">
         <label>Action<input id="compareAction" type="text" value="rds:DeleteDBInstance" autocomplete="off"></label>
@@ -158,7 +156,7 @@
       <div id="compareResult"></div>
       <details id="correctionCheck" class="correction-check" hidden>
         <summary>Verify a proposed correction</summary>
-        <p>Paste a corrected policy, then declare access that must still work. PolicyLens checks both sides before marking the correction verified.</p>
+        <p>Paste a corrected policy and name the access it must keep. PolicyLens marks the correction verified only if it removes the risky access and keeps the required access.</p>
         <textarea id="candidateBox" spellcheck="false" placeholder="Paste the corrected policy…"></textarea>
         <div class="review-query required-query">
           <label>Required action<input id="requiredAction" type="text" value="s3:GetObject" autocomplete="off"></label>

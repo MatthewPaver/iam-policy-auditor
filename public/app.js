@@ -92,7 +92,7 @@ function renderAskScope(blast) {
   if (!line) { el.hidden = true; return; }
   const tone = blast.permissionsManagement ? 'scope-high' : (blast.mutating ? 'scope-warn' : '');
   el.className = `scope-banner ${tone}`;
-  el.innerHTML = `⚡ These policies' Allow statements grant <b>${line}</b> across all resources they cover.`;
+  el.innerHTML = `Allow statements in these policies grant <b>${line}</b> across the resources they cover.`;
   el.hidden = false;
 }
 
@@ -103,7 +103,7 @@ function renderDocChips() {
   const wrap = $('#docChips');
   wrap.innerHTML = '';
   for (const d of state.docs) {
-    const chip = el('span', 'doc-chip', `📄 ${esc(d.name)} <span class="x" title="Remove">×</span>`);
+    const chip = el('span', 'doc-chip', `${esc(d.name)} <span class="x" title="Remove">×</span>`);
     chip.querySelector('.x').onclick = () => {
       state.docs = state.docs.filter((x) => x !== d);
       renderDocChips();
@@ -155,7 +155,7 @@ async function loadSamples() {
 async function loadDemoSnapshot() {
   state.snapshot = await (await fetch('/samples/aws-account-snapshot.json')).json();
   const n = (state.snapshot.UserDetailList || []).length + (state.snapshot.RoleDetailList || []).length;
-  setSnapshotStatus(`Demo snapshot loaded — ${n} principals.`, true);
+  setSnapshotStatus(`Sample snapshot loaded: ${n} principals.`, true);
   return n;
 }
 
@@ -175,11 +175,11 @@ async function runNinetySecondDemo() {
   if (state.demoRunning) return;
   state.demoRunning = true;
   const btn = $('#runDemoBtn');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">◐</span> Running demo…'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin">◐</span> Running checks…'; }
 
   try {
     activateTab('org');
-    setDemoStatus('① Running org demo on the sample account…');
+    setDemoStatus('Running checks on the sample account…');
 
     const demo = await api('/api/demo/run');
     // Keep a live snapshot in memory so they can re-query who-can themselves
@@ -190,18 +190,19 @@ async function runNinetySecondDemo() {
     renderReachAdmin(demo.reach);
     renderResourceExposure(demo.exposure);
 
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
     setDemoStatus(
-      `Done — ${demo.who.rows.length} can delete prod DB · ${demo.reach.results.length} reach admin · ${demo.exposure.findings.length} resource exposure(s). Try another action below, or upload your own snapshot.`,
+      `Done. ${plural(demo.who.rows.length, 'principal', 'principals')} can delete prod-1, ${plural(demo.reach.results.length, 'principal', 'principals')} can reach administrator, ${plural(demo.exposure.findings.length, 'resource exposure', 'resource exposures')}. Try another action below or upload your own snapshot.`,
       true,
     );
     const hero = $('#hero');
     if (hero) hero.classList.add('hero-compact');
   } catch (e) {
-    setDemoStatus(`Demo failed: ${e.message}`, false);
-    alert(`Demo failed: ${e.message}`);
+    setDemoStatus(`Sample check failed: ${e.message}`, false);
+    alert(`Sample check failed: ${e.message}`);
   } finally {
     state.demoRunning = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'Run the 90-second demo'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Run sample account check'; }
   }
 }
 
@@ -236,7 +237,7 @@ function snippetHtml(ev) {
   lines.forEach((ln, i) => {
     html += `<span class="cl"><span class="ln">${ev.line + i}</span>${esc(ln)}</span>`;
   });
-  if (ev.truncated) html += `<span class="cl"><span class="ln">…</span>(truncated — full statement runs to line ${ev.endLine})</span>`;
+  if (ev.truncated) html += `<span class="cl"><span class="ln">…</span>(truncated; the statement ends at line ${ev.endLine})</span>`;
   return html + '</pre>';
 }
 
@@ -259,12 +260,12 @@ function renderFindings() {
   // At-a-glance grant scope from the action catalogue.
   if (a.blast && a.blast.total) {
     const tone = a.blast.permissionsManagement ? 'sev-high' : (a.blast.mutating ? 'sev-medium' : '');
-    sum.appendChild(el('span', `sev-chip ${tone}`, `⚡ grants ${blastLine(a.blast)}`));
+    sum.appendChild(el('span', `sev-chip ${tone}`, `grants ${blastLine(a.blast)}`));
   }
   renderAskScope(a.blast);
 
   if (!a.findings.length) {
-    wrap.appendChild(el('p', 'empty', '✅ No findings from the rule engine. Note: a clean pattern audit does not certify the policy safe — review the Statements tab for the full permission model.'));
+    wrap.appendChild(el('p', 'empty', 'The rule engine found nothing. The rules check known risky patterns, so a clean result does not prove the policy is safe. The Statements tab shows the full permission model.'));
     return;
   }
 
@@ -277,11 +278,11 @@ function renderFindings() {
 function findingCardHtml(f) {
   const evidence = f.evidence.map((ev) => `
     <div class="evidence">
-      <div class="evidence-label">📎 ${esc(ev.doc)} — lines ${ev.line}–${ev.endLine}</div>
+      <div class="evidence-label">${esc(ev.doc)}, lines ${ev.line}–${ev.endLine}</div>
       ${snippetHtml(ev)}
     </div>`).join('');
   const rem = f.remediation ? `
-    <details class="remediation"><summary>✚ Suggested remediation</summary>
+    <details class="remediation"><summary>Suggested fix</summary>
       <div class="rem-body">${md(f.remediation.summary || '')}
       ${f.remediation.rewrite ? `<pre>${esc(f.remediation.rewrite)}</pre>` : ''}</div>
     </details>` : '';
@@ -355,13 +356,13 @@ async function ask() {
       redactIdentifiers: $('#redactToggle').checked,
     });
     const modeHtml = r.mode === 'ai'
-      ? `<span class="m-ai">◆ Claude (${esc(r.aiModel || '')})</span> · grounded in deterministic engine`
+      ? `<span class="m-ai">◆ Claude (${esc(r.aiModel || '')})</span> · explaining the engine's results`
       : `<span class="m-det">◆ deterministic engine</span> · no AI used`;
     let inner = `<div class="mode">${modeHtml}</div>${md(r.text)}`;
     if (r.mode === 'ai' && r.engineText && r.engineText !== r.text) {
-      inner += `<details class="facts"><summary>Show raw engine facts (verifiable)</summary>${md(r.engineText)}</details>`;
+      inner += `<details class="facts"><summary>Show the engine's answer</summary>${md(r.engineText)}</details>`;
     }
-    if (r.aiError) inner += `<div class="ai-error">AI layer unavailable (${esc(r.aiError)}) — showing deterministic answer.</div>`;
+    if (r.aiError) inner += `<div class="ai-error">AI unavailable (${esc(r.aiError)}). Showing the engine's answer.</div>`;
     pending.innerHTML = inner;
     wireCites(pending);
     renderAskScope(r.blast);
@@ -378,7 +379,7 @@ async function ask() {
 $('#compareBtn').onclick = async () => {
   const before = $('#beforeBox').value;
   const after = $('#afterBox').value;
-  if (!before.trim() || !after.trim()) { alert('Paste both a before and an after policy.'); return; }
+  if (!before.trim() || !after.trim()) { alert('Paste both the current and the proposed policy.'); return; }
   const action = $('#compareAction').value.trim();
   const resource = $('#compareResource').value.trim();
   if (!action) { alert('Enter the sensitive action to review.'); return; }
@@ -407,9 +408,9 @@ $('#compareBtn').onclick = async () => {
         <div><h4>Evidence</h4><ul>${evidence}</ul></div>
         <div><h4>Candidate correction</h4><ul>${corrections}</ul></div>
       </div>
-      <div class="cmp-col cmp-intro"><h4>⬆ Introduced by the change (${r.findings.introduced.length})</h4>
+      <div class="cmp-col cmp-intro"><h4>Introduced by the change (${r.findings.introduced.length})</h4>
         ${r.findings.introduced.map(card).join('') || '<p class="empty">None</p>'}</div>
-      <div class="cmp-col cmp-res"><h4>⬇ Resolved by the change (${r.findings.resolved.length})</h4>
+      <div class="cmp-col cmp-res"><h4>Resolved by the change (${r.findings.resolved.length})</h4>
         ${r.findings.resolved.map(card).join('') || '<p class="empty">None</p>'}</div>
       <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
     $('#correctionCheck').hidden = false;
@@ -474,7 +475,7 @@ function setSnapshotStatus(text, ok) {
 }
 
 function orgApiReady() {
-  if (!state.snapshot) { alert('Load a snapshot first (try "Load demo snapshot").'); return false; }
+  if (!state.snapshot) { alert('Load a snapshot first, for example with "Load sample snapshot".'); return false; }
   return true;
 }
 
@@ -482,7 +483,7 @@ $('#loadDemoSnapshot').onclick = async () => {
   try {
     await loadDemoSnapshot();
   } catch (e) {
-    setSnapshotStatus(`Could not load demo snapshot: ${e.message}`, false);
+    setSnapshotStatus(`Could not load the sample snapshot: ${e.message}`, false);
   }
 };
 
@@ -498,7 +499,7 @@ $('#snapshotFile').onchange = async (e) => {
   try {
     state.snapshot = JSON.parse(await file.text());
     const n = (state.snapshot.UserDetailList || []).length + (state.snapshot.RoleDetailList || []).length;
-    setSnapshotStatus(`${esc(file.name)} loaded — ${n} principals.`, true);
+    setSnapshotStatus(`${esc(file.name)} loaded: ${n} principals.`, true);
   } catch (err) {
     setSnapshotStatus(`Invalid snapshot JSON: ${err.message}`, false);
   }
@@ -511,7 +512,7 @@ $('#orgWhoCanBtn').onclick = async () => {
   if (!action) { alert('Enter an action, e.g. rds:DeleteDBInstance'); return; }
   const resource = $('#orgResource').value.trim();
   const wrap = $('#orgWhoCanResult');
-  wrap.innerHTML = '<p class="empty"><span class="spin">◐</span> Resolving across all principals…</p>';
+  wrap.innerHTML = '<p class="empty"><span class="spin">◐</span> Checking every principal…</p>';
   try {
     const r = await api('/api/org/whocan', { snapshot: state.snapshot, action, resource: resource || undefined });
     renderWhoCan(r);
@@ -522,7 +523,7 @@ $('#orgWhoCanBtn').onclick = async () => {
 
 function renderWhoCan(r) {
   const wrap = $('#orgWhoCanResult');
-  const head = `<div class="org-result-head">Checked <b>${r.principals}</b> principals for <code>${esc(r.action)}</code> on <code>${esc(r.resource)}</code> — <b>${r.rows.length}</b> can.</div>`;
+  const head = `<div class="org-result-head"><b>${r.rows.length}</b> of ${r.principals} principals can run <code>${esc(r.action)}</code> on <code>${esc(r.resource)}</code>.</div>`;
   if (!r.rows.length) {
     wrap.innerHTML = `${head}<p class="empty">No principal in the snapshot is granted this. <span class="org-caveat-inline">${esc(r.caveat)}</span></p>`;
     return;
@@ -532,7 +533,7 @@ function renderWhoCan(r) {
       ? '<span class="badge medium" title="Allowed only when a condition holds">conditional</span>'
       : '<span class="badge high">allowed</span>';
     const vis = row.incompleteVisibility
-      ? `<div class="org-warn">⚠ some managed-policy bodies are not in the snapshot, so this may under-report: ${row.incompleteVisibility.map(esc).join(', ')}</div>`
+      ? `<div class="org-warn">Some managed-policy documents are missing from the snapshot, so this may under-report: ${row.incompleteVisibility.map(esc).join(', ')}</div>`
       : '';
     return `<tr>
       <td>${esc(row.name)} <span class="org-type">${esc(row.type)}</span></td>
@@ -550,7 +551,7 @@ function renderWhoCan(r) {
 $('#orgReachBtn').onclick = async () => {
   if (!orgApiReady()) return;
   const wrap = $('#orgReachResult');
-  wrap.innerHTML = '<p class="empty"><span class="spin">◐</span> Computing reachability…</p>';
+  wrap.innerHTML = '<p class="empty"><span class="spin">◐</span> Finding admin paths…</p>';
   try {
     const r = await api('/api/org/reach-admin', { snapshot: state.snapshot });
     renderReachAdmin(r);
@@ -563,7 +564,7 @@ function renderReachAdmin(r) {
   const wrap = $('#orgReachResult');
   const head = `<div class="org-result-head"><b>${r.results.length}</b> of ${r.principals} principals can reach administrator.</div>`;
   if (!r.results.length) {
-    wrap.innerHTML = `${head}<p class="empty">No principal can reach admin via the modelled routes. <span class="org-caveat-inline">${esc(r.caveat)}</span></p>`;
+    wrap.innerHTML = `${head}<p class="empty">No principal can reach administrator through the modelled routes. <span class="org-caveat-inline">${esc(r.caveat)}</span></p>`;
     return;
   }
   const nodeLabel = (a) => (a === '__admin__' ? 'administrator' : esc(a.split('/').pop()));
@@ -609,9 +610,9 @@ $('#orgResourceBtn').onclick = async () => {
 function renderResourceExposure(r) {
   const wrap = $('#orgResourceResult');
   const acct = r.accountId ? ` in account ${esc(r.accountId)}` : '';
-  const head = `<div class="org-result-head">Scanned <b>${r.supplied}</b> resource ${r.supplied === 1 ? 'policy' : 'policies'}${acct} — <b>${r.findings.length}</b> ${r.findings.length === 1 ? 'exposure' : 'exposures'}.</div>`;
+  const head = `<div class="org-result-head">Scanned <b>${r.supplied}</b> resource ${r.supplied === 1 ? 'policy' : 'policies'}${acct}. Found <b>${r.findings.length}</b> ${r.findings.length === 1 ? 'exposure' : 'exposures'}.</div>`;
   if (!r.supplied) {
-    wrap.innerHTML = `${head}<p class="empty">This snapshot has no resource policies. Add a <code>ResourcePolicies</code> array (KMS key policies, S3 bucket policies, …) to scan them.</p>`;
+    wrap.innerHTML = `${head}<p class="empty">This snapshot has no resource policies. Add a <code>ResourcePolicies</code> array (KMS key policies, S3 bucket policies and so on) to scan them.</p>`;
     return;
   }
   if (!r.findings.length) {
@@ -640,13 +641,13 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
     state.aiEnabled = h.ai;
     state.hosted = !!h.hosted;
     const pill = $('#aiPill');
-    if (h.ai) { pill.textContent = `✨ AI: ${h.model}`; pill.classList.add('on'); }
-    else { pill.textContent = 'AI off — deterministic mode'; pill.title = 'Set ANTHROPIC_API_KEY and restart to enable free-form questions.'; }
+    if (h.ai) { pill.textContent = `AI: ${h.model}`; pill.classList.add('on'); }
+    else { pill.textContent = 'AI off: engine answers only'; pill.title = 'Set ANTHROPIC_API_KEY and restart to enable free-form questions.'; }
 
     // Public demo: swap the “local” claim so hosted-demo visitors aren't misled
     const localPill = document.querySelector('.pill.local');
     if (state.hosted && localPill) {
-      localPill.textContent = '⚠ public demo — don’t paste secrets';
+      localPill.textContent = 'Public demo: do not paste secrets';
       localPill.classList.remove('local');
       localPill.classList.add('warn');
     }
@@ -659,5 +660,5 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
     if (wantDemo || (state.hosted && !skip)) {
       await runNinetySecondDemo();
     }
-  } catch { $('#aiPill').textContent = 'server unreachable'; }
+  } catch { $('#aiPill').textContent = 'Server unreachable'; }
 })();

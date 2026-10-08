@@ -29,7 +29,7 @@ const MAX_BODY = 5 * 1024 * 1024;
 /** Account snapshots are for Org tab — not single-policy Analyze. */
 const POLICY_SAMPLE_SKIP = new Set(['aws-account-snapshot.json']);
 
-/** Default Org demo query (matches the UI 90-second path). */
+/** Default Org query for the sample account check in the UI. */
 const DEMO_ACTION = 'rds:DeleteDBInstance';
 const DEMO_RESOURCE = 'arn:aws:rds:eu-west-1:111122223333:db:prod-1';
 
@@ -61,18 +61,18 @@ function runOrgDemo(snapshot) {
       resource: DEMO_RESOURCE,
       principals: org.principals.length,
       rows: whoCan(org, { action: DEMO_ACTION, resource: DEMO_RESOURCE, context: {} }),
-      caveat: 'Models identity + group + role-trust only. SCPs, permission boundaries and session policies are not evaluated.',
+      caveat: 'Covers identity, group and role-trust policies only. SCPs, permission boundaries and session policies are not evaluated.',
     },
     reach: {
       principals: org.principals.length,
       results: reachAdmin(org),
-      caveat: 'Escalation catalogue (self-admin, become-user, become-role incl. pass-role variants) + transitive assume-role chains. Not evaluated: SCPs, permission boundaries, session policies, and instance-profile / SSM-command paths that need live instance data.',
+      caveat: 'Covers the escalation catalogue (self-admin, become-user, become-role, including pass-role variants) and chained assume-role paths. Not evaluated: SCPs, permission boundaries, session policies, and instance-profile or SSM-command paths that need live instance data.',
     },
     exposure: {
       accountId: org.accountId,
       supplied: org.resourcePolicies.length,
       findings: analyzeResourcePolicies(org.resourcePolicies, org.accountId),
-      caveat: 'Only resource policies supplied in the snapshot are scanned. Not evaluated: SCPs, permission boundaries, session policies, instance-profile / SSM-command paths. External grants are reported as exposures, not reach-admin paths.',
+      caveat: 'Scans only the resource policies supplied in the snapshot. Not evaluated: SCPs, permission boundaries, session policies, instance-profile or SSM-command paths. External grants appear as exposures and are not counted as admin paths.',
     },
   };
 }
@@ -186,20 +186,19 @@ const routes = {
 
   'GET /api/product': async () => ({
     name: 'PolicyLens',
-    tagline: 'Ask who can do what in IAM — get cited, deterministic answers.',
-    thesis: 'The engine produces the facts. The LLM only explains them. Every answer cites a source line.',
+    tagline: 'AWS IAM policy review with line citations.',
+    thesis: 'A deterministic policy engine makes each decision and cites the statement and line behind it. Optional AI only explains the engine\'s results.',
     demo: {
-      seconds: 90,
       steps: [
-        'Org → Load demo snapshot',
-        'Who can delete the prod DB?',
-        'Reach administrator (multi-hop paths)',
-        'Resource-policy exposures (KMS / S3)',
+        'Load the sample account snapshot',
+        'List who can delete the prod-1 database',
+        'Find paths to administrator, including role chains',
+        'List resource policies open to other accounts (KMS, S3)',
       ],
     },
     limits: [
       'SCPs, permission boundaries, and session policies are not evaluated',
-      'Instance-profile / SSM paths need an extended snapshot (not yet)',
+      'Instance-profile and SSM paths need an extended snapshot, which is not supported yet',
       'Access Analyzer oracle needs iam:SimulateCustomPolicy credentials',
     ],
   }),
@@ -274,7 +273,7 @@ const routes = {
         resource: body.resource ? String(body.resource) : undefined,
         context: body.context && typeof body.context === 'object' ? body.context : {},
       }),
-      caveat: 'Models identity + group + role-trust only. SCPs, permission boundaries and session policies are not evaluated.',
+      caveat: 'Covers identity, group and role-trust policies only. SCPs, permission boundaries and session policies are not evaluated.',
     };
   },
 
@@ -284,7 +283,7 @@ const routes = {
     return {
       principals: org.principals.length,
       results: reachAdmin(org),
-      caveat: 'Escalation catalogue (self-admin, become-user, become-role incl. pass-role variants) + transitive assume-role chains. Not evaluated: SCPs, permission boundaries, session policies, and instance-profile / SSM-command paths that need live instance data.',
+      caveat: 'Covers the escalation catalogue (self-admin, become-user, become-role, including pass-role variants) and chained assume-role paths. Not evaluated: SCPs, permission boundaries, session policies, and instance-profile or SSM-command paths that need live instance data.',
     };
   },
 
@@ -298,7 +297,7 @@ const routes = {
       accountId: org.accountId,
       supplied: org.resourcePolicies.length,
       findings: analyzeResourcePolicies(org.resourcePolicies, org.accountId),
-      caveat: 'Only resource policies supplied in the snapshot are scanned. Not evaluated: SCPs, permission boundaries, session policies, instance-profile / SSM-command paths. External grants are reported as exposures, not reach-admin paths.',
+      caveat: 'Scans only the resource policies supplied in the snapshot. Not evaluated: SCPs, permission boundaries, session policies, instance-profile or SSM-command paths. External grants appear as exposures and are not counted as admin paths.',
     };
   },
 
@@ -312,9 +311,9 @@ const routes = {
     const worst = (list) => list.reduce((m, f) => Math.min(m, SEV_ORDER[f.severity]), 9);
     let verdict;
     if (!introduced.length && !resolved.length) verdict = 'No change in findings between the two versions.';
-    else if (introduced.length && worst(introduced) <= 1) verdict = '⚠ The change INTRODUCES high/critical-severity risk.';
-    else if (!introduced.length && resolved.length) verdict = '✓ The change strictly reduces risk.';
-    else verdict = 'The change alters the risk profile — review both lists below.';
+    else if (introduced.length && worst(introduced) <= 1) verdict = 'The change introduces a high or critical finding.';
+    else if (!introduced.length && resolved.length) verdict = 'The change only resolves findings and introduces none.';
+    else verdict = 'The change introduces and resolves findings. Review both lists.';
     return {
       verdict,
       introduced, resolved,
@@ -349,7 +348,7 @@ const routes = {
         });
         out.aiEvaluation = evaluation;
         if (evaluation.passed) out.ai = { text: ai.text, model: ai.model };
-        else out.aiError = 'The model explanation failed the grounding gate, so PolicyLens withheld it.';
+        else out.aiError = 'The AI explanation failed the grounding gate, so PolicyLens withheld it.';
       } else if (ai?.error) out.aiError = ai.error;
     }
     return out;
@@ -372,7 +371,7 @@ const server = http.createServer(async (req, res) => {
 
   // Hosted demos get a soft POST throttle (GET demo stays free).
   if (HOSTED && req.method === 'POST' && !rateOk(ip)) {
-    return send(res, 429, { error: 'Too many requests — try again in a minute.' });
+    return send(res, 429, { error: 'Too many requests. Try again in a minute.' });
   }
 
   try {
@@ -406,16 +405,16 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   const where = HOST === '0.0.0.0' || HOST === '::'
-    ? `http://localhost:${PORT}  (listening on ${HOST} — LAN/tunnel reachable)`
+    ? `http://localhost:${PORT} (listening on ${HOST}, reachable from the network)`
     : `http://${HOST}:${PORT}`;
-  console.log(`
-  ┌──────────────────────────────────────────────────────┐
-  │  PolicyLens — ask IAM questions, get cited answers     │
-  │                                                       │
-  │  ${where.padEnd(51)}│
-  │  Mode: ${(HOSTED ? 'HOSTED shared demo' : 'local').padEnd(44)}│
-  │                                                       │
-  │  AI layer: ${aiAvailable() ? `ENABLED (${MODEL})`.padEnd(41) : 'disabled — set ANTHROPIC_API_KEY to enable'.padEnd(41)} │
-  │  One-click demo: /?demo=1  →  GET /api/demo/run       │
-  └──────────────────────────────────────────────────────┘`);
+  const ai = aiAvailable() ? `on (${MODEL})` : 'off (set ANTHROPIC_API_KEY to enable)';
+  console.log([
+    '',
+    'PolicyLens',
+    `  URL:           ${where}`,
+    `  Mode:          ${HOSTED ? 'hosted shared demo' : 'local'}`,
+    `  AI:            ${ai}`,
+    '  Sample check:  /?demo=1 (GET /api/demo/run)',
+    '',
+  ].join('\n'));
 });

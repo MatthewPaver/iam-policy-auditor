@@ -30,7 +30,7 @@ header {
   background: var(--panel);
 }
 .brand { display: flex; gap: 12px; align-items: center; }
-.logo { font-size: 28px; }
+.logo { flex: none; color: var(--accent); }
 h1 { font-size: 19px; letter-spacing: .3px; }
 .tag { color: var(--muted); font-size: 12.5px; }
 .pills { display: flex; gap: 8px; }
