@@ -1,0 +1,27 @@
+'use strict';
+const { test, expect } = require('@playwright/test');
+const fs = require('node:fs/promises');
+const { reviewChange } = require('../../src/change_review');
+test('published browser engine matches the server result and completes correction/export without uploads', async ({ page }) => {
+  const requests = [];
+  page.on('request', request => requests.push({ url: request.url(), method: request.method() }));
+  await page.goto('/');
+  await expect(page.locator('.pill.local')).toContainText('no upload');
+  await page.getByRole('button', { name: 'Run example change' }).click();
+  await expect(page.locator('#compareResult')).toContainText('Stop and review');
+  const before = await page.locator('#beforeBox').inputValue(), after = await page.locator('#afterBox').inputValue();
+  const serverResult = reviewChange({ before, after, request: { action: 'rds:DeleteDBInstance', resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1', context: {} } });
+  const local = await page.evaluate(({ before, after }) => window.PolicyLensLocalAPI('/api/change/review', { before, after, action: 'rds:DeleteDBInstance', resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1', context: {} }), { before, after });
+  expect(local.verdict).toEqual(serverResult.verdict);
+  expect(local.access).toEqual(serverResult.access);
+  await page.getByRole('button', { name: 'Verify correction', exact: true }).click();
+  await expect(page.locator('#correctionResult')).toContainText('Correction verified for declared requests');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export review JSON' }).click();
+  const record = JSON.parse(await fs.readFile(await (await download).path(), 'utf8'));
+  expect(record.engine.runtime).toBe('browser');
+  expect(record.correction.result.verified).toBe(true);
+  expect(requests.every(request => request.method === 'GET' && request.url.startsWith('http://127.0.0.1:4180/'))).toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+});

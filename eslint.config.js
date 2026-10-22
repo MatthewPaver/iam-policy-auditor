@@ -4,7 +4,7 @@ const js = require('@eslint/js');
 const globals = require('globals');
 
 module.exports = [
-  { ignores: ['node_modules/', 'data/', 'evals/results/'] },
+  { ignores: ['node_modules/', 'data/', 'evals/results/', 'site/'] },
   js.configs.recommended,
   {
     files: ['**/*.js'],
@@ -19,7 +19,7 @@ module.exports = [
     },
   },
   {
-    files: ['public/**/*.js', 'test/browser/**/*.js'],
+    files: ['public/**/*.js', 'test/browser/**/*.js', 'scripts/browser-entry.js'],
     languageOptions: {
       sourceType: 'script',
       globals: { ...globals.browser },

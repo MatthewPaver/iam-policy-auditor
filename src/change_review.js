@@ -7,17 +7,7 @@
 // This module deliberately keeps the decision path deterministic. An LLM may
 // explain this result, but it cannot change the verdict.
 
-const fs = require('fs');
-const path = require('path');
-const { createHash } = require('crypto');
-const { version: engineVersion } = require('../package.json');
-const sourceHash = createHash('sha256');
-for (const name of fs.readdirSync(__dirname).filter(name => name.endsWith('.js')).sort()) {
-  sourceHash.update(name); sourceHash.update(fs.readFileSync(path.join(__dirname, name)));
-}
-const cataloguePath = path.join(__dirname, '..', 'data', 'aws-actions.json');
-if (fs.existsSync(cataloguePath)) sourceHash.update(fs.readFileSync(cataloguePath));
-const engine = { name: 'PolicyLens', version: engineVersion, sourceIdentity: sourceHash.digest('hex') };
+const engine = require('./engine_identity');
 const { analyzeDocuments, publicStatements } = require('./engine');
 const { evaluateRequest } = require('./evaluate');
 const { runRules, SEV_ORDER } = require('./rules');
