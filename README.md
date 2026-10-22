@@ -9,13 +9,19 @@ For engineers and security reviewers approving AWS IAM policy changes: PolicyLen
 
 *Change review on the bundled example, running locally with the AI layer off. The verdict, the evidence line and the candidate correction all come from the deterministic engine.*
 
+The default page is the change-review workbench. Select **Run example change** to load a synthetic proposal, inspect **Stop and review**, then select **Verify correction**. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, server-reported engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction.
+
+Condition context is an explicit JSON object. Verification requires at least one declared required request with definite Allow in both policies; empty requirements and unresolved context cannot verify preservation. A candidate introducing a high or critical rule finding is not marked verified. Optional AI explanation is off by default for change review. The account demo remains at `/?demo=1`; `/?view=org` opens account analysis.
+
+Browser journey checks: `npm ci`, `npx playwright install chromium`, then `npm run test:browser`. CI runs these alongside the engine tests, authored benchmark and grounding checks.
+
 ## The problem
 
 A pull request adds a statement to a role's policy. The reviewer has to answer a narrow question before approving it:
 
 > Did this change make `rds:DeleteDBInstance` reachable on `prod-1`, and does the correction remove that path without breaking the report reader?
 
-Scanners such as Access Analyzer, Prowler and Cloudsplaining produce findings feeds. They do not answer "is this specific request allowed now, when it was not before?" for one change. Pasting the diff into a chatbot gives a fluent answer that cannot be checked and may cite statements that do not exist.
+AWS IAM Access Analyzer already offers [custom checks for new access](https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-checks-validating-policies.html). PolicyLens is a smaller local workflow: inspect a declared request with line citations, test a corrected candidate while keeping required access, and export the bounded evidence. It does not replace AWS automated reasoning or establish parity with the AWS simulator.
 
 PolicyLens turns "this diff looks risky" into a reproducible **stop**, **needs context** or **pass** verdict for a declared request, with the source line that caused it. It then re-runs the same request against a candidate correction, alongside the access that has to survive. An LLM may explain the result, but it is shown only if its explanation passes a grounding check.
 
@@ -31,9 +37,9 @@ npm run demo        # serves http://127.0.0.1:4177, this machine only
 
 The terminal prints `Mode: local` and `AI layer: disabled — set ANTHROPIC_API_KEY to enable`. Then, in the browser:
 
-1. Open the **Change review** tab, click **Load example**, then **Review this change**.
+1. The **Change review** workbench opens by default. Select **Run example change**.
 2. Expected result: **Stop and review**, `ImplicitDeny → Allow`, with evidence `S2 after.json:10 (DeleteProductionDatabase)`.
-3. Open **Verify a proposed correction** (the corrected policy is pre-filled) and click **Verify correction**. Expected result: **Correction verified**, with `risk closed: yes · required access preserved: yes` for `s3:GetObject` on the reports bucket.
+3. Open **Edit and verify correction** (the corrected policy is pre-filled) and click **Verify correction**. Expected result: **Correction verified**, with `risk closed: yes · required access preserved: yes` for `s3:GetObject` on the reports bucket.
 
 The same check is available over HTTP (`POST /api/change/review`, `POST /api/change/verify`).
 
@@ -73,7 +79,7 @@ All three checks run offline in CI on every push.
 
 | Check | Command | Result | What it does not show |
 |---|---|---|---|
-| Unit and contract tests | `npm test` | 118 tests in 11 suites pass | Behaviour on real account data; the fixtures are synthetic. |
+| Unit and contract tests | `npm test` | 133 tests in 11 suites pass | Behaviour on real account data; the fixtures are synthetic. |
 | AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
 | Authored regression corpus | `npm run benchmark` | Engine agrees with 55/55 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
 

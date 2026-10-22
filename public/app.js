@@ -376,85 +376,152 @@ async function ask() {
 // ---------------------------------------------------------------------------
 // Compare tab
 // ---------------------------------------------------------------------------
+let changeRevision = 0;
+let correctionRevision = 0;
+let changeRecord = null;
+let changeBusy = false;
+
+function changeError(message, target = '#compareResult') {
+  $(target).innerHTML = `<p class="ai-error" role="alert">${esc(message)} Repair the inputs and run the check again.</p>`;
+}
+
+function invalidateChange() {
+  changeRevision += 1;
+  correctionRevision += 1;
+  changeRecord = null;
+  $('#exportChange').disabled = true;
+  $('#changeStatus').textContent = 'Inputs changed. Previous results are stale; review this change again.';
+  $('#compareResult').classList.add('stale');
+  if (!$('#compareResult .stale-label')) $('#compareResult').insertAdjacentHTML('afterbegin', '<p class="stale-label">Stale result — inputs changed. Run a new review.</p>');
+  $('#correctionResult').innerHTML = '';
+  $('#correctionCheck').hidden = true;
+  $('#candidateHint').hidden = false;
+}
+
+function invalidateCorrection() {
+  correctionRevision += 1;
+  if (changeRecord) changeRecord.correction = null;
+  $('#correctionResult').innerHTML = '<p class="change-status">Correction inputs changed. Verify again before relying on this candidate.</p>';
+}
+
+async function fingerprint(inputs) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(inputs)));
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function currentChangeInputs() {
+  const context = JSON.parse($('#compareContext').value);
+  if (!context || typeof context !== 'object' || Array.isArray(context)) throw new Error('Condition context must be a JSON object.');
+  const inputs = { before: $('#beforeBox').value, after: $('#afterBox').value, action: $('#compareAction').value.trim(), resource: $('#compareResource').value.trim(), context, useAI: $('#changeUseAI').checked };
+  if (!inputs.before.trim() || !inputs.after.trim()) throw new Error('Paste both the current and proposed policies.');
+  if (!inputs.action || !inputs.resource) throw new Error('Declare both the sensitive action and resource.');
+  JSON.parse(inputs.before); JSON.parse(inputs.after);
+  return inputs;
+}
+
+function evidenceLines(evaluation) {
+  const matches = [...(evaluation.allowMatches || []), ...(evaluation.conditionalAllows || []), ...(evaluation.denyMatches || [])];
+  return matches.length ? matches.map(item => `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)}${item.sid ? ` · ${esc(item.sid)}` : ''}</li>`).join('') : '<li>No matching statement; implicit deny in the supplied document.</li>';
+}
+
 $('#compareBtn').onclick = async () => {
-  const before = $('#beforeBox').value;
-  const after = $('#afterBox').value;
-  if (!before.trim() || !after.trim()) { alert('Paste both the current and the proposed policy.'); return; }
-  const action = $('#compareAction').value.trim();
-  const resource = $('#compareResource').value.trim();
-  if (!action) { alert('Enter the sensitive action to review.'); return; }
+  if (changeBusy) return;
+  const revision = changeRevision;
+  changeBusy = true;
+  changeRecord = null;
+  $('#exportChange').disabled = true;
+  $('#correctionResult').innerHTML = '';
+  $('#correctionCheck').hidden = true;
   const btn = $('#compareBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spin">◐</span> Reviewing…';
+  btn.disabled = true; btn.textContent = 'Reviewing…';
   try {
-    const r = await api('/api/change/review', { before, after, action, resource, redactIdentifiers: true });
-    const wrap = $('#compareResult');
-    const card = (f) => `<div class="finding ${f.severity}">
-      <h3><span class="badge ${f.severity}">${f.severity}</span> ${esc(f.title)} <span class="rule-id">${esc(f.ruleId)}</span></h3>
-      <p class="desc">${md(f.description)}</p></div>`;
-    const accessTone = r.verdict.status === 'stop' ? 'review-stop' : (r.verdict.status === 'review' ? 'review-context' : 'review-pass');
-    const ai = r.ai
-      ? `<div class="review-explanation"><div class="mode"><span class="m-ai">◆ ${esc(r.ai.model)}</span> · passed grounding gate (${Math.round(r.aiEvaluation.score * 100)}%)</div>${md(r.ai.text)}</div>`
-      : `<div class="review-explanation deterministic"><div class="mode"><span class="m-det">◆ deterministic review</span></div><p>${esc(r.verdict.reason)}</p>${r.aiError ? `<p class="ai-error">${esc(r.aiError)}</p>` : ''}</div>`;
-    const evidence = r.evidence.length
-      ? r.evidence.map((item) => `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${item.line}${item.sid ? ` (${esc(item.sid)})` : ''}</li>`).join('')
-      : '<li>No matching allow or deny statement for the checked request.</li>';
-    const corrections = r.suggestedCorrections.length
-      ? r.suggestedCorrections.map((item) => `<li><b>${esc(item.title)}</b>: ${esc(item.summary || 'Review the introduced statement.')}</li>`).join('')
-      : '<li>No automatic rewrite is offered. Narrow or remove the statement that introduced the checked access.</li>';
-    wrap.innerHTML = `
-      <div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
-      ${ai}
-      <div class="review-grid">
-        <div><h4>Evidence</h4><ul>${evidence}</ul></div>
-        <div><h4>Candidate correction</h4><ul>${corrections}</ul></div>
-      </div>
-      <div class="cmp-col cmp-intro"><h4>Introduced by the change (${r.findings.introduced.length})</h4>
-        ${r.findings.introduced.map(card).join('') || '<p class="empty">None</p>'}</div>
-      <div class="cmp-col cmp-res"><h4>Resolved by the change (${r.findings.resolved.length})</h4>
-        ${r.findings.resolved.map(card).join('') || '<p class="empty">None</p>'}</div>
-      <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
+    const inputs = currentChangeInputs();
+    const inputIdentity = await fingerprint(inputs);
+    const r = await api('/api/change/review', { ...inputs, redactIdentifiers: true });
+    if (revision !== changeRevision) return;
+    changeRecord = { schemaVersion: r.schemaVersion, engine: r.engine, inputIdentity, inputs, review: r, correction: null, createdAt: new Date().toISOString() };
+    const accessTone = r.verdict.status === 'stop' ? 'review-stop' : r.verdict.status === 'review' ? 'review-context' : 'review-pass';
+    const evidence = r.evidence.length ? r.evidence.map(item => {
+      const statement = r.statements.after.find(s => s.id === item.id);
+      return `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)} · ${esc(item.sid || 'Unnamed statement')}${statement ? `<pre>${esc(JSON.stringify({ Sid: statement.sid, Effect: statement.effect, Action: statement.actions, Resource: statement.resources, ...(statement.notActions?.length ? { NotAction: statement.notActions } : {}), ...(statement.notResources?.length ? { NotResource: statement.notResources } : {}), ...(Object.keys(statement.conditions || {}).length ? { Condition: statement.conditions } : {}) }, null, 2))}</pre>` : ''}</li>`;
+    }).join('') : '<li>No matching allow or deny statement for this request.</li>';
+    $('#compareResult').classList.remove('stale');
+    $('#compareResult').innerHTML = `<div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
+      <h4>Granting evidence</h4><ul class="grant-evidence">${evidence}</ul>
+      <details><summary>Rule findings and suggested corrections</summary>${md(r.suggestedCorrections.map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${r.findings.introduced.map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
+      <p class="input-identity">Input SHA-256 <code>${esc(inputIdentity)}</code></p>
+      ${r.ai ? `<details class="review-explanation"><summary>Optional AI explanation · ${esc(r.ai.model)}</summary>${md(r.ai.text)}</details>` : r.aiError ? `<p class="ai-error">Optional AI explanation unavailable: ${esc(r.aiError)} Engine result remains available.</p>` : ''}`;
+    $('#changeStatus').textContent = 'Current deterministic result. The original proposal remains separate from any corrected candidate.';
     $('#correctionCheck').hidden = false;
+    $('#candidateHint').hidden = true;
+    $('#changeInputs').open = false;
+    $('#exportChange').disabled = false;
   } catch (e) {
-    $('#compareResult').innerHTML = `<div class="ai-error">${esc(e.message)}</div>`;
+    if (revision === changeRevision) { changeError(e.message); $('#changeStatus').textContent = 'Review incomplete. No current verdict or export is available.'; }
   } finally {
-    btn.disabled = false; btn.textContent = 'Review this change';
+    changeBusy = false; btn.disabled = false; btn.textContent = 'Review this change';
   }
 };
 
 $('#loadChangeExample').onclick = async () => {
-  const [before, after, corrected] = await Promise.all([
-    fetch('/samples/aws-change-before.json').then((response) => response.text()),
-    fetch('/samples/aws-change-after.json').then((response) => response.text()),
-    fetch('/samples/aws-change-corrected.json').then((response) => response.text()),
-  ]);
-  $('#beforeBox').value = before;
-  $('#afterBox').value = after;
-  $('#candidateBox').value = corrected;
+  if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the synthetic example?')) return;
+  const button = $('#loadChangeExample'); button.disabled = true;
+  try {
+    const values = await Promise.all(['before', 'after', 'corrected'].map(async name => {
+      const response = await fetch(`/samples/aws-change-${name}.json`);
+      if (!response.ok) throw new Error('The example could not load. Retry or paste two policies.');
+      return response.text();
+    }));
+    invalidateChange();
+    $('#beforeBox').value = values[0]; $('#afterBox').value = values[1]; $('#candidateBox').value = values[2];
+    $('#compareAction').value = 'rds:DeleteDBInstance'; $('#compareResource').value = 'arn:aws:rds:eu-west-1:111122223333:db:prod-1';
+    $('#compareContext').value = '{}'; $('#requiredAction').value = 's3:GetObject'; $('#requiredResource').value = 'arn:aws:s3:::reports/daily.csv';
+    $('#changeUseAI').checked = false;
+    await $('#compareBtn').onclick();
+  } catch (e) { changeError(e.message); }
+  finally { button.disabled = false; }
 };
 
 $('#verifyCorrectionBtn').onclick = async () => {
-  const proposed = $('#afterBox').value;
-  const candidate = $('#candidateBox').value;
-  if (!proposed.trim() || !candidate.trim()) { alert('Paste the proposed and corrected policies first.'); return; }
-  const riskRequest = { action: $('#compareAction').value.trim(), resource: $('#compareResource').value.trim() };
-  const requiredAction = $('#requiredAction').value.trim();
-  const requiredAccess = requiredAction ? [{ action: requiredAction, resource: $('#requiredResource').value.trim() }] : [];
-  const button = $('#verifyCorrectionBtn');
-  button.disabled = true;
+  const record = changeRecord;
+  if (!record) { changeError('Review the current proposal before verifying a correction.', '#correctionResult'); return; }
+  const revision = changeRevision, candidateRevision = correctionRevision;
+  const button = $('#verifyCorrectionBtn'); button.disabled = true;
+  record.correction = null;
+  $('#correctionResult').innerHTML = '';
   try {
-    const r = await api('/api/change/verify', { proposed, candidate, riskRequest, requiredAccess });
-    const tone = r.verified ? 'review-pass' : 'review-stop';
-    $('#correctionResult').innerHTML = `<div class="verdict ${tone}">
-      <span>${r.verified ? 'Correction verified' : 'Correction not verified'}</span>
-      <b>risk closed: ${r.riskClosed ? 'yes' : 'no'} · required access preserved: ${r.requiredPreserved ? 'yes' : 'no'}</b>
-      <p>${esc(r.limits.join(' '))}</p>
-    </div>`;
+    const candidate = $('#candidateBox').value;
+    const requiredAction = $('#requiredAction').value.trim(), requiredResource = $('#requiredResource').value.trim();
+    if (!candidate.trim() || !requiredAction || !requiredResource) throw new Error('Supply a corrected policy and both required action and resource.');
+    JSON.parse(candidate);
+    const inputs = { proposed: record.inputs.after, candidate, riskRequest: { action: record.inputs.action, resource: record.inputs.resource, context: record.inputs.context }, requiredAccess: [{ action: requiredAction, resource: requiredResource, context: record.inputs.context }] };
+    const inputIdentity = await fingerprint(inputs);
+    const r = await api('/api/change/verify', inputs);
+    if (revision !== changeRevision || candidateRevision !== correctionRevision || record !== changeRecord) return;
+    record.correction = { inputIdentity, inputs, result: r };
+    $('#correctionResult').innerHTML = `<div class="verdict ${r.verified ? 'review-pass' : 'review-stop'}"><span>${r.verified ? 'Correction verified for declared requests' : 'Correction not verified'}</span><b>${esc(r.risk.proposed.decision)} → ${esc(r.risk.candidate.decision)}</b><p>Risk closed: ${r.riskClosed ? 'yes' : 'no'} · required access preserved: ${r.requiredPreserved ? 'yes' : 'no'}</p></div>
+      <p>New high or critical findings: ${r.introducedSevere.length}</p>${r.introducedSevere.map(finding => `<p class="ai-error">${esc(finding.ruleId)}: ${esc(finding.title)}</p>`).join('')}
+      <h4>Risk request in corrected policy</h4><ul>${evidenceLines(r.risk.candidate)}</ul>
+      ${r.preservation.map(item => `<h4>Required: ${esc(item.request.action)}</h4><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}
+      <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
+    if (r.verified) $('#correctionCheck').open = false;
   } catch (e) {
-    $('#correctionResult').innerHTML = `<div class="ai-error">${esc(e.message)}</div>`;
-  } finally {
-    button.disabled = false;
-  }
+    if (revision === changeRevision && candidateRevision === correctionRevision) changeError(e.message, '#correctionResult');
+  } finally { button.disabled = false; }
 };
+
+$('#exportChange').onclick = () => {
+  if (!changeRecord) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(changeRecord, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a'); link.href = url; link.download = 'policylens-review.json'; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+['beforeBox', 'afterBox', 'compareAction', 'compareResource', 'compareContext', 'changeUseAI'].forEach(id => $(`#${id}`).addEventListener('input', invalidateChange));
+['candidateBox', 'requiredAction', 'requiredResource'].forEach(id => $(`#${id}`).addEventListener('input', invalidateCorrection));
+document.querySelectorAll('[data-editor]').forEach(button => button.addEventListener('click', () => {
+  document.querySelector('.compare-inputs').dataset.editorPane = button.dataset.editor;
+  document.querySelectorAll('[data-editor]').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+}));
 
 // ---------------------------------------------------------------------------
 // Org tab — whole-account reachability over a snapshot
@@ -626,7 +693,11 @@ function renderResourceExposure(r) {
 // Tabs + boot
 // ---------------------------------------------------------------------------
 function activateTab(name) {
-  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+  document.body.classList.toggle('change-view', name === 'compare');
+  document.querySelectorAll('.tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.tab === name);
+    if (t.dataset.tab === name) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+  });
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === `panel-${name}`));
 }
 document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab(t.dataset.tab); });
@@ -635,6 +706,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
   loadSamples();
   const params = new URLSearchParams(location.search);
   const wantDemo = params.has('demo') || params.get('auto') === '1';
+  activateTab(wantDemo || params.get('view') === 'org' ? 'org' : 'compare');
 
   try {
     const h = await api('/api/health');
@@ -657,7 +729,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
     // Hosted demo link is /?demo=1 — auto-run so one click = value
     // Hosted cold start also auto-runs unless ?skipdemo=1
     const skip = params.has('skipdemo');
-    if (wantDemo || (state.hosted && !skip)) {
+    if (wantDemo || (state.hosted && !skip && params.get('view') === 'org')) {
       await runNinetySecondDemo();
     }
   } catch { $('#aiPill').textContent = 'Server unreachable'; }

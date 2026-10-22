@@ -7,6 +7,17 @@
 // This module deliberately keeps the decision path deterministic. An LLM may
 // explain this result, but it cannot change the verdict.
 
+const fs = require('fs');
+const path = require('path');
+const { createHash } = require('crypto');
+const { version: engineVersion } = require('../package.json');
+const sourceHash = createHash('sha256');
+for (const name of fs.readdirSync(__dirname).filter(name => name.endsWith('.js')).sort()) {
+  sourceHash.update(name); sourceHash.update(fs.readFileSync(path.join(__dirname, name)));
+}
+const cataloguePath = path.join(__dirname, '..', 'data', 'aws-actions.json');
+if (fs.existsSync(cataloguePath)) sourceHash.update(fs.readFileSync(cataloguePath));
+const engine = { name: 'PolicyLens', version: engineVersion, sourceIdentity: sourceHash.digest('hex') };
 const { analyzeDocuments, publicStatements } = require('./engine');
 const { evaluateRequest } = require('./evaluate');
 const { runRules, SEV_ORDER } = require('./rules');
@@ -29,8 +40,9 @@ function analyzePolicy(name, text) {
   return { model, findings };
 }
 
-function findingKey(finding) {
-  return `${finding.ruleId}|${finding.title}`;
+function findingKey(finding, model) {
+  const sources = (finding.statements || []).map(id => model.statements.find(statement => statement.id === id)).filter(Boolean).map(statement => JSON.stringify({ effect: statement.effect, actions: statement.actions, notActions: statement.notActions, resources: statement.resources, notResources: statement.notResources, conditions: statement.conditions, principals: statement.principals })).sort();
+  return `${finding.ruleId}|${finding.title}|${sources.join('|')}`;
 }
 
 function decisionRank(decision) {
@@ -42,21 +54,20 @@ function isPermitted(decision) {
 }
 
 function normalizeRequest(request = {}) {
-  const action = String(request.action || '').trim();
-  if (!action) throw new Error('Provide the sensitive action to review, for example rds:DeleteDBInstance');
-  return {
-    action,
-    resource: request.resource ? String(request.resource) : undefined,
-    context: request.context && typeof request.context === 'object' ? request.context : {},
-  };
+  if (!request || typeof request !== 'object' || Array.isArray(request)) throw new Error('Declare a request object with action and resource.');
+  if (typeof request.action !== 'string' || !request.action.trim()) throw new Error('Provide the sensitive action to review, for example rds:DeleteDBInstance');
+  if (typeof request.resource !== 'string' || !request.resource.trim()) throw new Error('Provide the exact resource or an explicit wildcard scope for the request.');
+  const context = request.context === undefined ? {} : request.context;
+  if (!context || typeof context !== 'object' || Array.isArray(context) || Object.getPrototypeOf(context) !== Object.prototype) throw new Error('Condition context must be a plain JSON object.');
+  return { action: request.action.trim(), resource: request.resource.trim(), context };
 }
 
-function diffFindings(before, after) {
-  const beforeKeys = new Set(before.map(findingKey));
-  const afterKeys = new Set(after.map(findingKey));
+function diffFindings(before, after, beforeModel, afterModel) {
+  const beforeKeys = new Set(before.map(finding => findingKey(finding, beforeModel)));
+  const afterKeys = new Set(after.map(finding => findingKey(finding, afterModel)));
   return {
-    introduced: after.filter((finding) => !beforeKeys.has(findingKey(finding))),
-    resolved: before.filter((finding) => !afterKeys.has(findingKey(finding))),
+    introduced: after.filter((finding) => !beforeKeys.has(findingKey(finding, afterModel))),
+    resolved: before.filter((finding) => !afterKeys.has(findingKey(finding, beforeModel))),
   };
 }
 
@@ -94,7 +105,7 @@ function reviewChange({ before, after, request }) {
   const afterPolicy = analyzePolicy('after.json', after);
   const beforeEvaluation = evaluateRequest(beforePolicy.model, checkedRequest);
   const afterEvaluation = evaluateRequest(afterPolicy.model, checkedRequest);
-  const findings = diffFindings(beforePolicy.findings, afterPolicy.findings);
+  const findings = diffFindings(beforePolicy.findings, afterPolicy.findings, beforePolicy.model, afterPolicy.model);
   const verdict = buildVerdict({
     beforeDecision: beforeEvaluation.decision,
     afterDecision: afterEvaluation.decision,
@@ -102,6 +113,8 @@ function reviewChange({ before, after, request }) {
   });
 
   return {
+    schemaVersion: 1,
+    engine,
     verdict,
     request: { ...checkedRequest, resource: checkedRequest.resource || '*' },
     access: {
@@ -137,6 +150,7 @@ function reviewChange({ before, after, request }) {
 }
 
 function verifyCorrection({ proposed, candidate, riskRequest, requiredAccess = [] }) {
+  if (!Array.isArray(requiredAccess) || !requiredAccess.length) throw new Error('Declare at least one required-access request before verifying a correction.');
   const checkedRisk = normalizeRequest(riskRequest);
   const proposedPolicy = analyzePolicy('proposed.json', proposed);
   const candidatePolicy = analyzePolicy('candidate.json', candidate);
@@ -152,14 +166,18 @@ function verifyCorrection({ proposed, candidate, riskRequest, requiredAccess = [
       request: { ...normalized, resource: normalized.resource || '*' },
       before,
       after,
-      preserved: !isPermitted(before.decision) || isPermitted(after.decision),
+      preserved: before.decision === 'Allow' && after.decision === 'Allow',
     };
   });
 
-  const riskClosed = isPermitted(proposedRisk.decision) && !isPermitted(candidateRisk.decision);
+  const riskClosed = proposedRisk.decision === 'Allow' && ['ImplicitDeny', 'ExplicitDeny'].includes(candidateRisk.decision);
   const requiredPreserved = preservation.every((item) => item.preserved);
+  const introducedSevere = diffFindings(proposedPolicy.findings, candidatePolicy.findings, proposedPolicy.model, candidatePolicy.model).introduced.filter(finding => ['high', 'critical'].includes(finding.severity));
   return {
-    verified: riskClosed && requiredPreserved,
+    schemaVersion: 1,
+    engine,
+    verified: riskClosed && requiredPreserved && introducedSevere.length === 0,
+    introducedSevere,
     riskClosed,
     requiredPreserved,
     risk: { proposed: proposedRisk, candidate: candidateRisk },
