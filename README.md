@@ -25,6 +25,12 @@ AWS IAM Access Analyzer already offers [custom checks for new access](https://do
 
 PolicyLens turns "this diff looks risky" into a reproducible **stop**, **needs context** or **pass** verdict for a declared request, with the source line that caused it. It then re-runs the same request against a candidate correction, alongside the access that has to survive. An LLM may explain the result, but it is shown only if its explanation passes a grounding check.
 
+## Published browser demo
+
+[Open browser-local change review](https://matthewpaver.github.io/iam-policy-auditor/). Run the synthetic example, verify the correction and export the record. The published build reuses the deterministic modules and action catalogue. Policies are processed in the browser; there is no upload, AI API or account-analysis service on this route. The Node server below retains the broader tools.
+
+`npm run build:demo` creates the static `site/` artifact without a bundler dependency. Its browser test checks the server/browser verdict and access result, correction, export identity and absence of POST requests. GitHub Pages deploys only after this journey passes.
+
 ## Quickstart
 
 Node.js 18 or later (CI uses Node 22). No `npm install`, AWS account or API key is needed to run it.

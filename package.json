@@ -13,7 +13,8 @@
     "benchmark": "node benchmark/run.js",
     "benchmark:aws": "node benchmark/run.js --oracle aws",
     "ingest": "node scripts/ingest-aws-actions.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "build:demo": "node scripts/build-browser-demo.js"
   },
   "engines": {
     "node": ">=18"

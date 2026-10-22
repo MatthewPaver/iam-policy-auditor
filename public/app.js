@@ -22,6 +22,7 @@ const el = (tag, cls, html) => {
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 async function api(path, body) {
+  if (window.PolicyLensLocalAPI) return window.PolicyLensLocalAPI(path, body);
   const resp = await fetch(path, body
     ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
     : undefined);
@@ -144,7 +145,7 @@ async function loadSamples() {
     }
     sel.onchange = async () => {
       if (!sel.value) return;
-      const text = await (await fetch(`/samples/${sel.value}`)).text();
+      const text = await (await fetch(`samples/${sel.value}`)).text();
       addDoc(sel.value, text);
       sel.value = '';
     };
@@ -153,7 +154,7 @@ async function loadSamples() {
 
 /** Load the baked-in demo snapshot; returns principal count or throws. */
 async function loadDemoSnapshot() {
-  state.snapshot = await (await fetch('/samples/aws-account-snapshot.json')).json();
+  state.snapshot = await (await fetch('samples/aws-account-snapshot.json')).json();
   const n = (state.snapshot.UserDetailList || []).length + (state.snapshot.RoleDetailList || []).length;
   setSnapshotStatus(`Sample snapshot loaded: ${n} principals.`, true);
   return n;
@@ -468,7 +469,7 @@ $('#loadChangeExample').onclick = async () => {
   const button = $('#loadChangeExample'); button.disabled = true;
   try {
     const values = await Promise.all(['before', 'after', 'corrected'].map(async name => {
-      const response = await fetch(`/samples/aws-change-${name}.json`);
+      const response = await fetch(`samples/aws-change-${name}.json`);
       if (!response.ok) throw new Error('The example could not load. Retry or paste two policies.');
       return response.text();
     }));
@@ -705,11 +706,12 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
 (async function boot() {
   loadSamples();
   const params = new URLSearchParams(location.search);
-  const wantDemo = params.has('demo') || params.get('auto') === '1';
-  activateTab(wantDemo || params.get('view') === 'org' ? 'org' : 'compare');
+  const wantDemo = !window.PolicyLensLocalAPI && (params.has('demo') || params.get('auto') === '1');
+  activateTab(!window.PolicyLensLocalAPI && (wantDemo || params.get('view') === 'org') ? 'org' : 'compare');
 
   try {
     const h = await api('/api/health');
+    if (h.browser) document.querySelector('.pill.local').textContent = 'Runs in this browser · no upload';
     state.aiEnabled = h.ai;
     state.hosted = !!h.hosted;
     const pill = $('#aiPill');
