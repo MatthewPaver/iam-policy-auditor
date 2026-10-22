@@ -12,7 +12,8 @@
     "demo": "HOST=127.0.0.1 node server.js",
     "benchmark": "node benchmark/run.js",
     "benchmark:aws": "node benchmark/run.js --oracle aws",
-    "ingest": "node scripts/ingest-aws-actions.js"
+    "ingest": "node scripts/ingest-aws-actions.js",
+    "test:browser": "playwright test"
   },
   "engines": {
     "node": ">=18"
@@ -21,6 +22,7 @@
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.1",
     "eslint": "^9.39.5",
     "globals": "^17.13.0"
   }

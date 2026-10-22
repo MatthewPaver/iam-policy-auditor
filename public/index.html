@@ -67,12 +67,12 @@
   </aside>
 
   <section id="results">
-    <nav id="tabs">
+    <nav id="tabs" aria-label="Review tools">
+      <button data-tab="compare" class="tab">Change review</button>
       <button data-tab="findings" class="tab active">Findings <span id="findingCount" class="count"></span></button>
       <button data-tab="ask" class="tab">Ask</button>
       <button data-tab="statements" class="tab">Statements</button>
       <button data-tab="org" class="tab">Org</button>
-      <button data-tab="compare" class="tab">Change review</button>
     </nav>
 
     <div id="panel-findings" class="panel active">
@@ -139,32 +139,42 @@
     </div>
 
     <div id="panel-compare" class="panel">
-      <div class="workflow-intro">
-        <h3>Check a policy change before you approve it</h3>
-        <p>Enter one action and resource, then compare the current and proposed policy. The policy engine decides the verdict. If Claude is enabled, PolicyLens shows its explanation only when the citations and claims pass the grounding gate.</p>
-      </div>
+      <div class="workflow-intro"><h2>Review a permission change</h2><p>Check one declared request. Inspect the grant, then test a correction that keeps required access.</p></div>
       <div class="review-query">
         <label>Action<input id="compareAction" type="text" value="rds:DeleteDBInstance" autocomplete="off"></label>
         <label>Resource<input id="compareResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" autocomplete="off"></label>
-        <button id="loadChangeExample" class="btn secondary" type="button">Load example</button>
+        <button id="loadChangeExample" class="btn secondary" type="button">Run example change</button>
       </div>
-      <div class="compare-inputs">
-        <div><h3>Current policy</h3><textarea id="beforeBox" spellcheck="false" placeholder="Paste the current policy…"></textarea></div>
-        <div><h3>Proposed policy</h3><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
+      <p id="changeStatus" class="change-status" role="status">Paste two policies below or run the synthetic example.</p>
+      <div class="change-workbench">
+        <section aria-label="Original proposal"><h3>Original proposal</h3><div id="compareResult"><p class="empty">The checked transition and granting statement will appear here.</p></div></section>
+        <section aria-label="Corrected candidate"><h3>Corrected candidate</h3><p id="candidateHint" class="empty">Review the proposal first, then verify a correction. The original result stays visible.</p>
+          <details id="correctionCheck" class="correction-check" hidden open>
+            <summary>Edit and verify correction</summary>
+            <p>Verification covers the declared risk and required request only.</p>
+            <label for="candidateBox">Corrected policy</label><textarea id="candidateBox" spellcheck="false" placeholder="Paste the corrected policy…"></textarea>
+            <div class="review-query required-query">
+              <label>Required action<input id="requiredAction" type="text" value="s3:GetObject" autocomplete="off"></label>
+              <label>Required resource<input id="requiredResource" type="text" value="arn:aws:s3:::reports/daily.csv" autocomplete="off"></label>
+            </div>
+            <button id="verifyCorrectionBtn" class="btn secondary" type="button">Verify correction</button>
+          </details>
+          <div id="correctionResult"></div>
+        </section>
       </div>
-      <button id="compareBtn" class="btn primary">Review this change</button>
-      <div id="compareResult"></div>
-      <details id="correctionCheck" class="correction-check" hidden>
-        <summary>Verify a proposed correction</summary>
-        <p>Paste a corrected policy and name the access it must keep. PolicyLens marks the correction verified only if it removes the risky access and keeps the required access.</p>
-        <textarea id="candidateBox" spellcheck="false" placeholder="Paste the corrected policy…"></textarea>
-        <div class="review-query required-query">
-          <label>Required action<input id="requiredAction" type="text" value="s3:GetObject" autocomplete="off"></label>
-          <label>Required resource<input id="requiredResource" type="text" value="arn:aws:s3:::reports/daily.csv" autocomplete="off"></label>
-          <button id="verifyCorrectionBtn" class="btn secondary" type="button">Verify correction</button>
+      <details id="changeInputs" class="change-inputs" open>
+        <summary>Current and proposed policies · edit inputs</summary>
+        <div class="policy-switch" role="group" aria-label="Policy editor"><button type="button" data-editor="before" aria-pressed="true">Current</button><button type="button" data-editor="after" aria-pressed="false">Proposed</button></div>
+        <div class="compare-inputs" data-editor-pane="before">
+          <div class="before-editor"><label for="beforeBox">Current policy</label><textarea id="beforeBox" spellcheck="false" placeholder="Paste the current policy…"></textarea></div>
+          <div class="after-editor"><label for="afterBox">Proposed policy</label><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
         </div>
-        <div id="correctionResult"></div>
+        <label for="compareContext">Condition context (JSON object)</label><textarea id="compareContext" rows="2" spellcheck="false">{}</textarea>
+        <p class="fineprint">Missing or unsupported condition context can produce ConditionalAllow. It cannot prove access is preserved.</p>
+        <label class="ai-opt-in"><input id="changeUseAI" type="checkbox"> Request an optional AI explanation (sends extracted facts to Anthropic when configured)</label>
       </details>
+      <div class="change-actions"><button id="compareBtn" class="btn primary">Review this change</button><button id="exportChange" class="btn secondary" disabled>Export review JSON</button></div>
+      <p class="review-limits">Supplied policy documents only. SCPs, permission boundaries, session policies and cross-account interactions are excluded. A bounded pass is not production approval.</p>
     </div>
   </section>
 </main>

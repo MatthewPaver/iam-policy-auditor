@@ -28,3 +28,7 @@ jobs:
       - run: npm test
       - run: npm run eval
       - run: npm run benchmark
+      - name: Install browser for journey checks
+        run: npx playwright install --with-deps chromium
+      - name: Check change-review journeys
+        run: npm run test:browser
