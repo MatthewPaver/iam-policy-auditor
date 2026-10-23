@@ -1,0 +1,35 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { compare, render } = require('../public/correction-view');
+const { verifyCorrection } = require('../src/change_review');
+const sample = name => fs.readFileSync(path.join(__dirname, `../samples/aws-change-${name}.json`), 'utf8');
+const proposed = sample('after'), corrected = sample('corrected');
+const delta = compare(proposed, corrected);
+assert.deepEqual(delta.removed.map(item => item.value.Sid), ['DeleteProductionDatabase']);
+assert.deepEqual(delta.retained.map(item => item.value.Sid), ['ReadReports']);
+assert.equal(delta.retained[0].candidatePointer, '/Statement/0');
+assert.equal(delta.added.length, 0);
+
+const original = JSON.parse(proposed);
+const reordered = JSON.stringify({ Statement: original.Statement.map(statement => Object.fromEntries(Object.entries(statement).reverse())) });
+assert.equal(compare(proposed, reordered).retained.length, 2, 'Object-key order cannot invent a removal');
+const duplicate = JSON.stringify({ Statement: [original.Statement[0], original.Statement[0]] });
+assert.equal(compare(duplicate, corrected).removed.length, 1, 'Duplicate statements must be counted individually');
+
+const denyCandidate = JSON.stringify({ Statement: [...original.Statement, { Effect: 'Deny', Action: 'rds:DeleteDBInstance', Resource: '*' }] });
+const denyDelta = compare(proposed, denyCandidate);
+assert.equal(denyDelta.removed.length, 0, 'A new deny does not mean the original grant was removed');
+assert.equal(denyDelta.retained.length, 2);
+assert.equal(denyDelta.added[0].value.Effect, 'Deny');
+const verified = verifyCorrection({ proposed, candidate: denyCandidate, riskRequest: { action: 'rds:DeleteDBInstance', resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1' }, requiredAccess: [{ action: 's3:GetObject', resource: 'arn:aws:s3:::reports/daily.csv' }] });
+assert.equal(verified.verified, true, 'Access closure can happen without removing the original grant');
+assert.equal(compare(proposed, JSON.stringify({ Statement: [] })).retained.length, 0);
+assert.match(render(proposed, '{bad'), /Fix the candidate JSON/);
+const hostile = JSON.stringify({ Statement: { Sid: '<img src=x onerror=alert(1)>', Effect: 'Allow', Action: '<script>x</script>', Resource: '*' } });
+const html = render(hostile, hostile);
+assert.ok(!html.includes('<img'));
+assert.ok(!html.includes('<script>'));
+assert.ok(html.includes('&lt;script&gt;'));
+console.log('Correction view: exact edits, duplicate/key order, deny override and escaping checks passed');

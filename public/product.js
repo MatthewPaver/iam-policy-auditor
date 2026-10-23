@@ -24,6 +24,8 @@
       find('.demo-desk').dataset.ready = 'true';
       find('#demoBefore').textContent = review.access.before.decision;
       find('#demoAfter').textContent = review.access.after.decision;
+      find('#demoBeforeMeaning').textContent = window.PolicyLensCorrectionView.describe(review.access.before.decision);
+      find('#demoAfterMeaning').textContent = window.PolicyLensCorrectionView.describe(review.access.after.decision);
       find('#demoConsequence').textContent = 'The proposal allows database deletion';
       find('#demoReason').textContent = 'The supplied proposal introduces permission to delete prod-1.';
       const evidence = review.evidence[0];
@@ -31,6 +33,7 @@
       renderSource(false);
       ['copyDemoRequest', 'copyDemoCitation', 'copyDemoSource'].forEach(id => { find(`#${id}`).disabled = false; });
       find('#demoCandidate').value = texts[2];
+      renderChanges();
       find('#verifyDemoCorrection').disabled = false;
       find('.original-outcome').innerHTML = `Original proposal: <strong>${esc(review.verdict.label)} · ${esc(review.access.before.decision)} → ${esc(review.access.after.decision)}</strong>`;
       renderRecord();
@@ -92,6 +95,10 @@
     declared.querySelectorAll('code')[0].textContent = action || 'Required action missing';
     declared.querySelectorAll('code')[1].textContent = resource || 'Required resource missing';
     renderRecord();
+    renderChanges();
+  }
+  function renderChanges() {
+    if (sampleRecord) find('#demoChanges').innerHTML = window.PolicyLensCorrectionView.render(sampleRecord.inputs.after, find('#demoCandidate').value);
   }
   ['demoCandidate', 'demoRequiredAction', 'demoRequiredResource'].forEach(id => find(`#${id}`).addEventListener('input', invalidateExampleCorrection));
 
@@ -119,7 +126,8 @@
       find('#demoVerification').classList.add(result.verified ? 'verified' : 'not-verified');
       find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Correction verified for declared requests' : 'Correction not verified'}</h3>
         <dl><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
-        ${result.preservation.map(item => `<p><code>${esc(item.request.action)}</code>: ${esc(item.before.decision)} → ${esc(item.after.decision)}</p>`).join('')}
+        <p class="checked-access"><strong>Database deletion: ${esc(window.PolicyLensCorrectionView.describe(result.risk.candidate.decision))}</strong><code>${esc(request.action)}</code></p>
+        ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}
         <p>Original proposal: ${esc(record.review.verdict.label)}. This is a bounded check, not production approval.</p>`;
       renderRecord();
     } catch (error) {

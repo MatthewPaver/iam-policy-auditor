@@ -17,6 +17,22 @@ colors:
   verified: "#90dbb3"
   critical: "#ff4d5e"
   warning: "#f5c542"
+  source-ground: "#0d141d"
+  source-text: "#c8ddf2"
+  source-number: "#a0b6cb"
+  active-tab: "#4da3ff"
+  control-text: "#f5f7fa"
+  white: "#fff"
+  secondary-line: "#6c7f94"
+  secondary-hover: "#202d3c"
+  secondary-hover-line: "#9db1c8"
+  disabled-ground: "#242f3b"
+  disabled-line: "#465462"
+  trace: "#91caff"
+  trace-ground: "#24364b"
+  risk-ground: "#211b24"
+  risk-line: "#ae535f"
+  verified-line: "#4b9274"
 typography:
   display:
     fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
@@ -33,6 +49,41 @@ typography:
   body:
     fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
     fontSize: "16px"
+    lineHeight: 1.5
+  introduction:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "24px"
+    lineHeight: 1.2
+  evidence-heading:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "33px"
+    fontWeight: 700
+    lineHeight: 1.3
+    letterSpacing: "-.02em"
+  brand:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "23px"
+    fontWeight: 700
+    lineHeight: 1
+  statement-title:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "22px"
+    lineHeight: 1.3
+  statement-group:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "17px"
+    fontWeight: 600
+  evidence-label:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "14px"
+    lineHeight: 1.6
+  statement-name:
+    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontSize: "15px"
+  secondary-control:
+    fontFamily: "Arial, sans-serif"
+    fontSize: "18px"
+    fontWeight: 400
     lineHeight: 1.5
   primary-control:
     fontFamily: "Arial, sans-serif"
@@ -70,12 +121,10 @@ components:
     padding: "11px 14px"
   review-card:
     backgroundColor: "{colors.review-surface}"
-    rounded: "{rounded.surface}"
   source-field:
     backgroundColor: "#0d141d"
     textColor: "#c8ddf2"
     typography: "{typography.source}"
-    rounded: "{rounded.field}"
     padding: "5px 12px"
 ---
 
@@ -121,7 +170,7 @@ Primary product buttons use the recorded large, bold type. Preserve that size an
 
 ## Layout
 
-The landing begins with a centred promise, paired actions and a processing/privacy line. A broad bordered desk follows, with three ordered chapters: risk, correction and export. Desktop risk places current and proposed outcomes above two source/explanation columns. Correction and record summaries also use two columns. The desk gutter is fluid (`clamp(18px,3.19vw,60px)`); the own-policy workbench caps at 1440px.
+The landing begins with a centred promise, paired actions and a processing/privacy line. A broad, flat review desk follows, with three ordered chapters: risk, correction and export. Desktop risk places current and proposed outcomes above two source/explanation columns. Correction and record summaries also use two columns. The desk gutter is fluid (`clamp(18px,3.19vw,60px)`); the own-policy workbench caps at 1440px.
 
 At 1100px, typography and column gaps tighten. At 760px, navigation wraps, landing actions stack, chapter labels shorten and chapter controls arrange number above label. The current/proposed comparison remains adjacent with smaller type; the evidence, correction and record grids stack. Explanation precedes source on mobile. Evidence rows and footer stack; controls expand to usable widths. Source retains internal scrolling rather than forcing the page wider.
 
@@ -135,7 +184,7 @@ The replay trace briefly outlines proposed access, cited source and evidence in 
 
 ## Shapes
 
-Surfaces are gently curved rectangles. Larger desk containers use the surface radius; product actions and outcome cards use the control radius. Compact utilities and workbench verdicts use the compact radius. Evidence fields use the field radius. Thin borders distinguish regions. Chapter numbers are circular; document chips and existing pills retain their specific compact forms.
+The guided desk is a flat working surface with top and bottom rules, no outer rounded frame. Access outcomes use horizontal rules; data fields and source excerpts avoid enclosing borders. Verification uses a top rule and ruled data rows. Product actions retain the control radius; compact utilities and workbench verdicts use the compact radius. Editable fields and inherited tool surfaces retain their existing radii. Do not apply a shared card silhouette to every evidence region. Chapter numbers are circular; document chips and existing pills retain their specific compact forms.
 
 ## Components
 
@@ -145,7 +194,7 @@ Product actions are at least 51px tall, with a thin border and the primary or ou
 
 ### Navigation
 
-Header links are secondary until interaction. Chapter tabs use numbered circles and an active blue bottom rule, with `aria-selected`, roving focus and Arrow/Home/End navigation. Shortened phone labels preserve the three ordered steps. Product home navigation retains session work. Local account routes remain accessible on the server; the static browser build does not offer those services.
+Header links are secondary until interaction. Chapter tabs use numbered circles and an active blue bottom rule, with `aria-selected`, roving focus and Arrow/Home/End navigation. Shortened phone labels preserve the three ordered steps. Phone actions use concise labels such as “Check correction”, “View review record” and “Open policy review”; preserve their full-width targets. Product home navigation retains session work. Local account routes remain accessible on the server; the static browser build does not offer those services.
 
 ### Chips
 
@@ -153,7 +202,7 @@ Existing document chips use raised slate, thin borders, compact monospace labels
 
 ### Cards / Containers
 
-The guided desk contains the comparison, source and explanation within a single working surface. Proposed access uses a restrained tinted risk panel. Verification has its own bordered result container; success changes its border and heading, leaving the original proposal unchanged. Retain loading, incomplete, not-verified and stale states as first-class content.
+The guided desk contains the comparison, source and explanation within a single working surface. Proposed access uses a restrained tinted risk panel. Verification sits on the same working surface behind a top rule; success changes that rule and heading, leaving the original proposal unchanged. Retain loading, incomplete, not-verified and stale states as first-class content.
 
 ### Inputs / Fields
 
@@ -163,7 +212,19 @@ Policy textareas are resizable dark fields with monospace content. Request field
 
 Source displays real line numbers, a cited excerpt and restrained risk emphasis on granting values. The full-policy toggle preserves inspectability. Request, citation and source copy controls use authored SVGs, descriptive accessible names and copied/error status messages. Phone copy targets reach 44px. Icons support written meaning rather than replacing it.
 
-The original proposal, corrected candidate and exact export remain distinct. Verification checks risk closure, definite required access before and after, and introduced high or critical findings. Exports retain exact inputs, results, SHA-256 identities and schema/engine identity. A stale correction is removed from the current record.
+### Statement comparison
+
+The guided candidate preview and completed own-policy verification show whole statements grouped as Removed, Retained and, when present, Added. Each group counts statements and lists their name, effect, action and resource. An “Exact statement” disclosure exposes JSON and the original/candidate JSON pointers; values render as escaped text. Unnamed statements retain a written fallback.
+
+Comparison ignores object-key order, preserves array order and consumes duplicate statements individually. Editing a statement appears as removal plus addition. Adding a Deny retains an unchanged Allow; it does not portray that grant as removed. This is structural comparison, not semantic equivalence or an access conclusion. The guided preview refreshes when candidate inputs change; own-policy comparison belongs to the completed verification result.
+
+**The Statement Is Not Access Rule.** “Retained” means an exact whole statement remains. Only independent request verification establishes required access preservation.
+
+### Verified outcome and portable record
+
+Plain-language risk outcomes lead: Allowed, Not allowed, Explicitly denied and Needs context. Preserve the exact AWS decision names alongside them, including Allow, ImplicitDeny, ExplicitDeny and ConditionalAllow. Correction results retain the risk closure, required preservation and introduced severe-finding checks.
+
+The original proposal, corrected candidate and exact export remain distinct. Verification checks risk closure, definite required access before and after, and introduced high or critical findings. Exports retain exact inputs, results, SHA-256 identities and schema/engine identity. Candidate or required-request edits immediately invalidate verification and remove stale correction evidence from the current export; the original review may remain exportable. Late responses cannot restore stale evidence. “What the record includes” is a disclosure; scope limits, exclusions and outstanding independent AWS comparison remain visible outside it.
 
 **The Bounded Evidence Rule.** Place scope beside the outcome: supplied documents and declared requests only. Excluded organisation controls and unverified AWS parity remain explicit. Browser-local privacy text must differ accurately from the separate server and optional-AI routes.
 
@@ -174,10 +235,12 @@ The original proposal, corrected candidate and exact export remain distinct. Ver
 - **Do** preserve source lines, semantic value emphasis and functional copy controls.
 - **Do** distinguish the labelled synthetic example from own-policy review.
 - **Do** keep original results visible beside bounded correction outcomes and export their exact evidence.
+- **Do** distinguish retained statements from verified required access and keep exact JSON/pointers inspectable.
 - **Do** preserve keyboard focus, readable mobile editors and reduced-motion comprehension.
 
 ### Don't:
 - **Don't** treat a green correction result as production approval or whole-policy safety.
+- **Don't** imply an added Deny removed the original Allow, or collapse duplicate statement counts.
 - **Don't** replace policy monospace with the global form-control font.
 - **Don't** substitute glyph icons for the existing authored SVG vocabulary.
 - **Don't** present optional server AI or account analysis as a static-browser capability.

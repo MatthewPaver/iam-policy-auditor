@@ -502,6 +502,7 @@ $('#verifyCorrectionBtn').onclick = async () => {
     record.correction = { inputIdentity, inputs, result: r };
     $('#correctionResult').innerHTML = `<div class="verdict ${r.verified ? 'review-pass' : 'review-stop'}"><span>${r.verified ? 'Correction verified for declared requests' : 'Correction not verified'}</span><b>${esc(r.risk.proposed.decision)} → ${esc(r.risk.candidate.decision)}</b><p>Risk closed: ${r.riskClosed ? 'yes' : 'no'} · required access preserved: ${r.requiredPreserved ? 'yes' : 'no'}</p></div>
       <p>New high or critical findings: ${r.introducedSevere.length}</p>${r.introducedSevere.map(finding => `<p class="ai-error">${esc(finding.ruleId)}: ${esc(finding.title)}</p>`).join('')}
+      ${window.PolicyLensCorrectionView.render(inputs.proposed, inputs.candidate)}
       <h4>Risk request in corrected policy</h4><ul>${evidenceLines(r.risk.candidate)}</ul>
       ${r.preservation.map(item => `<h4>Required: ${esc(item.request.action)}</h4><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}
       <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
