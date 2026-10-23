@@ -269,3 +269,11 @@ body.change-view #tools{padding:30px 24px 48px}
   .browser-demo #tabs:after{content:'Browser-local review';white-space:normal}
   .file-control{font-size:13px!important}
 }
+
+/* Outcome first; exact requests, cited statements and decisions remain one disclosure away. */
+.risk-summary { max-width:65ch; margin:20px 0; }
+.risk-summary h3 { font-size:16px; margin-bottom:6px; }
+.risk-summary .product-button { margin-top:16px; }
+.verification-evidence { margin-top:16px; }
+.verification-evidence summary { cursor:pointer; text-underline-offset:4px; }
+.verification-evidence[open] summary { margin-bottom:14px; }
