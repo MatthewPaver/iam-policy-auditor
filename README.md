@@ -9,7 +9,9 @@ For engineers and security reviewers approving AWS IAM policy changes: PolicyLen
 
 *Change review on the bundled example, running locally with the AI layer off. The verdict, the evidence line and the candidate correction all come from the deterministic engine.*
 
-The default page is the change-review workbench. Select **Run example change** to load a synthetic proposal, inspect **Stop and review**, then select **Verify correction**. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, server-reported engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction.
+The default page is a product landing with a real-engine synthetic example. Its three chapters explain introduced access, verify a correction against required report access, and export the evidence. The cited statement stays inspectable and copyable. A user-triggered source trace supports reduced motion; chapter controls work by keyboard. The example never shares state with a visitor’s own review.
+
+Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, declare a sensitive request and select **Review this change**. **Run example change** remains available there. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
 
 Condition context is an explicit JSON object. Verification requires at least one declared required request with definite Allow in both policies; empty requirements and unresolved context cannot verify preservation. A candidate introducing a high or critical rule finding is not marked verified. Optional AI explanation is off by default for change review. The account demo remains at `/?demo=1`; `/?view=org` opens account analysis.
 
@@ -27,7 +29,7 @@ PolicyLens turns "this diff looks risky" into a reproducible **stop**, **needs c
 
 ## Published browser demo
 
-[Open browser-local change review](https://matthewpaver.github.io/iam-policy-auditor/). Run the synthetic example, verify the correction and export the record. The published build reuses the deterministic modules and action catalogue. Policies are processed in the browser; there is no upload, AI API or account-analysis service on this route. The Node server below retains the broader tools.
+[Explore PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/). Follow the synthetic example, verify the correction and export the record, or [review your own policies](https://matthewpaver.github.io/iam-policy-auditor/?view=review). The published build reuses the deterministic modules and action catalogue. Policies and self-hosted fonts load without third-party runtime requests; no policy upload, AI API or account-analysis service exists on this route. The Node server below retains the broader tools.
 
 `npm run build:demo` creates the static `site/` artifact without a bundler dependency. Its browser test checks the server/browser verdict and access result, correction, export identity and absence of POST requests. GitHub Pages deploys only after this journey passes.
 

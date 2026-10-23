@@ -5,7 +5,7 @@ const path = require('node:path');
 const captures = process.env.PORTFOLIO_CAPTURES;
 
 async function sample(page) {
-  await page.goto('/');
+  await page.goto('/?view=review');
   await page.getByRole('button', { name: 'Run example change' }).click();
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
 }
