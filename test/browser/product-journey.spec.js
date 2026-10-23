@@ -24,6 +24,8 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Understand the permission change before it ships.');
   await expect(page.locator('#tools')).toBeHidden();
   await expect(page.locator('#demoBefore')).toHaveText('ImplicitDeny');
+  await expect(page.locator('#demoBeforeMeaning')).toHaveText('Not allowed');
+  await expect(page.locator('#demoAfterMeaning')).toHaveText('Allowed');
   await expect(page.locator('#demoCitation')).toContainText('S2 · after.json:10');
   await expect(page.locator('#demoSource')).toContainText('arn:aws:rds:eu-west-1:111122223333:db:prod-1');
   await expect(page.locator('#demoSource .source-risk')).toHaveCount(4);
@@ -33,12 +35,17 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoSource')).not.toContainText('Version');
   await page.locator('#tryPermission').click();
   await expect(page.locator('#demoTraceStatus')).toContainText('after.json line 10');
-  await page.getByRole('button', { name: 'Inspect the correction', exact: true }).click();
+  await page.getByRole('button', { name: 'Check correction', exact: true }).click();
+  await expect(page.locator('#demoChanges [data-change-kind=removed]')).toContainText('DeleteProductionDatabase');
+  await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('ReadReports');
+  await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('arn:aws:s3:::reports/*');
+  await expect(page.locator('#demoChanges [data-change-kind=added]')).toHaveCount(0);
+  await expect(page.locator('#demoVerification')).toContainText('Not checked yet');
   await expect(page.locator('.original-outcome')).toContainText('Stop and review');
   await page.locator('#verifyDemoCorrection').click();
   await expect(page.locator('#demoVerification')).toContainText('Correction verified for declared requests');
   await expect(page.locator('.original-outcome')).toContainText('ImplicitDeny → Allow');
-  await page.getByRole('button', { name: 'Inspect the review record' }).click();
+  await page.getByRole('button', { name: 'View review record' }).click();
   const record = await downloadRecord(page, '#exportDemoReview');
   expect(record.inputIdentity).toBe(hash(record.inputs));
   expect(record.correction.inputIdentity).toBe(hash(record.correction.inputs));
@@ -97,6 +104,8 @@ test('own JSON files complete review and correction while home navigation preser
   expect(await page.locator('#candidateBox').evaluate(element => getComputedStyle(element).fontFamily)).toContain('monospace');
   await page.locator('#verifyCorrectionBtn').click();
   await expect(page.locator('#correctionResult')).toContainText('Correction verified');
+  await expect(page.locator('#correctionResult [data-change-kind=removed]')).toContainText('DeleteProductionDatabase');
+  await expect(page.locator('#correctionResult [data-change-kind=retained]')).toContainText('ReadReports');
   const own = await downloadRecord(page, '#exportChange');
   expect(own.correction.result.verified).toBe(true);
   expect(own.inputIdentity).toBe(hash(own.inputs));
@@ -151,9 +160,15 @@ test('example load failure makes no verdict claim and retry restores the actual 
 });
 
 test('keyboard chapter navigation, reduced motion and phone correction/export remain usable', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 320, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ready(page);
+  const next = page.getByRole('button', { name: 'Check correction', exact: true });
+  expect(await next.evaluate(element => element.clientHeight < 70 && element.scrollWidth <= element.clientWidth)).toBe(true);
+  await expect(page.locator('.record-contents')).not.toHaveAttribute('open');
+  await page.locator('.record-contents summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.record-contents')).toHaveAttribute('open');
   await page.locator('#chapterRisk').focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#chapterCorrection')).toBeFocused();
@@ -172,6 +187,27 @@ test('keyboard chapter navigation, reduced motion and phone correction/export re
     await page.setViewportSize({ width, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   }
+});
+
+test('a deny override retains its original grant in the edit view and invalid edits discard verification', async ({ page }) => {
+  await ready(page);
+  await page.locator('#chapterCorrection').click();
+  await page.locator('.demo-edit summary').click();
+  const policy = JSON.parse(await fs.readFile(path.join(samples, 'aws-change-after.json'), 'utf8'));
+  policy.Statement.push({ Sid: '<img src=x onerror=alert(1)>', Effect: 'Deny', Action: 'rds:DeleteDBInstance', Resource: '*' });
+  await page.locator('#demoCandidate').fill(JSON.stringify(policy));
+  await expect(page.locator('#demoChanges [data-change-kind=removed]')).toContainText('No removed statements');
+  await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('DeleteProductionDatabase');
+  await expect(page.locator('#demoChanges [data-change-kind=added]')).toContainText('<img src=x onerror=alert(1)>');
+  await expect(page.locator('#demoChanges img')).toHaveCount(0);
+  await page.locator('#verifyDemoCorrection').click();
+  await expect(page.locator('#demoVerification')).toContainText('Correction verified');
+  await expect(page.locator('#demoVerification')).toContainText('ExplicitDeny');
+  await page.locator('#demoCandidate').fill('{bad');
+  await expect(page.locator('#demoChanges')).toContainText('Fix the candidate JSON');
+  await expect(page.locator('#demoVerification')).toContainText('stale');
+  await page.locator('#chapterExport').click();
+  expect((await downloadRecord(page, '#exportDemoReview')).correction).toBe(null);
 });
 
 test('late verification cannot restore a pass after the candidate changes', async ({ page }) => {

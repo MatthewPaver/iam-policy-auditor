@@ -31,7 +31,7 @@ add('scripts/browser-entry.js');
 const wrapped = [...modules].map(([id, text]) => `${JSON.stringify(id)}:function(require,module,exports,__dirname){\n${text}\n}`).join(',\n');
 const runtime = `(function(){'use strict';const modules={${wrapped}},cache={};function resolve(request,from){if(!request.startsWith('.'))return request;const parts=(from.slice(0,from.lastIndexOf('/')+1)+request).split('/'),result=[];for(const part of parts){if(part==='..')result.pop();else if(part!=='.')result.push(part);}let id=result.join('/');if(!id.endsWith('.js'))id+='.js';return id;}function load(id){if(cache[id])return cache[id].exports;if(!modules[id])throw new Error('Unknown module: '+id);const module={exports:{}};cache[id]=module;modules[id](request=>load(resolve(request,id)),module,module.exports,id.slice(0,id.lastIndexOf('/')));return module.exports;}load('scripts/browser-entry.js');})();`;
 fs.mkdirSync(out, { recursive: true });
-for (const file of ['style.css', 'app.js', 'product.css', 'product.js']) fs.copyFileSync(path.join(root, 'public', file), path.join(out, file));
+for (const file of ['style.css', 'app.js', 'product.css', 'product.js', 'correction-view.js']) fs.copyFileSync(path.join(root, 'public', file), path.join(out, file));
 fs.cpSync(path.join(root, 'public/assets'), path.join(out, 'assets'), { recursive: true });
 fs.cpSync(path.join(root, 'samples'), path.join(out, 'samples'), { recursive: true });
 let html = fs.readFileSync(path.join(root, 'public/index.html'), 'utf8')
