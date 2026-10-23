@@ -124,10 +124,10 @@
       if (revision !== verificationRevision || record !== sampleRecord) return;
       record.correction = { inputIdentity: identity, inputs, result };
       find('#demoVerification').classList.add(result.verified ? 'verified' : 'not-verified');
-      find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Correction verified for declared requests' : 'Correction not verified'}</h3>
-        <dl><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
+      find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Deletion not allowed by this policy. Required access preserved.' : !result.riskClosed ? 'Deletion risk remains unresolved.' : !result.requiredPreserved ? 'Required access is not preserved.' : 'New high or critical findings need review.'}</h3>
+        <details class="verification-evidence"><summary>Inspect checked requests and decisions</summary><p>${result.verified ? 'Correction verified for declared requests.' : 'Correction not verified for the declared requests.'}</p><dl><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
         <p class="checked-access"><strong>Database deletion: ${esc(window.PolicyLensCorrectionView.describe(result.risk.candidate.decision))}</strong><code>${esc(request.action)}</code></p>
-        ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}
+        ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}</details>
         <p>Original proposal: ${esc(record.review.verdict.label)}. This is a bounded check, not production approval.</p>`;
       renderRecord();
     } catch (error) {
@@ -193,7 +193,7 @@
       traceTimer = setTimeout(() => desk.classList.remove('trace-running'), 1250);
     });
   }
-  find('#replayTrace').onclick = replayTrace;
+  find('#replayTrace').onclick = () => { find('#demoEvidence').open = true; replayTrace(); };
   if (!window.PolicyLensLocalAPI) find('#productPrivacy').textContent = 'Runs on your PolicyLens server. AI off for this example.';
   else {
     find('#localAccountTools').hidden = true;
@@ -246,6 +246,7 @@
   find('#copyDemoSource').onclick = () => copyExample('source');
 
   find('#viewDemoPolicy').onclick = () => {
+    find('#demoEvidence').open = true;
     const button = find('#viewDemoPolicy');
     const full = button.getAttribute('aria-pressed') !== 'true';
     button.setAttribute('aria-pressed', String(full));

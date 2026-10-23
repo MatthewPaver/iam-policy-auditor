@@ -27,6 +27,9 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoBeforeMeaning')).toHaveText('Not allowed');
   await expect(page.locator('#demoAfterMeaning')).toHaveText('Allowed');
   await expect(page.locator('#demoCitation')).toContainText('S2 · after.json:10');
+  await expect(page.locator('#demoEvidence')).not.toHaveAttribute('open');
+  await expect(page.getByRole('button', { name: 'Check correction', exact: true })).toBeVisible();
+  await page.locator('#demoEvidence summary').click();
   await expect(page.locator('#demoSource')).toContainText('arn:aws:rds:eu-west-1:111122223333:db:prod-1');
   await expect(page.locator('#demoSource .source-risk')).toHaveCount(4);
   await page.locator('#viewDemoPolicy').click();
@@ -43,6 +46,10 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoVerification')).toContainText('Not checked yet');
   await expect(page.locator('.original-outcome')).toContainText('Stop and review');
   await page.locator('#verifyDemoCorrection').click();
+  await expect(page.locator('#demoVerification h3')).toHaveText('Deletion not allowed by this policy. Required access preserved.');
+  await expect(page.locator('.verification-evidence')).not.toHaveAttribute('open');
+  await page.locator('.verification-evidence summary').click();
+  await expect(page.locator('#demoVerification')).toContainText('rds:DeleteDBInstance');
   await expect(page.locator('#demoVerification')).toContainText('Correction verified for declared requests');
   await expect(page.locator('.original-outcome')).toContainText('ImplicitDeny → Allow');
   await page.getByRole('button', { name: 'View review record' }).click();
@@ -129,6 +136,7 @@ test('own JSON files complete review and correction while home navigation preser
 test('copy controls copy the actual request, citation and displayed source', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await ready(page);
+  await page.locator('#demoEvidence summary').click();
   await page.locator('#copyDemoRequest').click();
   await expect(page.locator('#demoCopyStatus')).toHaveText('Copied checked request.');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('rds:DeleteDBInstance');

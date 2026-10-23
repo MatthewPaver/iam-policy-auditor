@@ -210,6 +210,8 @@ Policy textareas are resizable dark fields with monospace content. Request field
 
 ### Evidence trace and record
 
+The risk consequence and “Check correction” action precede “Inspect the request and source evidence”. “View policy” and “Replay trace” open that disclosure. Verified correction leads with “Deletion not allowed by this policy. Required access preserved.” Failure headings identify unresolved deletion risk, required access not preserved, or new high or critical findings needing review; “Inspect checked requests and decisions” retains exact checks and decisions. The bounded-check limit stays visible outside the disclosure.
+
 Source displays real line numbers, a cited excerpt and restrained risk emphasis on granting values. The full-policy toggle preserves inspectability. Request, citation and source copy controls use authored SVGs, descriptive accessible names and copied/error status messages. Phone copy targets reach 44px. Icons support written meaning rather than replacing it.
 
 ### Statement comparison

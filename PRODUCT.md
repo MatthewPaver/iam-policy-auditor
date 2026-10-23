@@ -44,7 +44,7 @@ Existing evidence includes source modules, tests, authored benchmarks, captured 
 
 ## Product Principles
 
-1. Explain the consequence, show its source and make the next review action clear.
+1. Explain the consequence and next review action before technical detail. Keep the checked request, cited statement, exact decisions and portable record available through labelled evidence disclosures.
 2. Keep original and corrected outcomes distinct, including failures and stale states.
 3. Use the real engine and clearly labelled synthetic inputs for demonstrations.
 4. Place scope limits beside conclusions, not only in documentation.
