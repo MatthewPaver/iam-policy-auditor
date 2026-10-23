@@ -7,6 +7,7 @@ test('published browser engine matches the server result and completes correctio
   page.on('request', request => requests.push({ url: request.url(), method: request.method() }));
   await page.goto('/');
   await expect(page.locator('.pill.local')).toContainText('no upload');
+  await page.getByRole('link', { name: 'Use your own policies', exact: true }).click();
   await page.getByRole('button', { name: 'Run example change' }).click();
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
   const before = await page.locator('#beforeBox').inputValue(), after = await page.locator('#afterBox').inputValue();

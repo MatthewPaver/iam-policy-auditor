@@ -10,3 +10,6 @@ playwright-report/
 test-results/
 
 site/
+
+# Local design choices, image references and measured review evidence.
+.impeccable/

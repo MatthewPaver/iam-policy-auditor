@@ -85,6 +85,7 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
 };
 
 function send(res, code, body, type = 'application/json; charset=utf-8') {
