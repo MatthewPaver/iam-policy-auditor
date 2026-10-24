@@ -1,4 +1,4 @@
-name: Verify impact rehearsal preview
+name: Verify shortened rehearsal preview
 on:
   push:
     branches: ['verify-policylens-impact-*']
@@ -37,13 +37,11 @@ jobs:
           PY
       - run: npx playwright install --with-deps chromium
       - name: Test branches, sandbox consequences and evidence
-        run: node review-proof/verify-impact.cjs
+        run: node review-proof/verify-simplified.cjs
       - name: Upload captures and verification evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: policylens-impact-proof
+          name: policylens-short-proof
           path: |
-            review-proof/impact-captures
-            review-proof/impact-checks.json
-            review-proof/impact-server-test.log
+            review-proof/simplified-proof
