@@ -1,23 +1,27 @@
-# PolicyLens: evidence-first IAM change review
+# PolicyLens
+
+Review an AWS permission change. Check that a correction removes declared risky access while preserving required access.
+
+**For:** engineers and security reviewers, with source-linked evidence that service owners can inspect.
+
+**Start here:** [Try PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/) — no install, account or policy upload.
+
+1. Follow the synthetic example: a proposed change adds permission to delete a production database.
+2. Check the correction. Inspect the removed deletion statement and retained report access, then verify the declared requests.
+3. Export the review JSON with its source evidence, input identities and limits.
+
+The browser demo checks supplied policies and declared requests. It does not establish whole-account safety or production approval. Account-analysis tools and optional AI explanations require the local server.
+
+**Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
+
+PolicyLens is the product name; `iam-policy-auditor` is its repository name.
 
 [![CI](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-For engineers and security reviewers approving AWS IAM policy changes: PolicyLens shows whether a change makes a sensitive action reachable, cites the statement responsible, and checks that a proposed fix closes the path without breaking access that must keep working.
-
 ![PolicyLens change review: the proposed policy turns rds:DeleteDBInstance on prod-1 from ImplicitDeny to Allow, citing statement S2 at after.json:10](docs/assets/change-review.png)
 
 *Change review on the bundled example, running locally with the AI layer off. The verdict, the evidence line and the candidate correction all come from the deterministic engine.*
-
-The default page is a product landing with a real-engine synthetic example. Its three chapters explain introduced access, verify a correction against required report access, and export the evidence. The cited statement stays inspectable and copyable. A user-triggered source trace supports reduced motion; chapter controls work by keyboard. The example never shares state with a visitor’s own review.
-
-Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, declare a sensitive request and select **Review this change**. **Run example change** remains available there. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
-
-The correction view compares the exact proposed and candidate statements: removed, retained and added, with inspectable JSON and source pointers. It appears in the guided example and completed own-policy verification. This is a document comparison, not an access verdict: an added deny can close the request while leaving its original allow statement in place. Editing a candidate refreshes the comparison and invalidates verification; only the existing engine can establish the declared access outcome.
-
-Condition context is an explicit JSON object. Verification requires at least one declared required request with definite Allow in both policies; empty requirements and unresolved context cannot verify preservation. A candidate introducing a high or critical rule finding is not marked verified. Optional AI explanation is off by default for change review. The account demo remains at `/?demo=1`; `/?view=org` opens account analysis.
-
-Browser journey checks: `npm ci`, `npx playwright install chromium`, then `npm run test:browser`. CI runs these alongside the engine tests, authored benchmark and grounding checks.
 
 ## The problem
 
@@ -57,6 +61,18 @@ The same check is available over HTTP (`POST /api/change/review`, `POST /api/cha
 
 **Docker (optional).** `docker build -t policylens . && docker run --rm -p 4177:4177 policylens` runs it in shared-demo mode (`HOSTED=1`): it binds all interfaces, throttles POST requests and shows a "do not paste real policies" banner.
 
+## Review workflow
+
+The default page is a product landing with a real-engine synthetic example. Its three chapters explain introduced access, verify a correction against required report access, and export the evidence. The cited statement stays inspectable and copyable. A user-triggered source trace supports reduced motion; chapter controls work by keyboard. The example never shares state with a visitor’s own review.
+
+Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, declare a sensitive request and select **Review this change**. **Run example change** remains available there. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
+
+The correction view compares the exact proposed and candidate statements: removed, retained and added, with inspectable JSON and source pointers. It appears in the guided example and completed own-policy verification. This is a document comparison, not an access verdict: an added deny can close the request while leaving its original allow statement in place. Editing a candidate refreshes the comparison and invalidates verification; only the existing engine can establish the declared access outcome.
+
+Condition context is an explicit JSON object. Verification requires at least one declared required request with definite Allow in both policies; empty requirements and unresolved context cannot verify preservation. A candidate introducing a high or critical rule finding is not marked verified. Optional AI explanation is off by default for change review. The account demo remains at `/?demo=1`; `/?view=org` opens account analysis.
+
+Browser journey checks: `npm ci`, `npx playwright install chromium`, then `npm run test:browser`. CI runs these alongside the engine tests, authored benchmark and grounding checks.
+
 ## How it works
 
 ```mermaid
@@ -89,7 +105,7 @@ All three checks run offline in CI on every push.
 
 | Check | Command | Result | What it does not show |
 |---|---|---|---|
-| Unit and contract tests | `npm test` | 133 tests in 11 suites pass | Behaviour on real account data; the fixtures are synthetic. |
+| Unit and contract tests | `npm test` | All unit and contract suites pass | Behaviour on real account data; the fixtures are synthetic. |
 | AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
 | Authored regression corpus | `npm run benchmark` | Engine agrees with 55/55 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
 
