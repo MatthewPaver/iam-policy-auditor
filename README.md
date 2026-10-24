@@ -12,6 +12,8 @@ Review an AWS permission change. Check that a correction removes declared risky 
 
 The browser demo checks supplied policies and declared requests. It does not establish whole-account safety or production approval. Account-analysis tools and optional AI explanations require the local server.
 
+**Case study:** [The problem, review journey and before-and-after design](https://matthewpaver.github.io/work/policylens/).
+
 **Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
 
 PolicyLens is the product name; `iam-policy-auditor` is its repository name.
