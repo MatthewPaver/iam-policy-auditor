@@ -19,7 +19,7 @@ function globMatch(pattern, str, caseSensitive = false) {
     else if (ch === '?') re += '.';
     else re += ch.replace(/[.+^${}()|[\]\\/]/g, '\\$&');
   }
-  return new RegExp(`^${re}$`, caseSensitive ? '' : 'i').test(String(str));
+  return new RegExp(`^${re}$`, caseSensitive ? 'su' : 'isu').test(String(str));
 }
 
 module.exports = { asArray, uniq, globMatch };

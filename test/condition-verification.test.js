@@ -147,6 +147,15 @@ check('ARN conditions compare case and each component separately', () => {
   assert.equal(evaluateCondition({ ArnLike: { 'aws:SourceArn': 'arn:aws:s3:::reports/A' } }, { 'aws:SourceArn': 'arn:aws:s3:::reports/a' }).result, false);
   assert.equal(evaluateCondition({ ArnLike: { 'aws:SourceArn': 'arn:aws:*:us-east-1:111122223333:report' } }, { 'aws:SourceArn': 'arn:aws:s3:us-west-2:111122223333:us-east-1:111122223333:report' }).result, false);
 });
+check('wildcards include line breaks and single Unicode code points', () => {
+  assert.equal(evaluateCondition({ StringLike: { 's3:prefix': 'allowed/*' } }, { 's3:prefix': 'allowed/\nsecret' }).result, true);
+  assert.equal(evaluateCondition({ StringLike: { 's3:prefix': 'allowed/?' } }, { 's3:prefix': 'allowed/😀' }).result, true);
+  const list = { Effect: 'Allow', Action: 's3:ListBucket', Resource: 'arn:aws:s3:::data' };
+  const request = { action: list.Action, resource: list.Resource, context: { 's3:prefix': 'allowed/\nsecret' } };
+  const result = verifyCorrection({ proposed: policy(read, list), candidate: policy(read, { ...list, Condition: { StringLike: { 's3:prefix': 'allowed/*' } } }), riskRequest: request, requiredAccess: [required] });
+  assert.equal(result.risk.candidate.decision, 'Allow');
+  assert.equal(result.verified, false);
+});
 check('context casing ambiguity is unresolved and set-operator lint agrees', () => {
   assert.equal(evaluateCondition({ StringEquals: { 'aws:RequestedRegion': 'eu-west-1' } }, { 'aws:requestedregion': 'eu-west-1', 'aws:RequestedRegion': 'us-east-1' }, true).result, 'unknown');
   for (const [operator, valid] of [['ForAnyValue:StringLike', true], ['ForAnyValues:StringLike', false]]) {
