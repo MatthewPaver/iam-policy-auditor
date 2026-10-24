@@ -1,0 +1,49 @@
+name: Verify impact rehearsal preview
+on:
+  push:
+    branches: ['verify-policylens-impact-*']
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:demo
+      - name: Prepare authored preview and existing engine
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,base64,io,shutil,urllib.request
+          r=Path('review-proof');r.mkdir()
+          data=base64.b64decode(Path('impact-preview-bundle.b64').read_text())
+          with zipfile.ZipFile(io.BytesIO(data))as z:
+              for name in z.namelist():
+                  p=Path(name)
+                  assert not p.is_absolute()and '..'not in p.parts
+              z.extractall(r)
+          p=r/'previews';(p/'vendor').mkdir()
+          shutil.copy2('site/engine-browser.js',p/'engine-browser.js')
+          shutil.copytree('samples',p/'samples')
+          shutil.copytree('public/assets/fonts',p/'fonts')
+          for name,source in [('three.module.js','build/three.module.js'),('OrbitControls.js','examples/jsm/controls/OrbitControls.js')]:
+              (p/'vendor'/name).write_bytes(urllib.request.urlopen('https://cdn.jsdelivr.net/npm/three@0.170.0/'+source,timeout=30).read())
+          PY
+      - run: npx playwright install --with-deps chromium
+      - name: Test branches, sandbox consequences and evidence
+        run: node review-proof/verify-impact.cjs
+      - name: Upload captures and verification evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: policylens-impact-proof
+          path: |
+            review-proof/impact-captures
+            review-proof/impact-checks.json
+            review-proof/impact-server-test.log
