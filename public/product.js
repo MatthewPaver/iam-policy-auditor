@@ -128,7 +128,7 @@
         <details class="verification-evidence"><summary>Inspect checked requests and decisions</summary><p>${result.verified ? 'Correction verified for declared requests.' : 'Correction not verified for the declared requests.'}</p><dl><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
         <p class="checked-access"><strong>Database deletion: ${esc(window.PolicyLensCorrectionView.describe(result.risk.candidate.decision))}</strong><code>${esc(request.action)}</code></p>
         ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}</details>
-        <p>Original proposal: ${esc(record.review.verdict.label)}. This is a bounded check, not production approval.</p>`;
+        <p>Original proposal: ${esc(record.review.verdict.label)}. These checks cover the listed requests, not all account permissions or production approval.</p>`;
       renderRecord();
     } catch (error) {
       if (revision === verificationRevision) find('#demoVerification').innerHTML = `<h3>Check incomplete</h3><p role="alert">${esc(error.message)} Repair the inputs and verify again. No current correction is included in the export.</p>`;
