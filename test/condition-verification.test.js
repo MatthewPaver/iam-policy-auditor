@@ -179,5 +179,26 @@ check('conditional administrator and group paths remain visible as uncertain', (
   assert.ok(direct);
   assert.match(direct.note, /unresolved/);
 });
+check('invalid numeric and boolean values cannot close risk or prove preservation', () => {
+  for (const [Condition, context] of [
+    [{ NumericLessThan: { 'aws:MultiFactorAuthAge': '3600' } }, { 'aws:MultiFactorAuthAge': 'recent' }],
+    [{ NumericGreaterThan: { 'aws:MultiFactorAuthAge': '3600' } }, { 'aws:MultiFactorAuthAge': '' }],
+    [{ NumericEquals: { 'aws:MultiFactorAuthAge': 'NaN' } }, { 'aws:MultiFactorAuthAge': '100' }],
+    [{ NumericEquals: { 'aws:MultiFactorAuthAge': 'Infinity' } }, { 'aws:MultiFactorAuthAge': '100' }],
+    [{ Bool: { 'aws:MultiFactorAuthPresent': 'true' } }, { 'aws:MultiFactorAuthPresent': 'yes' }],
+    [{ Bool: { 'aws:MultiFactorAuthPresent': 'yes' } }, { 'aws:MultiFactorAuthPresent': 'true' }],
+    [{ Null: { 'aws:TokenIssueTime': 'yes' } }, {}],
+  ]) {
+    const retained = verifyCorrection({ proposed: policy(read, destroy), candidate: policy(read, { ...destroy, Condition }), riskRequest: { ...risk, context }, requiredAccess: [required] });
+    assert.equal(retained.risk.candidate.decision, 'ConditionalAllow');
+    assert.equal(retained.verified, false);
+    const deny = { ...read, Effect: 'Deny', Condition };
+    const preserved = verifyCorrection({ proposed: policy(read, deny, destroy), candidate: policy(read, deny), riskRequest: risk, requiredAccess: [{ ...required, context }] });
+    assert.equal(preserved.preservation[0].after.decision, 'ConditionalAllow');
+    assert.equal(preserved.verified, false);
+  }
+  assert.equal(evaluateCondition({ NumericLessThan: { 'aws:MultiFactorAuthAge': '3600' } }, { 'aws:MultiFactorAuthAge': '1.2e2' }).result, true);
+  assert.equal(evaluateCondition({ Bool: { 'aws:MultiFactorAuthPresent': 'false' } }, { 'aws:MultiFactorAuthPresent': false }).result, true);
+});
 
 console.log(`condition verification — ${checks} regression groups passed`);

@@ -124,6 +124,11 @@ function evaluateCondition(condition, context, contextComplete = false) {
     }
     for (const [key, policyValRaw] of Object.entries(keyMap)) {
       const policyVals = asArr(policyValRaw).map(String);
+      if ((op === 'Bool' || op === 'Null') && policyVals.some(value => !/^(true|false)$/.test(value))) {
+        invalidValues.push(`${rawOp} ${key} (expected true or false)`);
+        sawUnknown = true;
+        continue;
+      }
       const contextKeys = Object.keys(context).filter(item => item.toLowerCase() === key.toLowerCase());
       const present = contextKeys.length > 0;
       if (policyVals.some(value => value.includes('${')) || contextKeys.some(item => JSON.stringify(context[item]) !== JSON.stringify(context[contextKeys[0]]))) {
@@ -154,6 +159,13 @@ function evaluateCondition(condition, context, contextComplete = false) {
       }
 
       const ctxVals = asArr(context[contextKeys[0]]).map(String);
+      const validNumber = value => /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) && Number.isFinite(Number(value));
+      if ((op.startsWith('Numeric') && [...policyVals, ...ctxVals].some(value => !validNumber(value)))
+        || (op === 'Bool' && ctxVals.some(value => !/^(true|false)$/.test(value)))) {
+        invalidValues.push(`${rawOp} ${key} (invalid numeric or boolean value)`);
+        sawUnknown = true;
+        continue;
+      }
       if ((op === 'IpAddress' || op === 'NotIpAddress') && ctxVals.some(value => policyVals.some(pattern => ipInCidr(value, pattern) === null))) {
         invalidValues.push(`${rawOp} ${key} (IPv6 or invalid IPv4 range is not evaluated locally)`);
         sawUnknown = true;

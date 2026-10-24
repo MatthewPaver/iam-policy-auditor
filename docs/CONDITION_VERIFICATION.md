@@ -10,6 +10,7 @@ PolicyLens evaluates supplied requests locally. It does not authorize AWS operat
 - Explicit Deny still takes precedence. An unresolved Allow does not weaken an independently conclusive Allow when no Deny is unresolved.
 - Required-access proof needs definite Allow before and after. Risk closure needs a definite proposed Allow and definite candidate denial. Unresolved results cannot satisfy either proof.
 - Invalid date values remain unresolved.
+- Numeric conditions require finite numeric values; Bool and Null policy values require canonical true/false values. Invalid supplied values remain unresolved rather than producing a failed condition or coercing empty text to zero.
 - JSON keys such as `__proto__` remain ordinary data. They cannot disappear during parsing and bypass unsupported-operator checks. This rejects a false proof from invalid IAM input; it is not evidence of an AWS enforcement bypass.
 - IPv6 and policy-variable substitution are not implemented locally. Relevant conditions and variable-bearing resource patterns stay unresolved instead of becoming false or unconditional. Use AWS for these cases.
 - String/ARN condition matching is case-sensitive; ARN condition components are compared separately. Condition key lookup is case-insensitive, with conflicting case variants unresolved. Resource matching is case-sensitive; action names retain their case-insensitive match.
