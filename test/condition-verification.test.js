@@ -185,8 +185,12 @@ check('invalid numeric and boolean values cannot close risk or prove preservatio
     [{ NumericGreaterThan: { 'aws:MultiFactorAuthAge': '3600' } }, { 'aws:MultiFactorAuthAge': '' }],
     [{ NumericEquals: { 'aws:MultiFactorAuthAge': 'NaN' } }, { 'aws:MultiFactorAuthAge': '100' }],
     [{ NumericEquals: { 'aws:MultiFactorAuthAge': 'Infinity' } }, { 'aws:MultiFactorAuthAge': '100' }],
+    [{ NumericEquals: { 'aws:MultiFactorAuthAge': '100' } }, { 'aws:MultiFactorAuthAge': [] }],
+    [{ NumericEquals: { 'aws:MultiFactorAuthAge': [] } }, { 'aws:MultiFactorAuthAge': '100' }],
     [{ Bool: { 'aws:MultiFactorAuthPresent': 'true' } }, { 'aws:MultiFactorAuthPresent': 'yes' }],
     [{ Bool: { 'aws:MultiFactorAuthPresent': 'yes' } }, { 'aws:MultiFactorAuthPresent': 'true' }],
+    [{ Bool: { 'aws:MultiFactorAuthPresent': 'true' } }, { 'aws:MultiFactorAuthPresent': [] }],
+    [{ Bool: { 'aws:MultiFactorAuthPresent': [] } }, { 'aws:MultiFactorAuthPresent': 'true' }],
     [{ Null: { 'aws:TokenIssueTime': 'yes' } }, {}],
   ]) {
     const retained = verifyCorrection({ proposed: policy(read, destroy), candidate: policy(read, { ...destroy, Condition }), riskRequest: { ...risk, context }, requiredAccess: [required] });

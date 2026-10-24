@@ -125,12 +125,12 @@ function evaluateCondition(condition, context, contextComplete = false) {
     }
     for (const [key, policyValRaw] of Object.entries(keyMap)) {
       const policyVals = asArr(policyValRaw).map(String);
-      if (op.startsWith('Numeric') && policyVals.some(value => !validNumber(value))) {
+      if (op.startsWith('Numeric') && (!policyVals.length || policyVals.some(value => !validNumber(value)))) {
         invalidValues.push(`${rawOp} ${key} (invalid numeric policy value)`);
         sawUnknown = true;
         continue;
       }
-      if ((op === 'Bool' || op === 'Null') && policyVals.some(value => !/^(true|false)$/.test(value))) {
+      if ((op === 'Bool' || op === 'Null') && (!policyVals.length || policyVals.some(value => !/^(true|false)$/.test(value)))) {
         invalidValues.push(`${rawOp} ${key} (expected true or false)`);
         sawUnknown = true;
         continue;
@@ -165,8 +165,8 @@ function evaluateCondition(condition, context, contextComplete = false) {
       }
 
       const ctxVals = asArr(context[contextKeys[0]]).map(String);
-      if ((op.startsWith('Numeric') && ctxVals.some(value => !validNumber(value)))
-        || (op === 'Bool' && ctxVals.some(value => !/^(true|false)$/.test(value)))) {
+      if ((op.startsWith('Numeric') && (!ctxVals.length || ctxVals.some(value => !validNumber(value))))
+        || (op === 'Bool' && (!ctxVals.length || ctxVals.some(value => !/^(true|false)$/.test(value))))) {
         invalidValues.push(`${rawOp} ${key} (invalid numeric or boolean value)`);
         sawUnknown = true;
         continue;
