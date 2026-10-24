@@ -198,6 +198,7 @@ check('invalid numeric and boolean values cannot close risk or prove preservatio
     assert.equal(preserved.verified, false);
   }
   assert.equal(evaluateCondition({ NumericLessThan: { 'aws:MultiFactorAuthAge': '3600' } }, { 'aws:MultiFactorAuthAge': '1.2e2' }).result, true);
+  assert.equal(evaluateCondition({ NumericNotEquals: { 'aws:MultiFactorAuthAge': 'NaN' } }, {}, true).result, 'unknown');
   assert.equal(evaluateCondition({ Bool: { 'aws:MultiFactorAuthPresent': 'false' } }, { 'aws:MultiFactorAuthPresent': false }).result, true);
 });
 

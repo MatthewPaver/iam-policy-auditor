@@ -94,6 +94,7 @@ const OPS = {
 };
 
 const asArr = (x) => (Array.isArray(x) ? x : [x]);
+const validNumber = value => /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) && Number.isFinite(Number(value));
 
 // Evaluate one Condition block against a context.
 // Returns { result: true|false|'unknown', unmet: [...], missingKeys: [...] }.
@@ -124,6 +125,11 @@ function evaluateCondition(condition, context, contextComplete = false) {
     }
     for (const [key, policyValRaw] of Object.entries(keyMap)) {
       const policyVals = asArr(policyValRaw).map(String);
+      if (op.startsWith('Numeric') && policyVals.some(value => !validNumber(value))) {
+        invalidValues.push(`${rawOp} ${key} (invalid numeric policy value)`);
+        sawUnknown = true;
+        continue;
+      }
       if ((op === 'Bool' || op === 'Null') && policyVals.some(value => !/^(true|false)$/.test(value))) {
         invalidValues.push(`${rawOp} ${key} (expected true or false)`);
         sawUnknown = true;
@@ -159,8 +165,7 @@ function evaluateCondition(condition, context, contextComplete = false) {
       }
 
       const ctxVals = asArr(context[contextKeys[0]]).map(String);
-      const validNumber = value => /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) && Number.isFinite(Number(value));
-      if ((op.startsWith('Numeric') && [...policyVals, ...ctxVals].some(value => !validNumber(value)))
+      if ((op.startsWith('Numeric') && ctxVals.some(value => !validNumber(value)))
         || (op === 'Bool' && ctxVals.some(value => !/^(true|false)$/.test(value)))) {
         invalidValues.push(`${rawOp} ${key} (invalid numeric or boolean value)`);
         sawUnknown = true;
