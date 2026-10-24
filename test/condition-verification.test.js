@@ -113,6 +113,9 @@ check('invalid dates cannot produce a correction proof', () => {
   assert.equal(evaluateCondition(dateCondition, { 'aws:CurrentTime': 'invalid-date' }).result, 'unknown');
   assert.equal(evaluateCondition(dateCondition, { 'aws:CurrentTime': '2026-10-24T00:00:00' }).result, 'unknown');
   assert.equal(evaluateCondition(dateCondition, { 'aws:CurrentTime': '2026-02-30T00:00:00Z' }).result, 'unknown');
+  // Calendar-only ISO input is a local UTC-midnight interpretation, distinct
+  // from an offset-less date-time. Neither case is live AWS evidence.
+  assert.equal(evaluateCondition(dateCondition, { 'aws:CurrentTime': '2026-10-24' }).result, false);
 });
 check('IPv6, policy variables and case-sensitive text cannot falsely close risk', () => {
   for (const [Condition, context, decision] of [

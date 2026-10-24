@@ -13,7 +13,7 @@ PolicyLens evaluates supplied requests locally. It does not authorize AWS operat
 - JSON keys such as `__proto__` remain ordinary data. They cannot disappear during parsing and bypass unsupported-operator checks. This rejects a false proof from invalid IAM input; it is not evidence of an AWS enforcement bypass.
 - IPv6 and policy-variable substitution are not implemented locally. Relevant conditions and variable-bearing resource patterns stay unresolved instead of becoming false or unconditional. Use AWS for these cases.
 - String/ARN condition matching is case-sensitive; ARN condition components are compared separately. Condition key lookup is case-insensitive, with conflicting case variants unresolved. Resource matching is case-sensitive; action names retain their case-insensitive match.
-- Dates without a timezone, unsupported formats and impossible calendar dates remain unresolved. A date-dependent result covers the supplied request time, not future requests.
+- Date-time values without a timezone, unsupported formats and impossible calendar dates remain unresolved. A calendar-only ISO date (`YYYY-MM-DD`) is interpreted as UTC midnight locally; this interpretation has not been compared live with AWS. Use a full timestamp with an explicit timezone or epoch seconds for precise checks. A date-dependent result covers the supplied request time, not future requests.
 - Account analysis retains possible administrator and group paths as conditional when unresolved conditions prevent certainty. Its three administrator probes remain an approximation, not a complete privilege model.
 
 ## Missing information versus known absence
