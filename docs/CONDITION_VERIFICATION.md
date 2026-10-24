@@ -10,6 +10,11 @@ PolicyLens evaluates supplied requests locally. It does not authorize AWS operat
 - Explicit Deny still takes precedence. An unresolved Allow does not weaken an independently conclusive Allow when no Deny is unresolved.
 - Required-access proof needs definite Allow before and after. Risk closure needs a definite proposed Allow and definite candidate denial. Unresolved results cannot satisfy either proof.
 - Invalid date values remain unresolved.
+- JSON keys such as `__proto__` remain ordinary data. They cannot disappear during parsing and bypass unsupported-operator checks. This rejects a false proof from invalid IAM input; it is not evidence of an AWS enforcement bypass.
+- IPv6 and policy-variable substitution are not implemented locally. Relevant conditions and variable-bearing resource patterns stay unresolved instead of becoming false or unconditional. Use AWS for these cases.
+- String/ARN condition matching is case-sensitive; ARN condition components are compared separately. Condition key lookup is case-insensitive, with conflicting case variants unresolved. Resource matching is case-sensitive; action names retain their case-insensitive match.
+- Dates without a timezone, unsupported formats and impossible calendar dates remain unresolved. A date-dependent result covers the supplied request time, not future requests.
+- Account analysis retains possible administrator and group paths as conditional when unresolved conditions prevent certainty. Its three administrator probes remain an approximation, not a complete privilege model.
 
 ## Missing information versus known absence
 
@@ -19,9 +24,11 @@ Advanced callers can explicitly set `contextComplete: true` on a request. Only u
 
 The optional boolean is supported by `evaluateRequest`, `reviewChange` request objects, `verifyCorrection` risk/required request objects and the review API's top-level request fields. The web form keeps the default incomplete-context behavior and has no automatic override.
 
+The older simulate and organization-analysis API routes keep the conservative default and do not expose this opt-in. Their omitted `Null`/`IfExists` context may now produce an unresolved result where older versions assumed absence.
+
 ## Evidence and limits
 
-`benchmark/condition-reference-cases.js` adds 18 fully specified reference cases derived from [AWS condition operators](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html) and [explicit Deny precedence](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html). Four additional cases cover PolicyLens's conservative incomplete-context behavior; these deliberately skip direct AWS comparison. The fixtures are authored interpretations, not recorded AWS responses or independent ground truth.
+`benchmark/condition-reference-cases.js` adds 23 fully specified reference cases derived from [AWS condition operators](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html), [condition key matching](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html) and [explicit Deny precedence](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html). Eight additional cases cover PolicyLens's conservative incomplete-context and unsupported-feature behavior; these deliberately skip direct AWS comparison. The full corpus has 86 cases. The fixtures are authored interpretations, not recorded AWS responses or independent ground truth.
 
 `test/condition-verification.test.js` reproduces the two original false-verification paths and checks unsupported operators, correction proof, Deny precedence, missing information, explicit context completeness and invalid dates. The benchmark participates in the existing CI gate.
 

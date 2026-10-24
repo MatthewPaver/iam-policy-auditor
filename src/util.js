@@ -10,7 +10,7 @@ function uniq(a) {
 
 // IAM-style glob: '*' matches any run, '?' matches one char. Case-insensitive,
 // matching how AWS evaluates action names.
-function globMatch(pattern, str) {
+function globMatch(pattern, str, caseSensitive = false) {
   if (pattern == null) return false;
   if (pattern === str) return true;
   let re = '';
@@ -19,7 +19,7 @@ function globMatch(pattern, str) {
     else if (ch === '?') re += '.';
     else re += ch.replace(/[.+^${}()|[\]\\/]/g, '\\$&');
   }
-  return new RegExp(`^${re}$`, 'i').test(String(str));
+  return new RegExp(`^${re}$`, caseSensitive ? '' : 'i').test(String(str));
 }
 
 module.exports = { asArray, uniq, globMatch };

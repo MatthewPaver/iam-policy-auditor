@@ -74,7 +74,9 @@ function parseWithPointers(text) {
       skipWs();
       if (text[i] !== ':') fail('Expected ":" after property name');
       i++;
-      obj[key] = parseValue(`${path}/${escapePtr(key)}`);
+      // Define JSON keys as data, including __proto__; assignment would invoke
+      // Object.prototype's setter and silently remove an unsupported condition.
+      Object.defineProperty(obj, key, { value: parseValue(`${path}/${escapePtr(key)}`), enumerable: true, writable: true, configurable: true });
       skipWs();
       if (text[i] === ',') { i++; continue; }
       if (text[i] === '}') { i++; return obj; }

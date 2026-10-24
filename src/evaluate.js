@@ -26,14 +26,17 @@ const ipInCidr = (ip, cidr) => {
     const p = s.split('.');
     if (p.length !== 4) return null;
     let n = 0;
-    for (const o of p) { const x = Number(o); if (!(x >= 0 && x <= 255)) return null; n = (n * 256) + x; }
+    for (const o of p) { const x = Number(o); if (!/^\d{1,3}$/.test(o) || !(x >= 0 && x <= 255)) return null; n = (n * 256) + x; }
     return n >>> 0;
   };
-  if (!cidr.includes('/')) return v4(ip) === v4(cidr);
+  if (!cidr.includes('/')) {
+    const a = v4(ip), b = v4(cidr);
+    return a === null || b === null ? null : a === b;
+  }
   const [base, bitsRaw] = cidr.split('/');
   const bits = Number(bitsRaw);
   const b = v4(base); const a = v4(ip);
-  if (a == null || b == null || !(bits >= 0 && bits <= 32)) return false;
+  if (a == null || b == null || cidr.split('/').length !== 2 || !/^\d+$/.test(bitsRaw) || !Number.isInteger(bits) || !(bits >= 0 && bits <= 32)) return null;
   const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
   return (a & mask) === (b & mask);
 };
@@ -45,25 +48,37 @@ const toDate = (v) => {
     const epoch = Number(v) * 1000;
     return Number.isFinite(epoch) && Math.abs(epoch) <= 8.64e15 ? epoch : null;
   }
+  // Keep unsupported date formats unresolved rather than using host-local time.
+  const iso = String(v).match(/^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/);
+  if (!iso) return null;
+  const day = new Date(0);
+  day.setUTCFullYear(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  if (day.getUTCFullYear() !== Number(iso[1]) || day.getUTCMonth() !== Number(iso[2]) - 1 || day.getUTCDate() !== Number(iso[3])) return null;
   const t = Date.parse(v);
   return Number.isNaN(t) ? null : t;
 };
+
+const arnParts = value => {
+  const parts = String(value).split(':');
+  return parts.length < 6 ? null : [...parts.slice(0, 5), parts.slice(5).join(':')];
+};
+const arnMatch = (pattern, value) => arnParts(pattern).every((part, index) => globMatch(part, arnParts(value)[index], true));
 
 const OPS = {
   StringEquals: (pv, cv) => pv.some((p) => p === cv),
   StringNotEquals: (pv, cv) => !pv.some((p) => p === cv),
   StringEqualsIgnoreCase: (pv, cv) => pv.some((p) => String(p).toLowerCase() === String(cv).toLowerCase()),
   StringNotEqualsIgnoreCase: (pv, cv) => !pv.some((p) => String(p).toLowerCase() === String(cv).toLowerCase()),
-  StringLike: (pv, cv) => pv.some((p) => globMatch(p, cv)),
-  StringNotLike: (pv, cv) => !pv.some((p) => globMatch(p, cv)),
+  StringLike: (pv, cv) => pv.some((p) => globMatch(p, cv, true)),
+  StringNotLike: (pv, cv) => !pv.some((p) => globMatch(p, cv, true)),
   Bool: (pv, cv) => pv.some((p) => String(p) === String(cv)),
   Null: (pv, cv, present) => pv.some((p) => (String(p) === 'true') === !present),
   IpAddress: (pv, cv) => pv.some((p) => ipInCidr(cv, p)),
   NotIpAddress: (pv, cv) => !pv.some((p) => ipInCidr(cv, p)),
-  ArnEquals: (pv, cv) => pv.some((p) => globMatch(p, cv)),
-  ArnLike: (pv, cv) => pv.some((p) => globMatch(p, cv)),
-  ArnNotEquals: (pv, cv) => !pv.some((p) => globMatch(p, cv)),
-  ArnNotLike: (pv, cv) => !pv.some((p) => globMatch(p, cv)),
+  ArnEquals: (pv, cv) => pv.some((p) => arnMatch(p, cv)),
+  ArnLike: (pv, cv) => pv.some((p) => arnMatch(p, cv)),
+  ArnNotEquals: (pv, cv) => !pv.some((p) => arnMatch(p, cv)),
+  ArnNotLike: (pv, cv) => !pv.some((p) => arnMatch(p, cv)),
   NumericEquals: (pv, cv) => pv.some((p) => Number(p) === Number(cv)),
   NumericNotEquals: (pv, cv) => !pv.some((p) => Number(p) === Number(cv)),
   NumericLessThan: (pv, cv) => pv.some((p) => Number(cv) < Number(p)),
@@ -109,7 +124,13 @@ function evaluateCondition(condition, context, contextComplete = false) {
     }
     for (const [key, policyValRaw] of Object.entries(keyMap)) {
       const policyVals = asArr(policyValRaw).map(String);
-      const present = Object.prototype.hasOwnProperty.call(context, key);
+      const contextKeys = Object.keys(context).filter(item => item.toLowerCase() === key.toLowerCase());
+      const present = contextKeys.length > 0;
+      if (policyVals.some(value => value.includes('${')) || contextKeys.some(item => JSON.stringify(context[item]) !== JSON.stringify(context[contextKeys[0]]))) {
+        invalidValues.push(`${rawOp} ${key} (unmodeled policy variable or ambiguous context keys)`);
+        sawUnknown = true;
+        continue;
+      }
 
       // An omitted input is missing knowledge unless the caller explicitly
       // declares a complete request context. This also applies to Null/IfExists.
@@ -132,7 +153,17 @@ function evaluateCondition(condition, context, contextComplete = false) {
         continue;
       }
 
-      const ctxVals = asArr(context[key]).map(String);
+      const ctxVals = asArr(context[contextKeys[0]]).map(String);
+      if ((op === 'IpAddress' || op === 'NotIpAddress') && ctxVals.some(value => policyVals.some(pattern => ipInCidr(value, pattern) === null))) {
+        invalidValues.push(`${rawOp} ${key} (IPv6 or invalid IPv4 range is not evaluated locally)`);
+        sawUnknown = true;
+        continue;
+      }
+      if (op.startsWith('Arn') && [...policyVals, ...ctxVals].some(value => !arnParts(value))) {
+        invalidValues.push(`${rawOp} ${key} (unmodeled ARN format)`);
+        sawUnknown = true;
+        continue;
+      }
       if (op.startsWith('Date') && [...policyVals, ...ctxVals].some(value => toDate(value) === null)) {
         invalidValues.push(`${rawOp} ${key} (invalid date)`);
         sawUnknown = true;
@@ -160,9 +191,10 @@ function matchesAction(stmt, action) {
 
 function matchesResource(stmt, resource) {
   if (!resource) return true; // caller didn't scope to a resource
-  if (stmt.notResources.length) return !stmt.notResources.some((p) => globMatch(p, resource));
+  if ([...stmt.resources, ...stmt.notResources].some(pattern => pattern.includes('${'))) return 'unknown';
+  if (stmt.notResources.length) return !stmt.notResources.some((p) => globMatch(p, resource, true));
   if (!stmt.resources.length) return stmt.kind === 'identity'; // identity stmt w/o Resource is unusual; treat as none
-  return stmt.resources.some((p) => globMatch(p, resource));
+  return stmt.resources.some((p) => globMatch(p, resource, true));
 }
 
 // Evaluate whether `request` is allowed by the AWS statements in `model`.
@@ -177,8 +209,10 @@ function evaluateRequest(model, request) {
 
   for (const s of stmts) {
     if (!matchesAction(s, request.action)) continue;
-    if (!matchesResource(s, request.resource)) continue;
-    const cond = evaluateCondition(s.conditions, context, request.contextComplete === true);
+    const resourceMatch = matchesResource(s, request.resource);
+    if (!resourceMatch) continue;
+    let cond = evaluateCondition(s.conditions, context, request.contextComplete === true);
+    if (resourceMatch === 'unknown' && cond.result !== false) cond = { ...cond, result: 'unknown', invalidValues: [...(cond.invalidValues || []), 'Resource contains an unmodeled policy variable'] };
     const rec = { id: s.id, doc: s.doc, line: s.line, sid: s.sid, condition: s.conditions, cond };
 
     if (s.effect === 'Deny') {

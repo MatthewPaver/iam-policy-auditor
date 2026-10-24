@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
+const { contextEntries } = require('../benchmark/oracle-aws');
 
 function run(args) {
   return spawnSync(process.execPath, [path.join(__dirname, '../benchmark/run.js'), ...args], {
@@ -18,4 +19,9 @@ assert.equal(JSON.parse(unavailable.stdout).oracle.status, 'not-run');
 assert.notEqual(run(['--threshold', 'invalid']).status, 0);
 assert.notEqual(run(['--oracle', 'awz', '--json']).status, 0);
 assert.notEqual(run(['--oracle']).status, 0);
-console.log('benchmark-contract — 6 passed (no AWS CLI or credentials used)');
+assert.deepEqual(contextEntries({ 'aws:SecureTransport': true, 'aws:TagKeys': ['team-a', 'cost,centre'], 'aws:CurrentTime': '2026-10-24T00:00:00Z' }), [
+  { ContextKeyName: 'aws:SecureTransport', ContextKeyValues: ['true'], ContextKeyType: 'boolean' },
+  { ContextKeyName: 'aws:TagKeys', ContextKeyValues: ['team-a', 'cost,centre'], ContextKeyType: 'stringList' },
+  { ContextKeyName: 'aws:CurrentTime', ContextKeyValues: ['2026-10-24T00:00:00Z'], ContextKeyType: 'date' },
+]);
+console.log('benchmark-contract — 7 passed (no AWS CLI or credentials used)');

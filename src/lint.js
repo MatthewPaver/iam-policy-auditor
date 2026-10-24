@@ -74,7 +74,7 @@ function lintModel(model) {
     const cond = s.conditions || null;
     if (cond && typeof cond === 'object') {
       for (const op of Object.keys(cond)) {
-        const base = op.replace(/IfExists$/, '').replace(/^For(All|Any)Values:/, '');
+        const base = op.replace(/IfExists$/, '').replace(/^(ForAllValues|ForAnyValue):/, '');
         if (!KNOWN_CONDITION_OPS.has(base) && !KNOWN_CONDITION_OPS.has(op)) {
           findings.push(make(model, s, 'LINT-BAD-CONDITION-OP', 'medium',
             `Unknown condition operator: ${op}`,

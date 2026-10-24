@@ -1,6 +1,6 @@
 # AWS simulator comparison status
 
-As of 2026-10-24: **not run in this repository**. The current environment has no AWS CLI on PATH; no AWS credentials were read or used for the condition-verification fixes. The 77-case corpus includes 18 new documented AWS reference cases and four incomplete-context regressions. Offline agreement is not AWS authorization accuracy.
+As of 2026-10-25: **not run in this repository**. The current environment has no AWS CLI on PATH; no AWS credentials were read or used for the condition-verification fixes. The 86-case corpus includes 23 new documented AWS reference cases and eight incomplete-context or unsupported-feature regressions. Offline agreement is not AWS authorization accuracy.
 
 The executable adapter is `benchmark/oracle-aws.js`; the machine-readable disclosure is `benchmark/oracle-manifest.json`. An owner may run `npm run benchmark:aws -- --json` with the AWS CLI and a deliberately scoped principal permitted to call `iam:SimulateCustomPolicy`. This command contacts AWS and is not part of offline CI.
 
