@@ -49,7 +49,8 @@ function normalizeRequest(request = {}) {
   if (typeof request.resource !== 'string' || !request.resource.trim()) throw new Error('Provide the exact resource or an explicit wildcard scope for the request.');
   const context = request.context === undefined ? {} : request.context;
   if (!context || typeof context !== 'object' || Array.isArray(context) || Object.getPrototypeOf(context) !== Object.prototype) throw new Error('Condition context must be a plain JSON object.');
-  return { action: request.action.trim(), resource: request.resource.trim(), context };
+  if (request.contextComplete !== undefined && typeof request.contextComplete !== 'boolean') throw new Error('contextComplete must be a boolean.');
+  return { action: request.action.trim(), resource: request.resource.trim(), context, ...(request.contextComplete !== undefined ? { contextComplete: request.contextComplete } : {}) };
 }
 
 function diffFindings(before, after, beforeModel, afterModel) {
@@ -64,7 +65,7 @@ function diffFindings(before, after, beforeModel, afterModel) {
 function buildVerdict({ beforeDecision, afterDecision, introduced }) {
   const broadened = decisionRank(afterDecision) > decisionRank(beforeDecision);
   const severe = introduced.some((finding) => ['critical', 'high'].includes(finding.severity));
-  const conditional = afterDecision === 'ConditionalAllow';
+  const conditional = beforeDecision === 'ConditionalAllow' || afterDecision === 'ConditionalAllow';
 
   if (broadened || severe) {
     return {
@@ -79,7 +80,7 @@ function buildVerdict({ beforeDecision, afterDecision, introduced }) {
     return {
       status: 'review',
       label: 'Needs context',
-      reason: 'The result depends on condition keys that were not supplied.',
+      reason: 'The comparison depends on missing context or unsupported condition semantics.',
     };
   }
   return {
@@ -117,6 +118,7 @@ function reviewChange({ before, after, request }) {
       ...afterEvaluation.allowMatches,
       ...afterEvaluation.conditionalAllows,
       ...afterEvaluation.denyMatches,
+      ...afterEvaluation.unknowns.filter(item => item.effect === 'Deny'),
     ],
     suggestedCorrections: findings.introduced
       .filter((finding) => finding.remediation)

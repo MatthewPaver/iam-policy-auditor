@@ -333,6 +333,7 @@ const routes = {
         action: body.action,
         resource: body.resource,
         context: body.context,
+        contextComplete: body.contextComplete,
       },
     });
     const out = { ...review, ai: null, aiEvaluation: null, aiError: null };

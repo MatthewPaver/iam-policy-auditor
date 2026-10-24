@@ -31,7 +31,8 @@ if (!Number.isFinite(threshold) || threshold < 0 || threshold > 100) {
 
 const corpus = JSON.parse(fs.readFileSync(path.join(__dirname, 'corpus.json'), 'utf8'));
 const extendedCases = require('./extended-cases');
-const benchmarkCases = [...corpus.cases, ...extendedCases];
+const conditionCases = require('./condition-reference-cases');
+const benchmarkCases = [...corpus.cases, ...extendedCases, ...conditionCases];
 
 function evalCase(c) {
   const text = JSON.stringify(c.policy, null, 2);
@@ -47,7 +48,7 @@ for (const c of benchmarkCases) {
   const got = evalCase(c);
   const ok = got.decision === c.expected;
   if (ok) agree++;
-  rows.push({ id: c.id, note: c.note, expected: c.expected, got: got.decision, ok, text: got.text, request: c.request, oracleSkip: !!c.oracleSkip, oracleReason: c.oracleReason });
+  rows.push({ id: c.id, note: c.note, reference: c.reference, expected: c.expected, got: got.decision, ok, text: got.text, request: c.request, oracleSkip: !!c.oracleSkip, oracleReason: c.oracleReason });
 }
 const pct = (agree / benchmarkCases.length) * 100;
 
@@ -87,7 +88,7 @@ if (useOracle) {
 
 // --- output ----------------------------------------------------------------
 if (asJson) {
-  console.log(JSON.stringify({ evidenceType: 'authored-regression-corpus', total: benchmarkCases.length, baseCases: corpus.cases.length, extendedCases: extendedCases.length, agree, agreementPct: pct, rows: rows.map(({ text, ...r }) => r), oracle }, null, 2));
+  console.log(JSON.stringify({ evidenceType: 'authored-regression-corpus', total: benchmarkCases.length, baseCases: corpus.cases.length, extendedCases: extendedCases.length, conditionReferenceCases: conditionCases.length, agree, agreementPct: pct, rows: rows.map(({ text, ...r }) => r), oracle }, null, 2));
 } else {
   console.log('\n  Authored regression corpus — not independent AWS validation\n');
   for (const r of rows) {

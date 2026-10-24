@@ -9,6 +9,7 @@
  * parser already produced, so line numbers stay honest.
  */
 
+const { OPS } = require('./evaluate');
 const KNOWN_CONDITION_OPS = new Set([
   'StringEquals', 'StringNotEquals', 'StringEqualsIgnoreCase', 'StringNotEqualsIgnoreCase',
   'StringLike', 'StringNotLike',
@@ -77,8 +78,14 @@ function lintModel(model) {
         if (!KNOWN_CONDITION_OPS.has(base) && !KNOWN_CONDITION_OPS.has(op)) {
           findings.push(make(model, s, 'LINT-BAD-CONDITION-OP', 'medium',
             `Unknown condition operator: ${op}`,
-            'Typos here silently fail open or closed depending on evaluation path.',
+            'Unknown operators remain unresolved in matching access checks.',
             'Use a documented IAM condition operator (`StringEquals`, `IpAddress`, …).',
+          ));
+        } else if (!Object.prototype.hasOwnProperty.call(OPS, base)) {
+          findings.push(make(model, s, 'LINT-UNMODELED-CONDITION-OP', 'medium',
+            `Condition operator is not evaluated locally: ${op}`,
+            'This is a recognized IAM operator, but the local evaluator cannot resolve it. Relevant access checks remain undetermined.',
+            'Check this policy with AWS IAM Policy Simulator before relying on its permissions.',
           ));
         }
       }

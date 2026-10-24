@@ -252,7 +252,7 @@
           <div class="after-editor"><div class="editor-heading"><label for="afterBox">Proposed policy</label><label class="text-control file-control">Open JSON file<input id="afterFile" type="file" accept=".json,application/json" aria-label="Open proposed policy JSON file"></label></div><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
         </div>
         <label for="compareContext">Condition context (JSON object)</label><textarea id="compareContext" rows="2" spellcheck="false">{}</textarea>
-        <p class="fineprint">Missing or unsupported condition context can produce ConditionalAllow. It cannot prove access is preserved.</p>
+        <p class="fineprint">ConditionalAllow means access is unresolved: information is missing or a condition is unsupported. It cannot prove access is preserved.</p>
         <label class="ai-opt-in"><input id="changeUseAI" type="checkbox"> Request an optional AI explanation (sends extracted facts to Anthropic when configured)</label>
       </details>
       <div class="change-actions"><button id="compareBtn" class="btn primary">Review this change</button><button id="exportChange" class="btn secondary" disabled>Export review JSON</button></div>

@@ -52,6 +52,7 @@ const cases = [
 ];
 
 module.exports = cases.map((item) => {
+  if (item.id === 'null-key-absent') item.request.contextComplete = true;
   // JSON.stringify drops undefined Resource when NotResource is used.
   if (item.policy.Statement[0].Resource === undefined) delete item.policy.Statement[0].Resource;
   return item;

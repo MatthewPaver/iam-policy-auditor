@@ -156,7 +156,7 @@ function groupIsAdmin(org, g) {
 function allowedWith(org, p, action, resource) {
   const r = evaluateRequest(org.effectiveModel(p), { action, resource, context: {} });
   if (r.decision === 'Allow') return { ok: true, conditional: false, via: r.allowMatches.map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
-  if (r.decision === 'ConditionalAllow') return { ok: true, conditional: true, via: r.conditionalAllows.map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
+  if (r.decision === 'ConditionalAllow') return { ok: true, conditional: true, via: r.allowMatches.concat(r.conditionalAllows).map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
   return { ok: false };
 }
 

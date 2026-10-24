@@ -218,6 +218,38 @@ test('a deny override retains its original grant in the edit view and invalid ed
   expect((await downloadRecord(page, '#exportDemoReview')).correction).toBe(null);
 });
 
+test('date conditions and unresolved Denies cannot export a false correction proof', async ({ page }) => {
+  const read = { Sid: 'ReadReports', Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::reports/daily.csv' };
+  const destroy = { Sid: 'DeleteProduction', Effect: 'Allow', Action: 'rds:DeleteDBInstance', Resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1' };
+  const deny = { ...read, Sid: 'DenyWithoutMfa', Effect: 'Deny', Condition: { Bool: { 'aws:MultiFactorAuthPresent': 'false' } } };
+  const policy = (...Statement) => JSON.stringify({ Version: '2012-10-17', Statement }, null, 2);
+  await ready(page);
+  await page.getByRole('link', { name: 'Use your own policies', exact: true }).click();
+  for (const scenario of ['date', 'epoch', 'unknown-deny']) {
+    await page.locator('#changeInputs').evaluate(element => { element.open = true; });
+    await page.locator('#beforeBox').fill(policy(read, ...(scenario === 'unknown-deny' ? [deny] : [])));
+    await page.locator('#afterBox').fill(policy(read, ...(scenario === 'unknown-deny' ? [deny] : []), destroy));
+    await page.locator('#compareAction').fill(destroy.Action);
+    await page.locator('#compareResource').fill(destroy.Resource);
+    await page.locator('#compareContext').fill(scenario === 'date' ? '{"aws:CurrentTime":"2026-10-23T00:00:00Z"}' : scenario === 'epoch' ? '{"aws:CurrentTime":"2000-01-01T00:00:00Z"}' : '{}');
+    await page.locator('#compareBtn').click();
+    await page.locator('#candidateBox').fill(scenario !== 'unknown-deny'
+      ? policy(read, { ...destroy, Condition: { DateNotEquals: { 'aws:CurrentTime': scenario === 'epoch' ? '0' : '2026-10-24T00:00:00Z' } } })
+      : policy(read, deny));
+    await page.locator('#requiredAction').fill(read.Action);
+    await page.locator('#requiredResource').fill(read.Resource);
+    await page.locator('#verifyCorrectionBtn').click();
+    await expect(page.locator('#correctionResult')).toContainText('Correction not verified');
+    if (scenario === 'unknown-deny') {
+      await expect(page.locator('#correctionResult')).toContainText('Not determined');
+      await expect(page.locator('#correctionResult')).toContainText('DenyWithoutMfa');
+    }
+    const record = await downloadRecord(page, '#exportChange');
+    expect(record.correction.result.verified).toBe(false);
+    expect(scenario !== 'unknown-deny' ? record.correction.result.riskClosed : record.correction.result.requiredPreserved).toBe(false);
+  }
+});
+
 test('late verification cannot restore a pass after the candidate changes', async ({ page }) => {
   await ready(page);
   test.skip(await page.evaluate(() => !!window.PolicyLensLocalAPI), 'Network response race applies to the Node server; the static engine runs in this tab.');

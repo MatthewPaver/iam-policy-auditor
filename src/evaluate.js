@@ -39,6 +39,12 @@ const ipInCidr = (ip, cidr) => {
 };
 
 const toDate = (v) => {
+  // IAM accepts Unix epoch seconds as well as ISO dates. Date.parse('0')
+  // means January 2000 in JavaScript, not the Unix epoch.
+  if (/^[+-]?\d+(?:\.\d+)?$/.test(String(v))) {
+    const epoch = Number(v) * 1000;
+    return Number.isFinite(epoch) && Math.abs(epoch) <= 8.64e15 ? epoch : null;
+  }
   const t = Date.parse(v);
   return Number.isNaN(t) ? null : t;
 };
@@ -65,6 +71,7 @@ const OPS = {
   NumericGreaterThan: (pv, cv) => pv.some((p) => Number(cv) > Number(p)),
   NumericGreaterThanEquals: (pv, cv) => pv.some((p) => Number(cv) >= Number(p)),
   DateEquals: (pv, cv) => pv.some((p) => toDate(p) === toDate(cv)),
+  DateNotEquals: (pv, cv) => !pv.some((p) => toDate(p) === toDate(cv)),
   DateLessThan: (pv, cv) => pv.some((p) => toDate(cv) < toDate(p)),
   DateLessThanEquals: (pv, cv) => pv.some((p) => toDate(cv) <= toDate(p)),
   DateGreaterThan: (pv, cv) => pv.some((p) => toDate(cv) > toDate(p)),
@@ -75,12 +82,15 @@ const asArr = (x) => (Array.isArray(x) ? x : [x]);
 
 // Evaluate one Condition block against a context.
 // Returns { result: true|false|'unknown', unmet: [...], missingKeys: [...] }.
-// 'unknown' when a required key is absent from the context and the operator is
-// not *IfExists / Null — we must not silently assume it passes or fails.
-function evaluateCondition(condition, context) {
+// 'unknown' when request information or operator semantics are unresolved.
+// Only contextComplete=true declares omitted keys actually absent, including
+// for IfExists / Null. Incomplete input must not silently pass or fail.
+function evaluateCondition(condition, context, contextComplete = false) {
   if (!condition) return { result: true, unmet: [], missingKeys: [] };
   const unmet = [];
   const missingKeys = [];
+  const unsupportedOperators = [];
+  const invalidValues = [];
   let sawUnknown = false;
 
   for (const [rawOp, keyMap] of Object.entries(condition)) {
@@ -92,9 +102,22 @@ function evaluateCondition(condition, context) {
     else if (op.startsWith('ForAnyValue:')) { setQuantifier = 'any'; op = op.slice('ForAnyValue:'.length); }
 
     const fn = OPS[op];
+    if (!Object.prototype.hasOwnProperty.call(OPS, op)) {
+      unsupportedOperators.push(rawOp);
+      sawUnknown = true;
+      continue;
+    }
     for (const [key, policyValRaw] of Object.entries(keyMap)) {
       const policyVals = asArr(policyValRaw).map(String);
       const present = Object.prototype.hasOwnProperty.call(context, key);
+
+      // An omitted input is missing knowledge unless the caller explicitly
+      // declares a complete request context. This also applies to Null/IfExists.
+      if (!present && !contextComplete) {
+        missingKeys.push(key);
+        sawUnknown = true;
+        continue;
+      }
 
       if (op === 'Null') { // Null takes present-state, not the value
         if (!OPS.Null(policyVals, undefined, present)) unmet.push(`${rawOp} ${key}`);
@@ -102,13 +125,19 @@ function evaluateCondition(condition, context) {
       }
       if (!present) {
         if (ifExists) continue; // IfExists: absent key passes
-        missingKeys.push(key);
+        // AWS set operators and negated operators have defined absence rules.
+        const absentMatches = setQuantifier === 'all'
+          || (setQuantifier !== 'any' && /^(StringNot|ArnNot|NumericNot|DateNot|NotIp)/.test(op));
+        if (!absentMatches) unmet.push(`${rawOp} ${key} (key absent)`);
+        continue;
+      }
+
+      const ctxVals = asArr(context[key]).map(String);
+      if (op.startsWith('Date') && [...policyVals, ...ctxVals].some(value => toDate(value) === null)) {
+        invalidValues.push(`${rawOp} ${key} (invalid date)`);
         sawUnknown = true;
         continue;
       }
-      if (!fn) { sawUnknown = true; unmet.push(`${rawOp} (operator not modeled)`); continue; }
-
-      const ctxVals = asArr(context[key]).map(String);
       let ok;
       if (setQuantifier === 'all') ok = ctxVals.every((cv) => fn(policyVals, cv, present));
       else ok = ctxVals.some((cv) => fn(policyVals, cv, present)); // default + ForAnyValue
@@ -116,9 +145,10 @@ function evaluateCondition(condition, context) {
     }
   }
 
-  if (unmet.length) return { result: false, unmet, missingKeys };
-  if (sawUnknown) return { result: 'unknown', unmet: [], missingKeys };
-  return { result: true, unmet: [], missingKeys };
+  const details = { unmet, missingKeys, unsupportedOperators, invalidValues };
+  if (unmet.length) return { result: false, ...details };
+  if (sawUnknown) return { result: 'unknown', ...details };
+  return { result: true, ...details };
 }
 
 // --- statement / request matching ------------------------------------------
@@ -136,7 +166,7 @@ function matchesResource(stmt, resource) {
 }
 
 // Evaluate whether `request` is allowed by the AWS statements in `model`.
-// request = { action, resource?, context?: {conditionKey: value|[values]} }
+// request = { action, resource?, context?: {conditionKey: value|[values]}, contextComplete?: boolean }
 function evaluateRequest(model, request) {
   const context = request.context || {};
   const stmts = model.statements.filter((s) => s.provider === 'aws');
@@ -148,22 +178,23 @@ function evaluateRequest(model, request) {
   for (const s of stmts) {
     if (!matchesAction(s, request.action)) continue;
     if (!matchesResource(s, request.resource)) continue;
-    const cond = evaluateCondition(s.conditions, context);
+    const cond = evaluateCondition(s.conditions, context, request.contextComplete === true);
     const rec = { id: s.id, doc: s.doc, line: s.line, sid: s.sid, condition: s.conditions, cond };
 
     if (s.effect === 'Deny') {
       if (cond.result === true) denyMatches.push(rec);
-      else if (cond.result === 'unknown') { rec.note = `Deny applies unless condition keys are provided (${cond.missingKeys.join(', ')})`; unknowns.push({ ...rec, effect: 'Deny' }); }
+      else if (cond.result === 'unknown') { rec.note = 'This Deny may apply; resolve missing context or unsupported conditions before relying on access.'; unknowns.push({ ...rec, effect: 'Deny' }); }
       continue;
     }
     // Allow
     if (cond.result === true) allowMatches.push(rec);
-    else if (cond.result === 'unknown') { rec.note = `Allow depends on unprovided condition keys: ${cond.missingKeys.join(', ')}`; conditionalAllows.push(rec); unknowns.push({ ...rec, effect: 'Allow' }); }
+    else if (cond.result === 'unknown') { rec.note = 'This Allow depends on unresolved context or condition semantics.'; conditionalAllows.push(rec); unknowns.push({ ...rec, effect: 'Allow' }); }
     // cond.result === false → statement does not apply under this context
   }
 
   let decision;
   if (denyMatches.length) decision = 'ExplicitDeny';
+  else if ((allowMatches.length || conditionalAllows.length) && unknowns.some(item => item.effect === 'Deny')) decision = 'ConditionalAllow';
   else if (allowMatches.length) decision = 'Allow';
   else if (conditionalAllows.length) decision = 'ConditionalAllow';
   else decision = 'ImplicitDeny';
@@ -176,7 +207,7 @@ function evaluateRequest(model, request) {
     denyMatches,
     conditionalAllows,
     unknowns,
-    explanation: explain(decision, { allowMatches, denyMatches, conditionalAllows }),
+    explanation: explain(decision, { allowMatches, denyMatches, conditionalAllows, unknowns }),
   };
 }
 
@@ -184,7 +215,7 @@ function explain(decision, m) {
   const cite = (r) => `[${r.id} · ${r.doc}:${r.line}]`;
   if (decision === 'ExplicitDeny') return `Denied — explicit Deny in ${m.denyMatches.map(cite).join(', ')} overrides any Allow.`;
   if (decision === 'Allow') return `Allowed by ${m.allowMatches.map(cite).join(', ')} with all conditions satisfied by the given context.`;
-  if (decision === 'ConditionalAllow') return `Allowed ONLY if the condition holds — ${m.conditionalAllows.map((r) => `${cite(r)} requires ${JSON.stringify(r.condition)}`).join('; ')}. Provide the condition keys to resolve.`;
+  if (decision === 'ConditionalAllow') return `Not determined — ${m.unknowns.map((r) => `${r.effect} ${cite(r)} depends on ${JSON.stringify(r.condition)}`).join('; ')}. Supply missing context and resolve unsupported or invalid conditions before relying on this result.`;
   return 'Implicitly denied — no statement allows this action/resource under the given context.';
 }
 
