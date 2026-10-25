@@ -218,6 +218,36 @@ test('a deny override retains its original grant in the edit view and invalid ed
   expect((await downloadRecord(page, '#exportDemoReview')).correction).toBe(null);
 });
 
+test('published walkthrough is discoverable, checks the correction and exports its evidence', async ({ page }) => {
+  await ready(page);
+  await page.getByRole('link', { name: 'Watch the walkthrough', exact: true }).click();
+  await page.waitForURL('**/impact/');
+  await page.waitForFunction(() => document.querySelector('#rehearsal')?.dataset.ready === 'true');
+  await page.locator('#takeControl').click();
+  for (const count of [1, 2]) {
+    await page.locator('#attempt').click();
+    await page.waitForFunction(n => { const data = document.querySelector('#rehearsal').dataset; return data.actions === String(n) && data.acting === 'false'; }, count);
+  }
+  await page.locator('[name=candidate][value=reports]').check();
+  await page.waitForFunction(() => document.querySelector('#rehearsal').dataset.choice === 'reports');
+  for (const count of [1, 2]) {
+    await page.locator('#attempt').click();
+    await page.waitForFunction(n => { const data = document.querySelector('#rehearsal').dataset; return data.actions === String(n) && data.acting === 'false'; }, count);
+  }
+  await expect(page.locator('#resultTitle')).toHaveText('The report works. The deletion is stopped.');
+  await page.locator('#rule > summary').click();
+  await page.locator('#showRule').click();
+  await expect(page.locator('#sourceStatement')).toBeVisible();
+  const record = await downloadRecord(page, '#download');
+  expect(record.correction.result.verified).toBe(true);
+  expect(record.engine.runtime).toBe('browser');
+  expect(record.simulation.cloudActionsPerformed).toBe(false);
+  expect(Object.keys(record.comparisons).sort()).toEqual(['block', 'keep', 'reports']);
+  await page.getByRole('link', { name: 'Review your own policies', exact: true }).click();
+  await expect(page).toHaveURL(/view=review/);
+  await expect(page.locator('#productHome')).toBeHidden();
+});
+
 test('date conditions and unresolved Denies cannot export a false correction proof', async ({ page }) => {
   const read = { Sid: 'ReadReports', Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::reports/daily.csv' };
   const destroy = { Sid: 'DeleteProduction', Effect: 'Allow', Action: 'rds:DeleteDBInstance', Resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1' };

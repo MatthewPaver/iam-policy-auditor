@@ -14,7 +14,8 @@
     "benchmark:aws": "node benchmark/run.js --oracle aws",
     "ingest": "node scripts/ingest-aws-actions.js",
     "test:browser": "playwright test",
-    "build:demo": "node scripts/build-browser-demo.js"
+    "build:demo": "node scripts/build-browser-demo.js",
+    "test:simulation": "npm run build:demo && node test/simulation/verify-impact.cjs"
   },
   "engines": {
     "node": ">=18"
