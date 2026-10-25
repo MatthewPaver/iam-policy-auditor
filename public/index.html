@@ -41,6 +41,7 @@
     <p>Review AWS cloud permissions. Check a correction keeps the access you need.</p>
     <div class="landing-actions"><a class="product-button primary" href="#guidedReview" id="tryPermission">Try the example <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a><a class="product-button" href="?view=review" data-own-policies>Use your own policies</a></div>
     <p class="product-privacy" id="productPrivacy">Runs in your browser. No policy upload.</p>
+    <p class="product-privacy"><a href="./impact/">Watch the walkthrough</a> · <a href="https://github.com/MatthewPaver/iam-policy-auditor/blob/main/docs/SIMULATION_EVIDENCE.md">Evidence and limits</a></p>
   </section>
   <section id="guidedReview" class="guided-review" aria-label="Interactive synthetic permission review">
     <div class="chapter-tabs" role="tablist" aria-label="Example review chapters">
@@ -252,7 +253,7 @@
           <div class="after-editor"><div class="editor-heading"><label for="afterBox">Proposed policy</label><label class="text-control file-control">Open JSON file<input id="afterFile" type="file" accept=".json,application/json" aria-label="Open proposed policy JSON file"></label></div><textarea id="afterBox" spellcheck="false" placeholder="Paste the proposed policy…"></textarea></div>
         </div>
         <label for="compareContext">Condition context (JSON object)</label><textarea id="compareContext" rows="2" spellcheck="false">{}</textarea>
-        <p class="fineprint">Missing or unsupported condition context can produce ConditionalAllow. It cannot prove access is preserved.</p>
+        <p class="fineprint">ConditionalAllow means access is unresolved: information is missing or a condition is unsupported. It cannot prove access is preserved.</p>
         <label class="ai-opt-in"><input id="changeUseAI" type="checkbox"> Request an optional AI explanation (sends extracted facts to Anthropic when configured)</label>
       </details>
       <div class="change-actions"><button id="compareBtn" class="btn primary">Review this change</button><button id="exportChange" class="btn secondary" disabled>Export review JSON</button></div>

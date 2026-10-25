@@ -142,11 +142,19 @@ function isDirectAdmin(org, p) {
     && principalAllows(org, p, 'ec2:TerminateInstances', '*').decision === 'Allow';
 }
 
+function possibleAdmin(model) {
+  const checks = ['iam:PutUserPolicy', 's3:DeleteObject', 'ec2:TerminateInstances'].map(action => evaluateRequest(model, { action, resource: '*', context: {} }));
+  return {
+    ok: checks.every(check => ['Allow', 'ConditionalAllow'].includes(check.decision)),
+    conditional: checks.some(check => check.decision === 'ConditionalAllow'),
+    via: checks.flatMap(check => check.allowMatches.concat(check.conditionalAllows).map(match => ({ doc: match.doc, line: match.line, sid: match.sid }))),
+  };
+}
+
 // Is this group, on its own, administrator? (Used by the add-user-to-group edge.)
 function groupIsAdmin(org, g) {
   const model = analyzeDocuments(g.docs.filter((d) => d.text));
-  const probe = (a) => evaluateRequest(model, { action: a, resource: '*', context: {} }).decision === 'Allow';
-  return probe('iam:PutUserPolicy') && probe('s3:DeleteObject') && probe('ec2:TerminateInstances');
+  return possibleAdmin(model);
 }
 
 // --- edge construction ------------------------------------------------------
@@ -156,7 +164,7 @@ function groupIsAdmin(org, g) {
 function allowedWith(org, p, action, resource) {
   const r = evaluateRequest(org.effectiveModel(p), { action, resource, context: {} });
   if (r.decision === 'Allow') return { ok: true, conditional: false, via: r.allowMatches.map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
-  if (r.decision === 'ConditionalAllow') return { ok: true, conditional: true, via: r.conditionalAllows.map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
+  if (r.decision === 'ConditionalAllow') return { ok: true, conditional: true, via: r.allowMatches.concat(r.conditionalAllows).map((m) => ({ doc: m.doc, line: m.line, sid: m.sid })) };
   return { ok: false };
 }
 
@@ -179,7 +187,7 @@ function escalationEdges(org, p, ctx) {
     // add itself to an admin group
     for (const g of ctx.adminGroups) {
       const ag = allowedWith(org, p, 'iam:AddUserToGroup', g.arn);
-      if (ag.ok) add(ADMIN, 'add-user-to-group', `add itself to the admin group ${g.name}`, ag);
+      if (ag.ok) add(ADMIN, 'add-user-to-group', `add itself to the admin group ${g.name}`, { ...ag, conditional: ag.conditional || g.adminCheck.conditional });
     }
   }
   // rewrite one of its own attached managed policies to allow everything
@@ -233,13 +241,15 @@ function escalationEdges(org, p, ctx) {
 function buildEdges(org, directAdmin) {
   const users = org.principals.filter((p) => p.type === 'user');
   const roles = org.principals.filter((p) => p.type === 'role');
-  const adminGroups = Object.values(org.groups).filter((g) => groupIsAdmin(org, g));
+  const adminGroups = Object.values(org.groups).map(g => ({ ...g, adminCheck: groupIsAdmin(org, g) })).filter(g => g.adminCheck.ok);
   const ctx = { users, roles, adminGroups };
   const skip = directAdmin || new Set(org.principals.filter((p) => isDirectAdmin(org, p)).map((p) => p.arn));
 
   const edges = [];
   for (const p of org.principals) {
     if (skip.has(p.arn)) continue;
+    const possible = possibleAdmin(org.effectiveModel(p));
+    if (possible.ok && possible.conditional) edges.push({ from: p.arn, to: ADMIN, technique: 'conditional-administrator', note: 'administrator probe requests remain unresolved; access may exist if conditions permit', via: possible.via });
     for (const r of roles) {
       if (r.arn === p.arn) continue;
       const via = trustAllowsVia(r, p.arn);

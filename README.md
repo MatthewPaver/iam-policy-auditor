@@ -16,6 +16,8 @@ The browser demo checks supplied policies and declared requests. It does not est
 
 **Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
 
+**Interactive walkthrough:** [Keep the report. Block the deletion.](https://matthewpaver.github.io/iam-policy-auditor/impact/) — compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
+
 PolicyLens is the product name; `iam-policy-auditor` is its repository name.
 
 [![CI](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthewPaver/iam-policy-auditor/actions/workflows/ci.yml)
@@ -73,6 +75,8 @@ The correction view compares the exact proposed and candidate statements: remove
 
 Condition context is an explicit JSON object. Verification requires at least one declared required request with definite Allow in both policies; empty requirements and unresolved context cannot verify preservation. A candidate introducing a high or critical rule finding is not marked verified. Optional AI explanation is off by default for change review. The account demo remains at `/?demo=1`; `/?view=org` opens account analysis.
 
+An unresolved Deny prevents a definite Allow, even when another statement grants access. `ConditionalAllow` is the API's unresolved result; it is not permission to proceed. Unsupported operators remain unresolved and appear in the evidence. The engine now evaluates `DateNotEquals`, including multiple policy dates. See [condition reference cases and validation limits](docs/CONDITION_VERIFICATION.md).
+
 Browser journey checks: `npm ci`, `npx playwright install chromium`, then `npm run test:browser`. CI runs these alongside the engine tests, authored benchmark and grounding checks.
 
 ## How it works
@@ -94,7 +98,7 @@ flowchart LR
 ```
 
 - **Parser and model** (`src/parse.js`, `src/engine.js`). A position-aware JSON parser maps every statement to its file and line, then normalises it into one statement model (effect, principals, actions, resources, conditions).
-- **Evaluator** (`src/evaluate.js`, `src/actions.js`). Evaluates a request with explicit deny > allow > implicit deny, `NotAction`/`NotResource`, wildcard matching and condition operators (String, Bool, Ip, Arn, Numeric, Date, Null, `IfExists`, `ForAllValues`/`ForAnyValue`). A missing context key gives `ConditionalAllow`, never a silent deny. Wildcards expand against 21,656 AWS actions from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset) (MIT), pinned to a commit with SHA-256 values in `data/aws-actions.provenance.json`.
+- **Evaluator** (`src/evaluate.js`, `src/actions.js`). Evaluates a request with explicit deny > allow > implicit deny, `NotAction`/`NotResource`, wildcard matching and condition operators (String, Bool, Ip, Arn, Numeric, Date, Null, `IfExists`, `ForAllValues`/`ForAnyValue`). Missing context or unsupported semantics prevents a definite Allow when relevant to the outcome. Wildcards expand against 21,656 AWS actions from [iann0036/iam-dataset](https://github.com/iann0036/iam-dataset) (MIT), pinned to a commit with SHA-256 values in `data/aws-actions.provenance.json`.
 - **Change review** (`src/change_review.js`). Evaluates the declared request before and after. **Stop** if the decision broadens (for example `ImplicitDeny → Allow`) or the change introduces a high or critical finding; **needs context** if the result depends on condition keys that were not supplied; otherwise **pass**. Correction verification passes only if the risky request is no longer permitted and every declared required-access request still is.
 - **Rules and lint** (`src/rules.js`, `src/lint.js`). Wildcard admin, `Allow` + `NotAction`, privilege escalation (`iam:PassRole` on `*`, `iam:CreatePolicyVersion`, …), risky trust policies, unconditioned destructive actions and public exposure. Each finding has a severity, the source lines and a least-privilege rewrite.
 - **Optional AI layer** (`src/ai.js`, `src/ai_eval.js`). Claude receives only the engine's facts and must cite `[S2 · file:line]`. The gate withholds the explanation unless the verdict matches, every citation resolves to a supplied statement, permission claims are cited, uncertainty is named where the decision is conditional, and nothing is called "safe" or "compliant".
@@ -109,7 +113,7 @@ All three checks run offline in CI on every push.
 |---|---|---|---|
 | Unit and contract tests | `npm test` | All unit and contract suites pass | Behaviour on real account data; the fixtures are synthetic. |
 | AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
-| Authored regression corpus | `npm run benchmark` | Engine agrees with 55/55 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
+| Authored regression corpus | `npm run benchmark` | Engine agrees with 86/86 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
 
 The independent check is `npm run benchmark:aws`, which compares the engine with AWS's `iam:SimulateCustomPolicy`. It needs credentials with that permission and **has not been run**; [docs/AWS_SIMULATOR_STATUS.md](docs/AWS_SIMULATOR_STATUS.md) records the status and what a run must report. An explicit AWS run fails closed if the CLI, credentials or any comparison is missing, so an offline pass cannot make it green. [docs/AI_EVALS.md](docs/AI_EVALS.md) sets out the pass bar for a live model release.
 

@@ -23,6 +23,7 @@ const PORT = Number(process.env.PORT || 4177);
 const HOSTED = process.env.HOSTED === '1';
 const HOST = process.env.HOST || (HOSTED ? '0.0.0.0' : '127.0.0.1');
 const PUB = path.join(__dirname, 'public');
+let browserDemoEngine;
 const SAMPLES = path.join(__dirname, 'samples');
 const MAX_BODY = 5 * 1024 * 1024;
 
@@ -333,6 +334,7 @@ const routes = {
         action: body.action,
         resource: body.resource,
         context: body.context,
+        contextComplete: body.contextComplete,
       },
     });
     const out = { ...review, ai: null, aiEvaluation: null, aiError: null };
@@ -389,8 +391,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, fs.readFileSync(file), 'application/json; charset=utf-8');
     }
 
+    if (req.method === 'GET' && url.pathname === '/engine-browser.js') {
+      // The walkthrough uses the same browser bundle in Node and on Pages.
+      if (!browserDemoEngine) browserDemoEngine = require('./scripts/build-browser-demo').buildBrowserDemo({ quiet: true });
+      return send(res, 200, browserDemoEngine, 'application/javascript; charset=utf-8');
+    }
+
     if (req.method === 'GET') {
-      const rel = url.pathname === '/' ? '/index.html' : url.pathname;
+      const rel = url.pathname.endsWith('/') ? `${url.pathname}index.html` : url.pathname;
       const file = path.join(PUB, path.normalize(rel));
       if (file.startsWith(PUB) && fs.existsSync(file) && fs.statSync(file).isFile()) {
         return send(res, 200, fs.readFileSync(file), MIME[path.extname(file)] || 'application/octet-stream');

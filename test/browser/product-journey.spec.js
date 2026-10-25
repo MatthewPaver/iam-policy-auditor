@@ -218,6 +218,82 @@ test('a deny override retains its original grant in the edit view and invalid ed
   expect((await downloadRecord(page, '#exportDemoReview')).correction).toBe(null);
 });
 
+test('published walkthrough is discoverable, checks the correction and exports its evidence', async ({ page }) => {
+  await ready(page);
+  await page.getByRole('link', { name: 'Watch the walkthrough', exact: true }).click();
+  await page.waitForURL('**/impact/');
+  await page.waitForFunction(() => document.querySelector('#rehearsal')?.dataset.ready === 'true');
+  await page.locator('#takeControl').click();
+  for (const count of [1, 2]) {
+    await page.locator('#attempt').click();
+    await page.waitForFunction(n => { const data = document.querySelector('#rehearsal').dataset; return data.actions === String(n) && data.acting === 'false'; }, count);
+  }
+  await page.locator('[name=candidate][value=reports]').check();
+  await page.waitForFunction(() => document.querySelector('#rehearsal').dataset.choice === 'reports');
+  for (const count of [1, 2]) {
+    await page.locator('#attempt').click();
+    await page.waitForFunction(n => { const data = document.querySelector('#rehearsal').dataset; return data.actions === String(n) && data.acting === 'false'; }, count);
+  }
+  await expect(page.locator('#resultTitle')).toHaveText('The report works. The deletion is stopped.');
+  await page.locator('#rule > summary').click();
+  await page.locator('#showRule').click();
+  await expect(page.locator('#sourceStatement')).toBeVisible();
+  const record = await downloadRecord(page, '#download');
+  expect(record.correction.result.verified).toBe(true);
+  expect(record.engine.runtime).toBe('browser');
+  expect(record.simulation.cloudActionsPerformed).toBe(false);
+  expect(Object.keys(record.comparisons).sort()).toEqual(['block', 'keep', 'reports']);
+  await page.getByRole('link', { name: 'Review your own policies', exact: true }).click();
+  await expect(page).toHaveURL(/view=review/);
+  await expect(page.locator('#productHome')).toBeHidden();
+});
+
+test('date conditions and unresolved Denies cannot export a false correction proof', async ({ page }) => {
+  const read = { Sid: 'ReadReports', Effect: 'Allow', Action: 's3:GetObject', Resource: 'arn:aws:s3:::reports/daily.csv' };
+  const destroy = { Sid: 'DeleteProduction', Effect: 'Allow', Action: 'rds:DeleteDBInstance', Resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1' };
+  const deny = { ...read, Sid: 'DenyWithoutMfa', Effect: 'Deny', Condition: { Bool: { 'aws:MultiFactorAuthPresent': 'false' } } };
+  const policy = (...Statement) => JSON.stringify({ Version: '2012-10-17', Statement }, null, 2);
+  await ready(page);
+  await page.getByRole('link', { name: 'Use your own policies', exact: true }).click();
+  const scenarios = [
+    { name: 'date', context: { 'aws:CurrentTime': '2026-10-23T00:00:00Z' }, Condition: { DateNotEquals: { 'aws:CurrentTime': '2026-10-24T00:00:00Z' } } },
+    { name: 'epoch', context: { 'aws:CurrentTime': '2000-01-01T00:00:00Z' }, Condition: { DateNotEquals: { 'aws:CurrentTime': '0' } } },
+    { name: 'unknown-deny', context: {} },
+    { name: 'ipv6', context: { 'aws:SourceIp': '2001:db8::10' }, Condition: { IpAddress: { 'aws:SourceIp': '2001:db8::/32' } } },
+    { name: 'case-sensitive', context: { 'aws:PrincipalTag/team': 'DBA-oncall' }, Condition: { StringNotLike: { 'aws:PrincipalTag/team': 'dba*' } } },
+    { name: 'variable', context: { 'aws:PrincipalTag/owner': 'alice', 'aws:username': 'alice' }, Condition: { StringEquals: { 'aws:PrincipalTag/owner': '${aws:username}' } } },
+  ];
+  for (const scenario of scenarios) {
+    const missingDeny = scenario.name === 'unknown-deny';
+    await page.locator('#changeInputs').evaluate(element => { element.open = true; });
+    await page.locator('#beforeBox').fill(policy(read, ...(missingDeny ? [deny] : [])));
+    await page.locator('#afterBox').fill(policy(read, ...(missingDeny ? [deny] : []), destroy));
+    await page.locator('#compareAction').fill(destroy.Action);
+    await page.locator('#compareResource').fill(destroy.Resource);
+    await page.locator('#compareContext').fill(JSON.stringify(scenario.context));
+    await page.locator('#compareBtn').click();
+    await page.locator('#candidateBox').fill(!missingDeny
+      ? policy(read, { ...destroy, Condition: scenario.Condition })
+      : policy(read, deny));
+    await page.locator('#requiredAction').fill(read.Action);
+    await page.locator('#requiredResource').fill(read.Resource);
+    await page.locator('#verifyCorrectionBtn').click();
+    await expect(page.locator('#correctionResult')).toContainText('Correction not verified');
+    if (missingDeny) {
+      await expect(page.locator('#correctionResult')).toContainText('Not determined');
+      await expect(page.locator('#correctionResult')).toContainText('DenyWithoutMfa');
+    }
+    const record = await downloadRecord(page, '#exportChange');
+    expect(record.correction.result.verified).toBe(false);
+    expect(!missingDeny ? record.correction.result.riskClosed : record.correction.result.requiredPreserved).toBe(false);
+    if (process.env.POLICYLENS_FIX_CAPTURES && ['date', 'unknown-deny', 'ipv6'].includes(scenario.name)) {
+      await fs.mkdir(process.env.POLICYLENS_FIX_CAPTURES, { recursive: true });
+      const runtime = await page.evaluate(() => window.PolicyLensLocalAPI ? 'browser' : 'server');
+      await page.locator('#correctionResult').screenshot({ path: path.join(process.env.POLICYLENS_FIX_CAPTURES, `${runtime}-${scenario.name}.png`) });
+    }
+  }
+});
+
 test('late verification cannot restore a pass after the candidate changes', async ({ page }) => {
   await ready(page);
   test.skip(await page.evaluate(() => !!window.PolicyLensLocalAPI), 'Network response race applies to the Node server; the static engine runs in this tab.');

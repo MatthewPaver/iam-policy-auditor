@@ -31,7 +31,7 @@ function contextType(key) {
   if (k.includes('currenttime') || k.includes('epochtime') || k.includes('tokenissuetime')) return 'date';
   if (k.includes('age') || k.includes('max') || k.includes('count') || k.includes('numeric')) return 'numeric';
   if (k.includes('arn')) return 'string'; // ARN condition ops take string values
-  if (k.includes('multifactorauthpresent') || k.includes('secureTransport') || k.includes('viaawsservice')) return 'boolean';
+  if (k.includes('multifactorauthpresent') || k.includes('securetransport') || k.includes('viaawsservice')) return 'boolean';
   return 'string';
 }
 
@@ -41,10 +41,10 @@ const TYPE_MAP = {
 
 function contextEntries(context) {
   return Object.entries(context || {}).map(([key, val]) => {
-    const values = Array.isArray(val) ? val.join(',') : String(val);
+    const values = (Array.isArray(val) ? val : [val]).map(String);
     const type = TYPE_MAP[contextType(key)] || 'string';
-    // CLI shorthand: ContextKeyName=..,ContextKeyValues=..,ContextKeyType=..
-    return `ContextKeyName=${key},ContextKeyValues=${values},ContextKeyType=${type}`;
+    // Structured JSON preserves list types and literal commas in values.
+    return { ContextKeyName: key, ContextKeyValues: values, ContextKeyType: Array.isArray(val) ? `${type}List` : type };
   });
 }
 
@@ -61,7 +61,7 @@ function simulate({ policyText, action, resource, context }) {
   ];
   if (resource && resource !== '*') args.push('--resource-arns', resource);
   const entries = contextEntries(context);
-  if (entries.length) { args.push('--context-entries'); args.push(...entries); }
+  if (entries.length) args.push('--context-entries', JSON.stringify(entries));
 
   const out = JSON.parse(run(args));
   const res = (out.EvaluationResults || [])[0];

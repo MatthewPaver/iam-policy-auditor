@@ -89,7 +89,7 @@
 
     { "id": "ifexists-absent-passes", "note": "StringEqualsIfExists with key absent → passes",
       "policy": { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow", "Action": "s3:GetObject", "Resource": "*", "Condition": { "StringEqualsIfExists": { "aws:PrincipalTag/team": "platform" } } }] },
-      "request": { "action": "s3:GetObject", "resource": "arn:aws:s3:::data/x", "context": {} }, "expected": "Allow" },
+      "request": { "action": "s3:GetObject", "resource": "arn:aws:s3:::data/x", "context": {}, "contextComplete": true }, "expected": "Allow" },
 
     { "id": "scoped-deny-nonmatch", "note": "deny scoped to a different resource does not apply",
       "policy": { "Version": "2012-10-17", "Statement": [

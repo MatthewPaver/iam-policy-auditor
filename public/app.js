@@ -421,8 +421,9 @@ function currentChangeInputs() {
 }
 
 function evidenceLines(evaluation) {
-  const matches = [...(evaluation.allowMatches || []), ...(evaluation.conditionalAllows || []), ...(evaluation.denyMatches || [])];
-  return matches.length ? matches.map(item => `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)}${item.sid ? ` · ${esc(item.sid)}` : ''}</li>`).join('') : '<li>No matching statement; implicit deny in the supplied document.</li>';
+  const matches = [...(evaluation.allowMatches || []), ...(evaluation.conditionalAllows || []), ...(evaluation.denyMatches || []), ...(evaluation.unknowns || []).filter(item => item.effect === 'Deny')];
+  const explanation = evaluation.decision === 'ConditionalAllow' ? `<li>${esc(evaluation.explanation)}</li>` : '';
+  return explanation + (matches.length ? matches.map(item => `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)}${item.sid ? ` · ${esc(item.sid)}` : ''}</li>`).join('') : '<li>No matching statement; implicit deny in the supplied document.</li>');
 }
 
 $('#compareBtn').onclick = async () => {
@@ -448,7 +449,7 @@ $('#compareBtn').onclick = async () => {
     }).join('') : '<li>No matching allow or deny statement for this request.</li>';
     $('#compareResult').classList.remove('stale');
     $('#compareResult').innerHTML = `<div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
-      <h4>Granting evidence</h4><ul class="grant-evidence">${evidence}</ul>
+      ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}<h4>Decision evidence</h4><ul class="grant-evidence">${evidence}</ul>
       <details><summary>Rule findings and suggested corrections</summary>${md(r.suggestedCorrections.map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${r.findings.introduced.map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
       <p class="input-identity">Input SHA-256 <code>${esc(inputIdentity)}</code></p>
       ${r.ai ? `<details class="review-explanation"><summary>Optional AI explanation · ${esc(r.ai.model)}</summary>${md(r.ai.text)}</details>` : r.aiError ? `<p class="ai-error">Optional AI explanation unavailable: ${esc(r.aiError)} Engine result remains available.</p>` : ''}`;
@@ -599,7 +600,7 @@ function renderWhoCan(r) {
   }
   const rows = r.rows.map((row) => {
     const badge = row.decision === 'ConditionalAllow'
-      ? '<span class="badge medium" title="Allowed only when a condition holds">conditional</span>'
+      ? '<span class="badge medium" title="Access is unresolved until the conditions are checked">needs information</span>'
       : '<span class="badge high">allowed</span>';
     const vis = row.incompleteVisibility
       ? `<div class="org-warn">Some managed-policy documents are missing from the snapshot, so this may under-report: ${row.incompleteVisibility.map(esc).join(', ')}</div>`

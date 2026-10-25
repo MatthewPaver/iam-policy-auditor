@@ -4,10 +4,10 @@ const js = require('@eslint/js');
 const globals = require('globals');
 
 module.exports = [
-  { ignores: ['node_modules/', 'data/', 'evals/results/', 'site/'] },
+  { ignores: ['node_modules/', 'data/', 'evals/results/', 'site/', 'public/assets/vendor/'] },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.cjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
@@ -24,5 +24,13 @@ module.exports = [
       sourceType: 'script',
       globals: { ...globals.browser },
     },
+  },
+  {
+    files: ['public/impact/**/*.js'],
+    languageOptions: { sourceType: 'module', globals: { ...globals.browser } },
+  },
+  {
+    files: ['test/simulation/**/*.cjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 ];

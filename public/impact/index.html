@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PolicyLens · Check the correction</title><link rel="stylesheet" href="impact.css"><script type="importmap">{"imports":{"three":"../assets/vendor/three.module.js"}}</script><script src="../engine-browser.js" defer></script><script src="../correction-view.js" defer></script><script type="module" src="impact.js"></script></head>
+<body>
+<a class="skip" href="#rehearsal">Skip to rehearsal</a>
+<header><a class="brand" href="../">PolicyLens</a><a href="https://github.com/MatthewPaver/iam-policy-auditor#results">Technical evidence</a></header>
+<main>
+  <div class="opening"><h1>Keep the report. Block the deletion.</h1><p>Check a permission change without stopping work people need.</p><p class="scope-label">Real permission checks · Fictional data · No cloud actions</p></div>
+  <section id="rehearsal" aria-label="Permission-change rehearsal">
+    <div class="run-heading"><h2 id="runTitle">Proposed access</h2><button id="useDiagram" aria-pressed="false">View in 3D</button></div>
+    <section id="walkthrough" class="walkthrough" aria-label="Captioned walkthrough" data-state="loading">
+      <div class="playback-heading"><span id="chapter">Preparing the story</span><span id="playbackStatus" role="status">Silent · Plays once</span></div>
+      <div class="playback-controls"><button id="playPause" disabled>Play</button><button id="replayStory" disabled>Replay</button><button id="takeControl" disabled>Try it yourself</button></div>
+      <progress id="storyProgress" max="5" value="0" aria-label="Walkthrough progress"></progress>
+      <p id="caption" class="caption" aria-live="polite" aria-atomic="true">See the risk, test a correction, then compare the choices.</p>
+      <div id="runResult" class="run-result" aria-live="polite"><strong id="resultTitle">Ready to check both requests.</strong><p id="resultDescription">Report access must remain. Database deletion must stop.</p></div>
+    </section>
+    <div class="action-bar"><button id="attempt" class="primary" disabled>Open sample report</button><p id="actionStatus" role="status">Loading policies and engine…</p></div>
+    <div id="workspace" class="workspace">
+      <div class="visual">
+        <div id="worldMount" hidden></div><div id="worldLabels" aria-hidden="true" hidden></div>
+        <div id="diagram">
+          <div class="diagram-origin"><span>Report reader</span><small>The account making both requests</small></div>
+          <button id="diagramPolicy" data-object="policy">Permission check<small id="diagramPolicyName">Proposed access</small></button>
+          <div class="diagram-destinations">
+            <button data-object="reports" class="request" data-task="reports"><span>Open the report</span><strong id="diagramReadDecision">Not tried</strong><small id="diagramReports">daily.csv</small></button>
+            <button data-object="database" class="request" data-task="database"><span>Delete the database</span><strong id="diagramDeleteDecision">Not tried</strong><small id="diagramDatabase">3 fictional rows</small></button>
+          </div>
+        </div>
+        <p id="sceneStatus" class="scene-status" role="status">Preparing the requests…</p><p class="scene-note" hidden>Illustrative 3D view. Drag to orbit; select an object to inspect.</p>
+      </div>
+      <div class="workbench">
+        <ol class="task-list" aria-label="Work to rehearse"><li id="reportTask" aria-current="step"><span>1</span><strong>Open report</strong><b id="reportTaskState">Ready</b></li><li id="databaseTask"><span>2</span><strong>Attempt deletion</strong><b id="databaseTaskState">Next</b></li></ol>
+        <div id="taskContent" class="task-content" aria-live="polite"><h3 id="taskTitle">Try the required report access.</h3><p id="taskDescription">Open the report, then attempt deletion in the fictional workspace.</p></div>
+        <details id="sampleData"><summary>Inspect the fictional report and database</summary><div id="reportPreview" hidden><p class="file-title">daily.csv · stored report</p><table><thead><tr><th>Package</th><th>Status</th></tr></thead><tbody><tr><td>Structure</td><td>Complete</td></tr><tr><td>Services</td><td>In progress</td></tr><tr><td>Fit-out</td><td>Ready</td></tr></tbody></table></div><div id="databasePreview" hidden><p class="file-title">prod-1 · fictional contents</p><ul id="databaseRows"><li>Structure package</li><li>Services package</li><li>Fit-out package</li></ul><p id="databaseEmpty" hidden>Example data removed.</p></div><p class="sample-note">The stored report is independent of this database.</p></details>
+        <div class="run-tools"><button id="rewind" disabled>Rewind this run</button><button id="showRule">Inspect the rule</button></div>
+      </div>
+    </div>
+    <section id="intervention" class="intervention" aria-label="Choose a correction" hidden><h2>Try another choice</h2><p>Each run starts with the same fictional data. The original run stays in the evidence.</p><fieldset id="choices" disabled><legend class="sr-only">Candidate policy</legend><label><input type="radio" name="candidate" value="keep" checked><span>Proposed access</span></label><label><input type="radio" name="candidate" value="block"><span>Block everything</span></label><label><input type="radio" name="candidate" value="reports"><span>Keep report access only</span></label></fieldset></section>
+    <section class="comparison" aria-labelledby="compareTitle"><h2 id="compareTitle">All three choices, checked by the engine</h2><p>Engine checks, independent of scene playback. Blocked means the supplied policy does not allow that request.</p><table><thead><tr><th>Policy choice</th><th>Read report</th><th>Delete database</th><th>Both requirements?</th></tr></thead><tbody><tr data-comparison="keep"><th>Proposed access</th><td id="originalReport" data-label="Read report">Checking…</td><td id="originalDatabase" data-label="Delete database">Checking…</td><td id="originalData" data-label="Both requirements?">Checking…</td></tr><tr data-comparison="block"><th>Block everything</th><td id="blockedReport" data-label="Read report">Checking…</td><td id="blockedDatabase" data-label="Delete database">Checking…</td><td id="blockedResult" data-label="Both requirements?">Checking…</td></tr><tr data-comparison="reports"><th>Keep report access only</th><td id="candidateReport" data-label="Read report">Checking…</td><td id="candidateDatabase" data-label="Delete database">Checking…</td><td id="candidateData" data-label="Both requirements?">Checking…</td></tr></tbody></table></section>
+    <details class="transcript"><summary>Read the walkthrough transcript</summary><ol id="transcript"><li>The walkthrough has not started.</li></ol></details>
+  </section>
+  <section id="evidence" class="evidence" aria-label="Evidence behind the result"><details id="rule"><summary>Source rules and correction</summary><div class="source-heading"><h2 id="sourceTitle">The checked permission</h2><p id="sourceCitation"></p></div><p id="sourceMeaning"></p><pre id="sourceStatement"></pre><div id="statementChanges"></div><details><summary>Exact engine record and fictional activity</summary><pre id="recordJSON"></pre></details></details><div class="evidence-actions"><button id="download" disabled>Download evidence</button><button id="reset">Reset example</button><a href="../?view=review">Review your own policies</a><span id="downloadStatus" role="status"></span></div><p class="limits">Only these supplied policies and two requests are checked. Other account rules and actual cloud execution remain outside this example.</p></section>
+  <div id="error" role="alert" hidden><p></p><button id="retry">Retry example</button></div>
+  <footer><span>Interactive example · No account connection</span><a href="../">Product home</a></footer>
+</main></body></html>
