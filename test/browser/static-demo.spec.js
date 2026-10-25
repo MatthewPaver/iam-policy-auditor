@@ -15,6 +15,9 @@ test('published browser engine matches the server result and completes correctio
   const local = await page.evaluate(({ before, after }) => window.PolicyLensLocalAPI('/api/change/review', { before, after, action: 'rds:DeleteDBInstance', resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1', context: {} }), { before, after });
   expect(local.verdict).toEqual(serverResult.verdict);
   expect(local.access).toEqual(serverResult.access);
+  const engineUrl = new URL(await page.locator('script[src*="engine-browser.js"]').getAttribute('src'), page.url());
+  expect(engineUrl.searchParams.get('v')).toBe(local.engine.sourceIdentity);
+  expect(await page.locator('script[src*="product.js"]').getAttribute('src')).toMatch(/\?v=[a-f0-9]{16}$/);
   await page.getByRole('button', { name: 'Verify correction', exact: true }).click();
   await expect(page.locator('#correctionResult')).toContainText('Correction verified for declared requests');
   const download = page.waitForEvent('download');

@@ -37,12 +37,18 @@ function buildBrowserDemo({ quiet = false } = {}) {
   fs.cpSync(path.join(root, 'public/assets'), path.join(out, 'assets'), { recursive: true });
   fs.cpSync(path.join(root, 'public/impact'), path.join(out, 'impact'), { recursive: true });
   fs.cpSync(path.join(root, 'samples'), path.join(out, 'samples'), { recursive: true });
+  const assetHash = name => createHash('sha256').update(fs.readFileSync(path.join(root, 'public', name))).digest('hex').slice(0, 16);
   let html = fs.readFileSync(path.join(root, 'public/index.html'), 'utf8')
     .replace('href="/style.css"', 'href="./style.css"')
     .replace('<body class="product-home">', '<body class="product-home browser-demo">')
-    .replace('<script src="/app.js"></script>', '<script src="./engine-browser.js"></script><script src="./app.js"></script>')
+    .replace('<script src="/app.js"></script>', `<script src="./engine-browser.js?v=${browserIdentity.sourceIdentity}"></script><script src="./app.js?v=${assetHash('app.js')}"></script>`)
+    .replace('src="./product.js"', `src="./product.js?v=${assetHash('product.js')}"`)
+    .replace('src="./correction-view.js"', `src="./correction-view.js?v=${assetHash('correction-view.js')}"`)
     .replace('Request an optional AI explanation (sends extracted facts to Anthropic when configured)', 'AI explanation is available in the local server version only');
   fs.writeFileSync(path.join(out, 'index.html'), html);
+  const walkthrough = fs.readFileSync(path.join(out, 'impact/index.html'), 'utf8')
+    .replace('src="../engine-browser.js"', `src="../engine-browser.js?v=${browserIdentity.sourceIdentity}"`);
+  fs.writeFileSync(path.join(out, 'impact/index.html'), walkthrough);
   fs.appendFileSync(path.join(out, 'style.css'), '\n.browser-demo #tabs .tab:not([data-tab=compare]),.browser-demo .ai-opt-in{display:none}.browser-demo #tabs:after{content:"Browser-local change review · synthetic example included";font-size:12px;color:var(--muted);padding:12px;}\n');
   fs.writeFileSync(path.join(out, 'engine-browser.js'), runtime);
   if (!quiet) console.log(`Browser demo built: ${modules.size} existing modules, no external API or server.`);
