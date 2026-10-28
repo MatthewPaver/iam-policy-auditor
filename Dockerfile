@@ -7,4 +7,5 @@ ENV HOST=0.0.0.0
 ENV HOSTED=1
 ENV PORT=4177
 EXPOSE 4177
+USER node
 CMD ["node", "server.js"]
