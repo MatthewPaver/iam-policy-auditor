@@ -316,13 +316,16 @@ function renderStatements() {
     <tbody>${rows}</tbody></table>`;
 }
 
+// Respect the visitor's reduced-motion setting for programmatic scrolling.
+const scrollBehavior = () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+
 function wireCites(container) {
   container.querySelectorAll('.cite').forEach((c) => {
     c.onclick = () => {
       activateTab('statements');
       const row = document.getElementById(`stmt-${c.dataset.stmt}`);
       if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
         row.classList.remove('flash');
         void row.offsetWidth;
         row.classList.add('flash');
@@ -349,7 +352,7 @@ async function ask() {
   log.appendChild(el('div', 'msg q', esc(q)));
   const pending = el('div', 'msg a', '<span class="spin">◐</span> Analysing…');
   log.appendChild(pending);
-  pending.scrollIntoView({ behavior: 'smooth' });
+  pending.scrollIntoView({ behavior: scrollBehavior() });
   try {
     const r = await api('/api/ask', {
       documents: state.docs,
@@ -371,7 +374,7 @@ async function ask() {
   } catch (e) {
     pending.innerHTML = `<div class="ai-error">${esc(e.message)}</div>`;
   }
-  pending.scrollIntoView({ behavior: 'smooth' });
+  pending.scrollIntoView({ behavior: scrollBehavior() });
 }
 
 // ---------------------------------------------------------------------------
@@ -449,7 +452,7 @@ $('#compareBtn').onclick = async () => {
     }).join('') : '<li>No matching allow or deny statement for this request.</li>';
     $('#compareResult').classList.remove('stale');
     $('#compareResult').innerHTML = `<div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
-      ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}<h4>Decision evidence</h4><ul class="grant-evidence">${evidence}</ul>
+      ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}<h3 class="result-subhead">Decision evidence</h3><ul class="grant-evidence">${evidence}</ul>
       <details><summary>Rule findings and suggested corrections</summary>${md(r.suggestedCorrections.map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${r.findings.introduced.map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
       <p class="input-identity">Input SHA-256 <code>${esc(inputIdentity)}</code></p>
       ${r.ai ? `<details class="review-explanation"><summary>Optional AI explanation · ${esc(r.ai.model)}</summary>${md(r.ai.text)}</details>` : r.aiError ? `<p class="ai-error">Optional AI explanation unavailable: ${esc(r.aiError)} Engine result remains available.</p>` : ''}`;
@@ -466,7 +469,7 @@ $('#compareBtn').onclick = async () => {
 };
 
 $('#loadChangeExample').onclick = async () => {
-  if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the synthetic example?')) return;
+  if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the made-up example?')) return;
   const button = $('#loadChangeExample'); button.disabled = true;
   try {
     const values = await Promise.all(['before', 'after', 'corrected'].map(async name => {
@@ -504,8 +507,8 @@ $('#verifyCorrectionBtn').onclick = async () => {
     $('#correctionResult').innerHTML = `<div class="verdict ${r.verified ? 'review-pass' : 'review-stop'}"><span>${r.verified ? 'Correction verified for declared requests' : 'Correction not verified'}</span><b>${esc(r.risk.proposed.decision)} → ${esc(r.risk.candidate.decision)}</b><p>Risk closed: ${r.riskClosed ? 'yes' : 'no'} · required access preserved: ${r.requiredPreserved ? 'yes' : 'no'}</p></div>
       <p>New high or critical findings: ${r.introducedSevere.length}</p>${r.introducedSevere.map(finding => `<p class="ai-error">${esc(finding.ruleId)}: ${esc(finding.title)}</p>`).join('')}
       ${window.PolicyLensCorrectionView.render(inputs.proposed, inputs.candidate)}
-      <h4>Risk request in corrected policy</h4><ul>${evidenceLines(r.risk.candidate)}</ul>
-      ${r.preservation.map(item => `<h4>Required: ${esc(item.request.action)}</h4><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}
+      <h3 class="result-subhead">Risk request in corrected policy</h3><ul>${evidenceLines(r.risk.candidate)}</ul>
+      ${r.preservation.map(item => `<h3 class="result-subhead">Required: ${esc(item.request.action)}</h3><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}
       <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
     if (r.verified) $('#correctionCheck').open = false;
   } catch (e) {

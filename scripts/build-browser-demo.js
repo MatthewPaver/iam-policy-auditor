@@ -49,7 +49,7 @@ function buildBrowserDemo({ quiet = false } = {}) {
   const walkthrough = fs.readFileSync(path.join(out, 'impact/index.html'), 'utf8')
     .replace('src="../engine-browser.js"', `src="../engine-browser.js?v=${browserIdentity.sourceIdentity}"`);
   fs.writeFileSync(path.join(out, 'impact/index.html'), walkthrough);
-  fs.appendFileSync(path.join(out, 'style.css'), '\n.browser-demo #tabs .tab:not([data-tab=compare]),.browser-demo .ai-opt-in{display:none}.browser-demo #tabs:after{content:"Browser-local change review · synthetic example included";font-size:12px;color:var(--muted);padding:12px;}\n');
+  fs.appendFileSync(path.join(out, 'style.css'), '\n.browser-demo #tabs .tab:not([data-tab=compare]),.browser-demo .ai-opt-in{display:none}.browser-demo #tabs:after{content:"Browser-local change review · made-up example included";font-size:12px;color:var(--muted);padding:12px;}\n');
   fs.writeFileSync(path.join(out, 'engine-browser.js'), runtime);
   if (!quiet) console.log(`Browser demo built: ${modules.size} existing modules, no external API or server.`);
   return runtime;

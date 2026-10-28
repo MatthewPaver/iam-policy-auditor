@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d1117">
 <title>PolicyLens · Understand the permission change</title>
-<meta name="description" content="Review an AWS permission change, inspect cited source evidence and test a correction that preserves required access. Try a synthetic example or your own policies.">
+<meta name="description" content="Review an AWS permission change, inspect cited source evidence and test a correction that preserves required access. Try a made-up example or your own policies.">
 <meta property="og:title" content="PolicyLens · Understand the permission change">
 <meta property="og:description" content="See introduced access, trace the granting statement, verify a correction and export the review evidence. A deterministic engine checks the declared requests.">
 <meta property="og:type" content="website">
@@ -18,7 +19,7 @@
 <a class="skip-link" href="#productContent">Skip to content</a>
 <div id="hostedBanner" class="hosted-banner" hidden>
   Shared demo. Analysis is deterministic. <b>Do not paste production secrets or customer policies.</b>
-  Use a synthetic snapshot, or run PolicyLens locally from the GitHub repo.
+  Use made-up example data, or run PolicyLens locally from the GitHub repo.
 </div>
 <header class="product-header">
   <a class="brand" href="./" data-product-home aria-label="PolicyLens home">
@@ -35,7 +36,8 @@
   </div>
 </header>
 
-<main id="productHome" aria-label="PolicyLens product">
+<main id="main">
+<div id="productHome">
   <section class="landing-intro" id="productContent">
     <h1>Understand the permission<br> change before it ships.</h1>
     <p>Review AWS cloud permissions. Check a correction keeps the access you need.</p>
@@ -43,11 +45,11 @@
     <p class="product-privacy" id="productPrivacy">Runs in your browser. No policy upload.</p>
     <p class="product-privacy"><a href="./impact/">Watch the walkthrough</a> · <a href="https://github.com/MatthewPaver/iam-policy-auditor/blob/main/docs/SIMULATION_EVIDENCE.md">Evidence and limits</a></p>
   </section>
-  <section id="guidedReview" class="guided-review" aria-label="Interactive synthetic permission review">
+  <section id="guidedReview" class="guided-review" aria-label="Interactive made-up example review">
     <div class="chapter-tabs" role="tablist" aria-label="Example review chapters">
-      <button type="button" role="tab" id="chapterRisk" aria-selected="true" aria-controls="demoRisk" data-chapter="risk"><span class="chapter-number">1</span><span><span class="chapter-verb">Review the </span>risk</span></button>
-      <button type="button" role="tab" id="chapterCorrection" aria-selected="false" aria-controls="demoCorrection" tabindex="-1" data-chapter="correction"><span class="chapter-number">2</span><span><span class="chapter-verb">Check the </span>correction</span></button>
-      <button type="button" role="tab" id="chapterExport" aria-selected="false" aria-controls="demoExport" tabindex="-1" data-chapter="export"><span class="chapter-number">3</span><span><span class="chapter-verb">Export the </span>record</span></button>
+      <button type="button" role="tab" id="chapterRisk" aria-selected="true" aria-controls="demoRisk" data-chapter="risk">Review the risk</button>
+      <button type="button" role="tab" id="chapterCorrection" aria-selected="false" aria-controls="demoCorrection" tabindex="-1" data-chapter="correction">Check the correction</button>
+      <button type="button" role="tab" id="chapterExport" aria-selected="false" aria-controls="demoExport" tabindex="-1" data-chapter="export">Export the record</button>
     </div>
     <div class="demo-desk">
       <div class="demo-bar"><p>Made-up example: the <code>prod-1</code> database</p><div class="demo-bar-actions"><button type="button" id="replayTrace" class="replay-control" aria-label="Replay how the permission was traced to its policy line">Replay the trace</button><button type="button" id="viewDemoPolicy" class="text-control" aria-pressed="false"><span>View policy</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
@@ -55,13 +57,14 @@
       <div id="demoRisk" class="demo-chapter" role="tabpanel" aria-labelledby="chapterRisk" tabindex="0">
         <h2 id="demoConsequence" tabindex="-1">Checking the proposed permission…</h2>
         <div class="access-comparison">
-          <div class="access-state"><span>Current policy</span><strong id="demoBeforeMeaning">Checking…</strong><p>Database deletion <code id="demoBefore">Checking…</code></p></div>
+          <div class="access-state"><span>Current policy</span><strong id="demoBeforeMeaning">Checking…</strong><p>Database deletion</p></div>
           <svg class="access-arrow" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          <div class="access-state proposed"><span>Proposed policy</span><strong id="demoAfterMeaning">Checking…</strong><p>Database deletion <code id="demoAfter">Checking…</code></p></div>
+          <div class="access-state proposed"><span>Proposed policy</span><strong id="demoAfterMeaning">Checking…</strong><p>Database deletion</p></div>
         </div>
         <div class="risk-summary"><h3>Why review this?</h3><p id="demoReason">The engine is checking the supplied proposal.</p><button type="button" class="product-button primary" data-next="correction">Check correction <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
         <details id="demoEvidence" class="record-details"><summary>Inspect the request and source evidence</summary>
         <p>AWS (Amazon Web Services) is the cloud platform in this example. <code>ImplicitDeny</code> means the supplied policy does not grant this request. <code>ExplicitDeny</code> means an applicable rule blocks it. <code>Allow</code> means the supplied policy permits it.</p>
+        <p class="engine-decisions">Engine decision for deletion: current policy <code id="demoBefore">Checking…</code>, proposed policy <code id="demoAfter">Checking…</code>.</p>
         <div class="demo-evidence-grid">
           <div class="demo-source-column"><h3>Checked request</h3><div class="data-field"><code>rds:DeleteDBInstance</code><button type="button" class="copy-control" id="copyDemoRequest" aria-label="Copy checked request" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg></button></div><h3>Statement from proposed policy</h3><div class="source-container"><pre id="demoSource" class="source-code" aria-label="Cited statement from the proposed policy">Loading source…</pre><button type="button" class="copy-control" id="copyDemoSource" aria-label="Copy cited statement" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg></button></div></div>
           <div class="demo-explanation-column"><h3>Evidence</h3><div class="data-field"><code id="demoCitation">Resolving citation…</code><button type="button" class="copy-control" id="copyDemoCitation" aria-label="Copy evidence citation" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg></button></div></div>
@@ -69,9 +72,9 @@
         </details>
       </div>
       <div id="demoCorrection" class="demo-chapter" role="tabpanel" aria-labelledby="chapterCorrection" tabindex="0" hidden>
-        <h2>Remove the grant. Keep the report working.</h2>
-        <p class="chapter-intro">Compare the statements, then check deletion and required report access.</p>
-        <p class="original-outcome">Original proposal: awaiting engine review.</p>
+        <h2>Remove the deletion permission. Keep report access working.</h2>
+        <p class="chapter-intro">Compare the policy before and after the fix, then test both requests.</p>
+        <p class="original-outcome">Original change: awaiting the engine check.</p>
         <div class="correction-layout">
           <div>
             <div id="demoChanges">Load the example to compare the candidate.</div>
@@ -82,19 +85,21 @@
               <label for="demoRequiredAction">Required action</label><input id="demoRequiredAction" value="s3:GetObject" autocomplete="off">
               <label for="demoRequiredResource">Required resource</label><input id="demoRequiredResource" value="arn:aws:s3:::reports/daily.csv" autocomplete="off">
             </details>
-            <button type="button" id="verifyDemoCorrection" class="product-button primary" disabled>Verify correction</button>
           </div>
-          <div id="demoVerification" class="verification-result" aria-live="polite"><h3>Not checked yet</h3><p>Verify the candidate to check deletion and required report access.</p></div>
+          <div class="verify-panel">
+            <button type="button" id="verifyDemoCorrection" class="product-button primary" disabled>Verify correction</button>
+            <p class="verify-note">Report access must still work. Missing information or a new serious finding stops the check.</p>
+            <div id="demoVerification" class="verification-result" aria-live="polite"><h3>Not checked yet</h3><p>Select Verify correction to test both requests.</p></div>
+          </div>
         </div>
-        <p class="chapter-note">The required report access must work before and after. Missing information or a new serious finding stops verification.</p>
         <button type="button" class="product-button chapter-next" data-next="export">View review record</button>
       </div>
       <div id="demoExport" class="demo-chapter" role="tabpanel" aria-labelledby="chapterExport" tabindex="0" hidden>
         <h2>Take the evidence with the result.</h2>
-        <p class="chapter-intro">The JSON record binds exact inputs, line citations and engine identity to each checked outcome.</p>
+        <p class="chapter-intro">Each result is saved with the exact policies, the cited policy lines and the engine that checked them.</p>
         <div id="demoRecordSummary" class="record-summary" aria-live="polite">Run the example to prepare a record.</div>
-        <details class="record-details"><summary>Inspect the exact record</summary><pre id="demoRecordJSON" class="source-code"></pre></details>
-        <div class="record-actions"><button type="button" id="exportDemoReview" class="product-button primary" disabled>Export review JSON</button><button type="button" class="product-button" data-next="correction">Return to correction</button></div>
+        <details class="record-details"><summary>Inspect the exact record</summary><p id="demoRecordIdentity" class="record-identity"></p><pre id="demoRecordJSON" class="source-code"></pre></details>
+        <div class="record-actions"><button type="button" id="exportDemoReview" class="product-button primary" disabled>Download the review record (JSON)</button><button type="button" class="product-button" data-next="correction">Return to correction</button></div>
         <p id="demoExportStatus" class="chapter-note" role="status"></p>
       </div>
       <p class="demo-scope"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><span>Checks these policies and access requests only. Other account rules still need review.</span></p>
@@ -109,9 +114,9 @@
     <div class="product-boundary"><h3>What this check covers.</h3><p>A checked correction covers the supplied policies and access requests. It is not an account-wide safety check or production approval.</p><details><summary>Which account rules are outside this check?</summary><p>Organisation-wide restrictions, limits on roles, temporary-session rules and cross-account access are excluded. Engineers know these as SCPs, permission boundaries, session policies and cross-account interactions.</p><p>AWS Access Analyzer already provides new-access checks. PolicyLens offers a smaller, inspectable workflow. Independent comparison with the AWS simulator remains outstanding.</p><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-checks-validating-policies.html">Read AWS’s policy-check guidance</a></details></div>
     <div class="product-closing"><h3>Review your own policies.</h3><p>Open or paste current and proposed JSON. Declare the access to check.</p><a class="product-button primary" href="?view=review" data-own-policies>Open policy review</a></div>
   </section>
-  <footer class="product-footer"><p>PolicyLens · An independent public project by Matthew Paver. Demonstrations use synthetic policies.</p><a href="https://matthewpaver.github.io/work/policylens/">Case study</a><a href="https://matthewpaver.github.io/">Portfolio</a><a href="https://github.com/MatthewPaver/iam-policy-auditor#results">Technical evidence</a><a href="https://github.com/MatthewPaver/iam-policy-auditor#limits-and-non-goals">Limits</a><a href="?view=org" id="localAccountTools">Local account tools</a></footer>
+  <footer class="product-footer"><p>PolicyLens · An independent public project by Matthew Paver. Demonstrations use made-up example policies.</p><a href="https://matthewpaver.github.io/work/policylens/">Case study</a><a href="https://matthewpaver.github.io/">Portfolio</a><a href="https://github.com/MatthewPaver/iam-policy-auditor#results">Technical evidence</a><a href="https://github.com/MatthewPaver/iam-policy-auditor#limits-and-non-goals">Limits</a><a href="?view=org" id="localAccountTools">Local account tools</a></footer>
   <noscript><p class="no-script">Enable JavaScript to run the local policy engine, or <a href="https://github.com/MatthewPaver/iam-policy-auditor">run PolicyLens from source</a>. No review has run.</p></noscript>
-</main>
+</div>
 
 <section id="hero" class="hero" aria-label="Sample account check">
   <div class="hero-copy">
@@ -131,18 +136,18 @@
   </ol>
 </section>
 
-<main id="tools" aria-label="Policy review tools">
+<section id="tools" aria-labelledby="reviewTitle">
   <aside id="inputPanel">
     <h2>Policies</h2>
     <div id="docChips" class="chips"></div>
     <textarea id="pasteBox" spellcheck="false" placeholder='Paste an IAM policy (JSON) here…&#10;&#10;AWS identity/resource/trust policies,&#10;GCP IAM bindings, Azure role definitions,&#10;IBM Cloud access policies.'></textarea>
     <div class="row">
-      <input id="pasteName" type="text" value="pasted-policy.json" title="Document name">
+      <input id="pasteName" type="text" value="pasted-policy.json" title="Document name" aria-label="Document name">
       <button id="addPaste" class="btn secondary">Add</button>
     </div>
     <div class="row">
       <label class="btn secondary file-btn">Upload files<input id="fileInput" type="file" multiple accept=".json,application/json" hidden></label>
-      <select id="sampleSelect"><option value="">Load a sample…</option></select>
+      <select id="sampleSelect" aria-label="Load a sample policy"><option value="">Load a sample…</option></select>
     </div>
     <button id="analyzeBtn" class="btn primary">Analyse policies</button>
     <p class="fineprint">Parsing and rule checks run in the local server. If Claude is enabled, PolicyLens sends the extracted policy facts to the Anthropic API, with account IDs and emails pseudonymised unless you turn that off in the Ask tab.</p>
@@ -174,7 +179,7 @@
       <div id="askScope" class="scope-banner" hidden></div>
       <div id="chatLog"></div>
       <div class="ask-row">
-        <input id="askInput" type="text" placeholder="Ask a question, for example: who can delete logs?" autocomplete="off">
+        <input id="askInput" type="text" aria-label="Your question about the loaded policies" placeholder="Ask a question, for example: who can delete logs?" autocomplete="off">
         <button id="askBtn" class="btn primary">Ask</button>
       </div>
       <label class="fineprint checkbox"><input type="checkbox" id="redactToggle" checked> Pseudonymise account IDs and emails before sending to Claude</label>
@@ -198,8 +203,8 @@
       <div class="org-block">
         <h3>Who can perform an action</h3>
         <div class="org-query">
-          <input id="orgAction" type="text" value="rds:DeleteDBInstance" placeholder="action, e.g. s3:DeleteObject" autocomplete="off">
-          <input id="orgResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" placeholder="resource ARN (optional)" autocomplete="off">
+          <input id="orgAction" type="text" aria-label="Action to check" value="rds:DeleteDBInstance" placeholder="action, e.g. s3:DeleteObject" autocomplete="off">
+          <input id="orgResource" type="text" aria-label="Resource ARN (optional)" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" placeholder="resource ARN (optional)" autocomplete="off">
           <button id="orgWhoCanBtn" class="btn primary">Run</button>
         </div>
         <div id="orgWhoCanResult"></div>
@@ -221,17 +226,17 @@
     </div>
 
     <div id="panel-compare" class="panel">
-      <div class="workflow-intro"><h1>Review a permission change</h1><p>Check one declared request. Inspect the grant, then test a correction that keeps required access.</p></div>
+      <div class="workflow-intro"><h1 id="reviewTitle">Review a permission change</h1><p>Check one declared request. Inspect the grant, then test a correction that keeps required access.</p></div>
       <p class="review-privacy" id="reviewPrivacy">Checks run on your PolicyLens server. Optional AI sends extracted facts to Anthropic only when requested and configured.</p>
       <div class="review-query">
         <label>Action<input id="compareAction" type="text" value="rds:DeleteDBInstance" autocomplete="off"></label>
         <label>Resource<input id="compareResource" type="text" value="arn:aws:rds:eu-west-1:111122223333:db:prod-1" autocomplete="off"></label>
         <button id="loadChangeExample" class="btn secondary" type="button">Run example change</button>
       </div>
-      <p id="changeStatus" class="change-status" role="status">Paste two policies below or run the synthetic example.</p>
+      <p id="changeStatus" class="change-status" role="status">Paste two policies below or run the made-up example.</p>
       <div class="change-workbench">
-        <section aria-label="Original proposal"><h3>Original proposal</h3><div id="compareResult"><p class="empty">The checked transition and granting statement will appear here.</p></div></section>
-        <section aria-label="Corrected candidate"><h3>Corrected candidate</h3><p id="candidateHint" class="empty">Review the proposal first, then verify a correction. The original result stays visible.</p>
+        <section aria-labelledby="originalTitle"><h2 id="originalTitle" class="workbench-title">Original proposal</h2><div id="compareResult"><p class="empty">The checked transition and granting statement will appear here.</p></div></section>
+        <section aria-labelledby="candidateTitle"><h2 id="candidateTitle" class="workbench-title">Corrected candidate</h2><p id="candidateHint" class="empty">Review the proposal first, then verify a correction. The original result stays visible.</p>
           <details id="correctionCheck" class="correction-check" hidden open>
             <summary>Edit and verify correction</summary>
             <p>Verification covers the declared risk and required request only.</p>
@@ -260,6 +265,7 @@
       <p class="review-limits">Checks only the supplied policies and access requests. Other account rules still need review; this is not production approval.</p>
     </div>
   </section>
+</section>
 </main>
 
 <script src="./correction-view.js"></script>

@@ -35,7 +35,7 @@
       find('#demoCandidate').value = texts[2];
       renderChanges();
       find('#verifyDemoCorrection').disabled = false;
-      find('.original-outcome').innerHTML = `Original proposal: <strong>${esc(review.verdict.label)} · ${esc(review.access.before.decision)} → ${esc(review.access.after.decision)}</strong>`;
+      find('.original-outcome').innerHTML = `Original change: database deletion went from <strong>${esc(plain(review.access.before.decision))} to ${esc(plain(review.access.after.decision))}</strong>`;
       renderRecord();
       status.textContent = '';
     } catch (error) {
@@ -44,6 +44,9 @@
       find('#retryExample').onclick = () => { status.textContent = 'Loading the example through the review engine…'; loadExample(); };
     }
   }
+
+  // Display wording only; the exported record keeps the engine's own decision values.
+  const plain = decision => window.PolicyLensCorrectionView.describe(decision).toLowerCase();
 
   function setChapter(name, focus = false) {
     const panels = { risk: '#demoRisk', correction: '#demoCorrection', export: '#demoExport' };
@@ -77,9 +80,9 @@
   function renderRecord() {
     if (!sampleRecord) return;
     const correction = sampleRecord.correction;
-    find('#demoRecordSummary').innerHTML = `<div><span>Original proposal</span><strong>${esc(sampleRecord.review.verdict.label)}</strong><p>${esc(sampleRecord.review.access.before.decision)} → ${esc(sampleRecord.review.access.after.decision)}</p></div>
-      <div><span>Corrected candidate</span><strong>${correction ? (correction.result.verified ? 'Verified for declared requests' : 'Not verified') : 'Not checked'}</strong><p>${correction ? `Risk closed: ${correction.result.riskClosed ? 'yes' : 'no'} · required access preserved: ${correction.result.requiredPreserved ? 'yes' : 'no'}` : 'This record contains the original review only.'}</p></div>
-      <p class="record-identity">Input SHA-256 <code>${esc(sampleRecord.inputIdentity)}</code></p>`;
+    find('#demoRecordSummary').innerHTML = `<div><span>Original change</span><strong>${esc(sampleRecord.review.verdict.label)}</strong><p>Database deletion went from ${esc(plain(sampleRecord.review.access.before.decision))} to ${esc(plain(sampleRecord.review.access.after.decision))}.</p></div>
+      <div><span>Correction</span><strong>${correction ? (correction.result.verified ? 'Verified for both requests' : 'Not verified') : 'Not checked'}</strong><p>${correction ? `Deletion blocked: ${correction.result.riskClosed ? 'yes' : 'no'}. Report access kept: ${correction.result.requiredPreserved ? 'yes' : 'no'}.` : 'This record contains the original review only.'}</p></div>`;
+    find('#demoRecordIdentity').innerHTML = `Original review: ${esc(sampleRecord.review.verdict.label)} · ${esc(sampleRecord.review.access.before.decision)} → ${esc(sampleRecord.review.access.after.decision)}<br>Input SHA-256 <code>${esc(sampleRecord.inputIdentity)}</code>${correction ? `<br>Correction input SHA-256 <code>${esc(correction.inputIdentity)}</code>` : ''}`;
     find('#demoRecordJSON').textContent = JSON.stringify(sampleRecord, null, 2);
     find('#exportDemoReview').disabled = false;
   }
@@ -88,7 +91,7 @@
     verificationRevision += 1;
     if (sampleRecord) sampleRecord.correction = null;
     find('#demoVerification').className = 'verification-result';
-    find('#demoVerification').innerHTML = '<h3>Correction changed</h3><p>Previous verification is stale. Run the check again before relying on this candidate. The export now contains the original review only.</p>';
+    find('#demoVerification').innerHTML = '<h3>Correction changed</h3><p>The earlier result is stale. Select Verify correction again before relying on this fix. The download now holds the original review only.</p>';
     find('#demoExportStatus').textContent = '';
     const action = find('#demoRequiredAction').value.trim(), resource = find('#demoRequiredResource').value.trim();
     const declared = find('.declared-request');
@@ -112,7 +115,7 @@
     record.correction = null;
     renderRecord();
     find('#demoVerification').className = 'verification-result';
-    find('#demoVerification').textContent = 'Checking the risk, required access and introduced findings…';
+    find('#demoVerification').textContent = 'Testing both requests and checking for new serious findings…';
     try {
       const candidate = find('#demoCandidate').value;
       const action = find('#demoRequiredAction').value.trim(), resource = find('#demoRequiredResource').value.trim();
@@ -125,14 +128,14 @@
       record.correction = { inputIdentity: identity, inputs, result };
       find('#demoVerification').classList.add(result.verified ? 'verified' : 'not-verified');
       find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Deletion not allowed by this policy. Required access preserved.' : !result.riskClosed ? 'Deletion risk remains unresolved.' : !result.requiredPreserved ? result.preservation.some(item => item.before.decision === 'ConditionalAllow' || item.after.decision === 'ConditionalAllow') ? 'Required access needs more information.' : 'Required access is not preserved.' : 'New high or critical findings need review.'}</h3>
-        <details class="verification-evidence"><summary>Inspect checked requests and decisions</summary><p>${result.verified ? 'Correction verified for declared requests.' : 'Correction not verified for the declared requests.'}</p><dl><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
+        <details class="verification-evidence"><summary>Inspect checked requests and decisions</summary><p>${result.verified ? 'Correction verified for declared requests.' : 'Correction not verified for the declared requests.'}</p><dl><div><dt>Original proposal</dt><dd>${esc(record.review.verdict.label)} · ${esc(record.review.access.before.decision)} → ${esc(record.review.access.after.decision)}</dd></div><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
         <p class="checked-access"><strong>Database deletion: ${esc(window.PolicyLensCorrectionView.describe(result.risk.candidate.decision))}</strong><code>${esc(request.action)}</code></p>
         ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}</details>
-        <p>Original proposal: ${esc(record.review.verdict.label)}. These checks cover the listed requests, not all account permissions or production approval.</p>`;
+        <p>These checks cover the two listed requests, not all account permissions or production approval.</p>`;
       renderRecord();
       revealResult();
     } catch (error) {
-      if (revision === verificationRevision) { find('#demoVerification').innerHTML = `<h3>Check incomplete</h3><p role="alert">${esc(error.message)} Repair the inputs and verify again. No current correction is included in the export.</p>`; revealResult(); }
+      if (revision === verificationRevision) { find('#demoVerification').innerHTML = `<h3>Check incomplete</h3><p role="alert">${esc(error.message)} Repair the inputs and verify again. No current correction is in the download.</p>`; revealResult(); }
     } finally {
       verifying = false;
       button.disabled = false;
@@ -140,7 +143,7 @@
     }
   };
 
-  // The result sits beside or below the button; bring it into view if it is off-screen.
+  // The result sits directly below the button; bring it into view if it is off-screen.
   function revealResult() {
     const result = find('#demoVerification');
     const box = result.getBoundingClientRect();
@@ -156,7 +159,7 @@
     link.download = 'policylens-example-review.json';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    find('#demoExportStatus').textContent = 'Review JSON prepared for download. It includes the exact inputs, results, identities and stated limits.';
+    find('#demoExportStatus').textContent = 'Review record downloaded as JSON. It includes the exact inputs, results, input fingerprints and stated limits.';
   };
 
   function applyRoute(focus = false) {
