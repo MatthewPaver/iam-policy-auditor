@@ -22,6 +22,8 @@ test('product landing completes a real-engine review, correction and exact evide
   page.on('request', request => requests.push(request));
   await ready(page);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Understand the permission change before it ships.');
+  await expect(page.locator('main')).toHaveCount(1);
+  await expect(page.getByRole('main')).toHaveCount(1);
   await expect(page.locator('#tools')).toBeHidden();
   await expect(page.locator('#demoBefore')).toHaveText('ImplicitDeny');
   await expect(page.locator('#demoBeforeMeaning')).toHaveText('Not allowed');
@@ -44,14 +46,15 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('arn:aws:s3:::reports/*');
   await expect(page.locator('#demoChanges [data-change-kind=added]')).toHaveCount(0);
   await expect(page.locator('#demoVerification')).toContainText('Not checked yet');
-  await expect(page.locator('.original-outcome')).toContainText('Stop and review');
+  await expect(page.locator('.original-outcome')).toContainText('database deletion went from not allowed to allowed');
+  await expect(page.locator('.original-outcome')).not.toContainText('ImplicitDeny');
   await page.locator('#verifyDemoCorrection').click();
   await expect(page.locator('#demoVerification h3')).toHaveText('Deletion not allowed by this policy. Required access preserved.');
   await expect(page.locator('.verification-evidence')).not.toHaveAttribute('open');
   await page.locator('.verification-evidence summary').click();
   await expect(page.locator('#demoVerification')).toContainText('rds:DeleteDBInstance');
   await expect(page.locator('#demoVerification')).toContainText('Correction verified for declared requests');
-  await expect(page.locator('.original-outcome')).toContainText('ImplicitDeny → Allow');
+  await expect(page.locator('.verification-evidence')).toContainText('Stop and review · ImplicitDeny → Allow');
   await page.getByRole('button', { name: 'View review record' }).click();
   const record = await downloadRecord(page, '#exportDemoReview');
   expect(record.inputIdentity).toBe(hash(record.inputs));

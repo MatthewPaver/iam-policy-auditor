@@ -83,7 +83,7 @@ function renderSandbox() {
   $('#reportPreview').hidden = !sandbox.reportOpened;
   $('#databasePreview').hidden = !sandbox.actions.some(a => a.task === 'database');
   $('#databaseRows').hidden = sandbox.rows.length === 0; $('#databaseEmpty').hidden = sandbox.rows.length > 0;
-  $('#diagramDatabase').textContent = sandbox.rows.length ? `${sandbox.rows.length} fictional rows` : 'Example data removed';
+  $('#diagramDatabase').textContent = sandbox.rows.length ? `${sandbox.rows.length} example rows` : 'Example data removed';
   $('#diagramReports').textContent = sandbox.reportOpened ? 'Sample report open' : 'daily.csv';
   $('#diagramPolicyName').textContent = names[choice];
   for (const [index, subject, target] of [[0, 'reports', '#diagramReadDecision'], [1, 'database', '#diagramDeleteDecision']]) {
@@ -128,14 +128,14 @@ async function attempt({ signal, checkpoint } = {}) {
     } else {
       if (permitted) sandbox.rows = [];
       $('#taskTitle').textContent = permitted ? 'The sandbox data is removed.' : 'The sandbox data stays.';
-      $('#taskDescription').textContent = permitted ? 'The policy permits deletion. This fictional sandbox enacts that consequence; no AWS request is made.' : decision === 'ConditionalAllow' ? 'Missing information prevents a definite decision. The sandbox leaves data unchanged.' : 'The policy does not permit the checked deletion request. The sandbox leaves all three rows in place.';
+      $('#taskDescription').textContent = permitted ? 'The policy permits deletion. This made-up example enacts that consequence; no AWS request is made.' : decision === 'ConditionalAllow' ? 'Missing information prevents a definite decision. The sandbox leaves data unchanged.' : 'The policy does not permit the checked deletion request. The sandbox leaves all three rows in place.';
     }
     sandbox.actions.push({ task: task === 'reports' ? 'report' : 'database', decision, permissionSource: 'PolicyLens deterministic engine', sandboxEffect: task === 'reports' ? permitted ? 'sample report revealed' : 'sample report withheld' : permitted ? 'fictional rows cleared' : 'fictional rows retained' });
     if (!guided) $('#sampleData').open = true;
     if (completed() && !original) original = { policy: 'Proposed access', engineRecord: structuredClone(record), sandbox: structuredClone(sandbox) };
     renderSandbox(); renderComparison(); renderEvidence(); renderConclusion();
     $('#actionStatus').textContent = completed() ? 'Run complete. Change the policy or rewind from the same starting data.' : 'One task remains. Try deletion in the sandbox.';
-    $('#sceneStatus').textContent = task === 'reports' ? permitted ? 'Report request allowed. Sample file open.' : 'Report request denied. Sample file withheld.' : permitted ? 'Deletion permitted. Fictional rows cleared in this sandbox.' : 'Deletion not permitted. Fictional rows retained.';
+    $('#sceneStatus').textContent = task === 'reports' ? permitted ? 'Report request allowed. Sample file open.' : 'Report request denied. Sample file withheld.' : permitted ? 'Deletion permitted. Example rows cleared in this sandbox.' : 'Deletion not permitted. Example rows retained.';
     $('#intervention').hidden = !original;
   } finally {
     acting = false; $('#choices').disabled = !original; $('#rewind').disabled = !record; $('#reset').disabled = false; $('#download').disabled = !record; renderSandbox();
@@ -144,8 +144,8 @@ async function attempt({ signal, checkpoint } = {}) {
 function initializeWalkthrough() {
   const steps = [
     { id: 'start', title: 'A new permission', intro: 'A report reader needs the report, but should never delete the database.', duration: 2000 },
-    { id: 'proposed', title: 'Expose the risk', intro: 'Try both requests under the proposed access.', lead: 1600, outcome: () => record.correction.result.risk.candidate.decision === 'Allow' ? 'The report opens. Deletion is also allowed; the sandbox loses its fictional data.' : 'Inspect both request results. The expected deletion permission was not found.', duration: 3500 },
-    { id: 'reports', title: 'Narrow the permission', intro: 'Remove the deletion grant. Keep report access. Start with the same fictional data.', duration: 2000 },
+    { id: 'proposed', title: 'Expose the risk', intro: 'Try both requests under the proposed access.', lead: 1600, outcome: () => record.correction.result.risk.candidate.decision === 'Allow' ? 'The report opens. Deletion is also allowed; the sandbox loses its example data.' : 'Inspect both request results. The expected deletion permission was not found.', duration: 3500 },
+    { id: 'reports', title: 'Narrow the permission', intro: 'Remove the deletion grant. Keep report access. Start with the same example data.', duration: 2000 },
     { id: 'corrected', title: 'Check the correction', intro: 'Try the same two requests again.', lead: 1600, outcome: () => record.correction.result.verified ? 'Report allowed. Deletion not allowed. Both checked requirements pass.' : 'The correction is not verified. Inspect the two checked outcomes.', duration: 3000 },
     { id: 'finish', title: 'Compare the choices', intro: 'Compare all three policy choices below. Try another choice or inspect the rule.', duration: 3500 },
   ];
@@ -209,7 +209,7 @@ function inspectObject(subject) {
   if (guided) { guide?.pause('Paused for inspection. Resume or take control.'); if (subject === 'policy') inspectRule(); return; }
   if (subject === 'policy') { inspectRule(); return; }
   if ((subject === 'reports' && sandbox.actions.length === 0) || (subject === 'database' && sandbox.actions.length === 1)) { attempt(); return; }
-  $('#sceneStatus').textContent = subject === 'reports' ? 'The report store is independent of the example database.' : subject === 'database' ? `Example database: ${sandbox.rows.length} fictional rows remain.` : 'The same role makes both checked requests.';
+  $('#sceneStatus').textContent = subject === 'reports' ? 'The report store is independent of the example database.' : subject === 'database' ? `Example database: ${sandbox.rows.length} example rows remain.` : 'The same role makes both checked requests.';
 }
 $('#attempt').onclick = attempt;
 $('#showRule').onclick = inspectRule;
