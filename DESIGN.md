@@ -190,11 +190,11 @@ The guided desk is a flat working surface with top and bottom rules, no outer ro
 
 ### Buttons
 
-Product actions are at least 51px tall, with a thin border and the primary or outlined secondary treatment. Hover darkens the primary and lifts the secondary surface tone. Disabled buttons become slate and retain readable labels. Workbench buttons are denser, use the incumbent 8px radius and deeper blue fill, and reach 44px height in review. Keep visible 3px keyboard focus with a 3px offset.
+Product actions are at least 51px tall, with a thin border and the primary or outlined secondary treatment. Hover darkens the primary and lifts the secondary surface tone. Disabled buttons become slate and retain readable labels. Pressed buttons scale to 0.98 over 100ms; there is no press scale under reduced motion. Workbench buttons are denser, use the incumbent 8px radius and deeper blue fill, and reach 44px height in review. Keep visible 3px keyboard focus with a 3px offset.
 
 ### Navigation
 
-Header links are secondary until interaction. Chapter tabs use numbered circles and an active blue bottom rule, with `aria-selected`, roving focus and Arrow/Home/End navigation. Shortened phone labels preserve the three ordered steps. Phone actions use concise labels such as “Check correction”, “View review record” and “Open policy review”; preserve their full-width targets. Product home navigation retains session work. Local account routes remain accessible on the server; the static browser build does not offer those services.
+Header links are secondary until interaction. The walkthrough at /impact/ uses the same header (wordmark, How it works, Source code, Product home). Chapter tabs use numbered circles and an active blue bottom rule, with `aria-selected`, roving focus and Arrow/Home/End navigation. Shortened phone labels preserve the three ordered steps. Phone actions use concise labels such as “Check the correction”, “Export the record” and “Open policy review”; preserve their full-width targets. Product home navigation retains session work. Local account routes remain accessible on the server; the static browser build does not offer those services.
 
 ### Chips
 
@@ -210,7 +210,7 @@ Policy textareas are resizable dark fields with monospace content. Request field
 
 ### Evidence trace and record
 
-The risk consequence and “Check correction” action precede “Inspect the request and source evidence”. “View policy” and “Replay trace” open that disclosure. Verified correction leads with “Deletion not allowed by this policy. Required access preserved.” Failure headings identify unresolved deletion risk, required access not preserved, or new high or critical findings needing review; “Inspect checked requests and decisions” retains exact checks and decisions. The bounded-check limit stays visible outside the disclosure.
+The risk consequence and “Check the correction” action precede “Inspect the request and source evidence”. “View policy” and “Replay trace” open that disclosure. Verified correction leads with “Deletion access removed and required access kept”, followed by an “Export the record” action that opens the export step. Failure headings identify unresolved deletion risk, required access not preserved, or new high or critical findings needing review; “Inspect checked requests and decisions” retains exact checks and decisions. Limits are stated once, in the Limits block on the landing page; every other mention links to it.
 
 Source displays real line numbers, a cited excerpt and restrained risk emphasis on granting values. The full-policy toggle preserves inspectability. Request, citation and source copy controls use authored SVGs, descriptive accessible names and copied/error status messages. Phone copy targets reach 44px. Icons support written meaning rather than replacing it.
 

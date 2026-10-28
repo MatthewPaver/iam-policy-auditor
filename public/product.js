@@ -127,11 +127,12 @@
       if (revision !== verificationRevision || record !== sampleRecord) return;
       record.correction = { inputIdentity: identity, inputs, result };
       find('#demoVerification').classList.add(result.verified ? 'verified' : 'not-verified');
-      find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Deletion not allowed by this policy. Required access preserved.' : !result.riskClosed ? 'Deletion risk remains unresolved.' : !result.requiredPreserved ? result.preservation.some(item => item.before.decision === 'ConditionalAllow' || item.after.decision === 'ConditionalAllow') ? 'Required access needs more information.' : 'Required access is not preserved.' : 'New high or critical findings need review.'}</h3>
+      find('#demoVerification').innerHTML = `<h3>${result.verified ? 'Deletion access removed and required access kept' : !result.riskClosed ? 'Deletion risk remains unresolved.' : !result.requiredPreserved ? result.preservation.some(item => item.before.decision === 'ConditionalAllow' || item.after.decision === 'ConditionalAllow') ? 'Required access needs more information.' : 'Required access is not preserved.' : 'New high or critical findings need review.'}</h3>
         <details class="verification-evidence"><summary>Inspect checked requests and decisions</summary><p>${result.verified ? 'Correction verified for declared requests.' : 'Correction not verified for the declared requests.'}</p><dl><div><dt>Original proposal</dt><dd>${esc(record.review.verdict.label)} · ${esc(record.review.access.before.decision)} → ${esc(record.review.access.after.decision)}</dd></div><div><dt>Risk closed</dt><dd>${result.riskClosed ? 'Yes' : 'No'} · ${esc(result.risk.proposed.decision)} → ${esc(result.risk.candidate.decision)}</dd></div><div><dt>Required access preserved</dt><dd>${result.requiredPreserved ? 'Yes' : 'No'}</dd></div><div><dt>New high or critical findings</dt><dd>${result.introducedSevere.length}</dd></div></dl>
         <p class="checked-access"><strong>Database deletion: ${esc(window.PolicyLensCorrectionView.describe(result.risk.candidate.decision))}</strong><code>${esc(request.action)}</code></p>
         ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}</details>
-        <p>These checks cover the two listed requests, not all account permissions or production approval.</p>`;
+        <button type="button" class="product-button${result.verified ? ' primary' : ''} result-next" data-next="export">Export the record <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`;
+      find('#demoVerification .result-next').onclick = () => setChapter('export', true);
       renderRecord();
       revealResult();
     } catch (error) {
@@ -186,13 +187,23 @@
   document.querySelectorAll('[data-product-home]').forEach(link => { link.onclick = event => { event.preventDefault(); navigate(null); }; });
   find('[data-how]').onclick = event => { if (!document.body.classList.contains('product-home')) { event.preventDefault(); navigate(null); find('#how-it-works').scrollIntoView(); } };
   window.addEventListener('popstate', () => applyRoute());
+  // The risk step already sits under the hero, so the hero action moves straight to the correction step.
   find('#tryPermission').onclick = event => {
     event.preventDefault();
-    setChapter('risk');
-    find('#guidedReview').scrollIntoView({ block: 'start' });
-    find('#demoConsequence').focus({ preventScroll: true });
-    replayTrace();
+    setChapter('correction');
+    find('#guidedReview').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    find('#demoCorrection').focus({ preventScroll: true });
   };
+  // One Limits block lives on the landing page; every other mention links to it.
+  document.querySelectorAll('[data-limits]').forEach(link => {
+    link.onclick = event => {
+      event.preventDefault();
+      if (!document.body.classList.contains('product-home')) navigate(null);
+      const limits = find('#limits');
+      limits.scrollIntoView({ block: 'start' });
+      limits.focus({ preventScroll: true });
+    };
+  });
   let traceTimer;
   function replayTrace() {
     if (!sampleRecord) return;

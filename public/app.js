@@ -360,13 +360,13 @@ async function ask() {
       redactIdentifiers: $('#redactToggle').checked,
     });
     const modeHtml = r.mode === 'ai'
-      ? `<span class="m-ai">◆ Claude (${esc(r.aiModel || '')})</span> · explaining the engine's results`
+      ? `<span class="m-ai">◆ Claude (${esc(r.aiModel || '')})</span> · explaining the engine’s results`
       : `<span class="m-det">◆ deterministic engine</span> · no AI used`;
     let inner = `<div class="mode">${modeHtml}</div>${md(r.text)}`;
     if (r.mode === 'ai' && r.engineText && r.engineText !== r.text) {
-      inner += `<details class="facts"><summary>Show the engine's answer</summary>${md(r.engineText)}</details>`;
+      inner += `<details class="facts"><summary>Show the engine’s answer</summary>${md(r.engineText)}</details>`;
     }
-    if (r.aiError) inner += `<div class="ai-error">AI unavailable (${esc(r.aiError)}). Showing the engine's answer.</div>`;
+    if (r.aiError) inner += `<div class="ai-error">AI unavailable (${esc(r.aiError)}). Showing the engine’s answer.</div>`;
     pending.innerHTML = inner;
     wireCites(pending);
     renderAskScope(r.blast);
@@ -394,9 +394,9 @@ function invalidateChange() {
   correctionRevision += 1;
   changeRecord = null;
   $('#exportChange').disabled = true;
-  $('#changeStatus').textContent = 'Inputs changed. Previous results are stale; review this change again.';
+  $('#changeStatus').textContent = 'Inputs changed, so earlier results are out of date. Select Check my policies again.';
   $('#compareResult').classList.add('stale');
-  if (!$('#compareResult .stale-label')) $('#compareResult').insertAdjacentHTML('afterbegin', '<p class="stale-label">Stale result — inputs changed. Run a new review.</p>');
+  if (!$('#compareResult .stale-label')) $('#compareResult').insertAdjacentHTML('afterbegin', '<p class="stale-label">Out of date: the inputs changed. Check the policies again.</p>');
   $('#correctionResult').innerHTML = '';
   $('#correctionCheck').hidden = true;
   $('#candidateHint').hidden = false;
@@ -438,7 +438,7 @@ $('#compareBtn').onclick = async () => {
   $('#correctionResult').innerHTML = '';
   $('#correctionCheck').hidden = true;
   const btn = $('#compareBtn');
-  btn.disabled = true; btn.textContent = 'Reviewing…';
+  btn.disabled = true; btn.textContent = 'Checking…';
   try {
     const inputs = currentChangeInputs();
     const inputIdentity = await fingerprint(inputs);
@@ -464,7 +464,7 @@ $('#compareBtn').onclick = async () => {
   } catch (e) {
     if (revision === changeRevision) { changeError(e.message); $('#changeStatus').textContent = 'Review incomplete. No current verdict or export is available.'; }
   } finally {
-    changeBusy = false; btn.disabled = false; btn.textContent = 'Review this change';
+    changeBusy = false; btn.disabled = false; btn.textContent = 'Check my policies';
   }
 };
 
@@ -508,8 +508,7 @@ $('#verifyCorrectionBtn').onclick = async () => {
       <p>New high or critical findings: ${r.introducedSevere.length}</p>${r.introducedSevere.map(finding => `<p class="ai-error">${esc(finding.ruleId)}: ${esc(finding.title)}</p>`).join('')}
       ${window.PolicyLensCorrectionView.render(inputs.proposed, inputs.candidate)}
       <h3 class="result-subhead">Risk request in corrected policy</h3><ul>${evidenceLines(r.risk.candidate)}</ul>
-      ${r.preservation.map(item => `<h3 class="result-subhead">Required: ${esc(item.request.action)}</h3><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}
-      <p class="review-limits">${r.limits.map(esc).join(' ')}</p>`;
+      ${r.preservation.map(item => `<h3 class="result-subhead">Required: ${esc(item.request.action)}</h3><p>${esc(item.before.decision)} → ${esc(item.after.decision)}</p><ul>${evidenceLines(item.after)}</ul>`).join('')}`;
     if (r.verified) $('#correctionCheck').open = false;
   } catch (e) {
     if (revision === changeRevision && candidateRevision === correctionRevision) changeError(e.message, '#correctionResult');

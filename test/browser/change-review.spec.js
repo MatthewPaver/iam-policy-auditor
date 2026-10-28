@@ -6,7 +6,7 @@ const captures = process.env.PORTFOLIO_CAPTURES;
 
 async function sample(page) {
   await page.goto('/?view=review');
-  await page.getByRole('button', { name: 'Run example change' }).click();
+  await page.getByRole('button', { name: 'Load the example', exact: true }).click();
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
 }
 
@@ -34,7 +34,7 @@ test('proposal, correction, export, stale edits and source identity', async ({ p
   expect(record.correction.inputIdentity).toMatch(/^[a-f0-9]{64}$/);
   await page.locator('#changeInputs summary').click();
   await page.locator('#afterBox').fill(record.inputs.after + '\n');
-  await expect(page.locator('#changeStatus')).toContainText('stale');
+  await expect(page.locator('#changeStatus')).toContainText('out of date');
   await expect(page.getByRole('button', { name: 'Export review JSON' })).toBeDisabled();
   await expect(page.locator('#correctionResult')).toBeEmpty();
   expect(errors).toEqual([]);
@@ -51,7 +51,7 @@ test('repair invalid JSON and reject a correction which drops required access', 
   await expect(page.locator('#correctionResult [role=alert]')).toContainText('required action and resource');
   await page.locator('#changeInputs summary').click();
   await page.locator('#beforeBox').fill('{bad JSON');
-  await page.getByRole('button', { name: 'Review this change', exact: true }).click();
+  await page.getByRole('button', { name: 'Check my policies', exact: true }).click();
   await expect(page.locator('#compareResult [role=alert]')).toContainText('Repair the inputs');
   await expect(page.getByRole('button', { name: 'Export review JSON' })).toBeDisabled();
 });
@@ -66,12 +66,12 @@ test('late review cannot replace edited inputs', async ({ page }) => {
     await barrier;
     await route.fulfill({ response });
   });
-  await page.getByRole('button', { name: 'Review this change', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Reviewing…', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Check my policies', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Checking…', exact: true })).toBeDisabled();
   await page.locator('#compareAction').fill('s3:DeleteObject');
   release();
-  await expect(page.getByRole('button', { name: 'Review this change', exact: true })).toBeEnabled();
-  await expect(page.locator('#changeStatus')).toContainText('stale');
+  await expect(page.getByRole('button', { name: 'Check my policies', exact: true })).toBeEnabled();
+  await expect(page.locator('#changeStatus')).toContainText('out of date');
   await expect(page.getByRole('button', { name: 'Export review JSON' })).toBeDisabled();
 });
 
