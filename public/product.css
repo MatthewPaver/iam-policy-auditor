@@ -22,7 +22,7 @@ body.product-home #tools,body.product-home #hero,body:not(.product-home) #produc
 #productHome{display:block;max-width:none;padding:0;margin:0}
 .landing-intro{text-align:center;padding:28px 24px 16px}
 .landing-intro h1{font-size:var(--r-headline-font);font-weight:var(--r-headline-weight);line-height:1.06;letter-spacing:-.025em;max-width:860px;margin:0 auto;text-wrap:balance}
-.landing-intro>p:not(.product-privacy){font-size:var(--r-introduction-font);line-height:1.2;color:var(--muted);margin:12px auto 0;max-width:950px}
+.landing-intro>p:not(.product-privacy){font-size:var(--r-introduction-font);line-height:1.2;color:var(--muted);margin:12px auto 0;max-width:950px;text-wrap:balance}
 .landing-actions{display:flex;justify-content:center;align-items:center;gap:24px;margin-top:22px}
 .landing-actions .primary{width:277px}
 .landing-actions .product-button:not(.primary){width:236px}
