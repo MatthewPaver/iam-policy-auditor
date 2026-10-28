@@ -4,7 +4,7 @@ Review an AWS permission change. Check that a correction removes declared risky 
 
 **For:** engineers and security reviewers, with source-linked evidence that service owners can inspect.
 
-**Start here:** [Try PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/) — no install, account or policy upload.
+**Start here:** [Try PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/). No install, account or policy upload needed.
 
 1. Follow the synthetic example: a proposed change adds permission to delete a production database.
 2. Check the correction. Inspect the removed deletion statement and retained report access, then verify the declared requests.
@@ -16,7 +16,7 @@ The browser demo checks supplied policies and declared requests. It does not est
 
 **Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
 
-**Interactive walkthrough:** [Keep the report. Block the deletion.](https://matthewpaver.github.io/iam-policy-auditor/impact/) — compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
+**Interactive walkthrough:** [Keep the report. Block the deletion.](https://matthewpaver.github.io/iam-policy-auditor/impact/): compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
 
 PolicyLens is the product name; `iam-policy-auditor` is its repository name.
 

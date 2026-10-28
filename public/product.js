@@ -130,14 +130,23 @@
         ${result.preservation.map(item => `<p class="checked-access"><strong>Required access: ${esc(window.PolicyLensCorrectionView.describe(item.before.decision))} → ${esc(window.PolicyLensCorrectionView.describe(item.after.decision))}</strong><code>${esc(item.request.action)}</code><code>${esc(item.request.resource)}</code><span>${esc(item.before.decision)} → ${esc(item.after.decision)}</span></p>`).join('')}</details>
         <p>Original proposal: ${esc(record.review.verdict.label)}. These checks cover the listed requests, not all account permissions or production approval.</p>`;
       renderRecord();
+      revealResult();
     } catch (error) {
-      if (revision === verificationRevision) find('#demoVerification').innerHTML = `<h3>Check incomplete</h3><p role="alert">${esc(error.message)} Repair the inputs and verify again. No current correction is included in the export.</p>`;
+      if (revision === verificationRevision) { find('#demoVerification').innerHTML = `<h3>Check incomplete</h3><p role="alert">${esc(error.message)} Repair the inputs and verify again. No current correction is included in the export.</p>`; revealResult(); }
     } finally {
       verifying = false;
       button.disabled = false;
       button.textContent = 'Verify correction';
     }
   };
+
+  // The result sits beside or below the button; bring it into view if it is off-screen.
+  function revealResult() {
+    const result = find('#demoVerification');
+    const box = result.getBoundingClientRect();
+    if (box.top >= 0 && box.bottom <= innerHeight) return;
+    result.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
 
   find('#exportDemoReview').onclick = () => {
     if (!sampleRecord) return;
