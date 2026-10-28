@@ -7,8 +7,8 @@ const requiredAccess = [{ action: 's3:GetObject', resource: 'arn:aws:s3:::report
 const blockAll = JSON.stringify({ Version: '2012-10-17', Statement: [{ Sid: 'BlockAllAccess', Effect: 'Deny', Action: '*', Resource: '*' }] }, null, 2);
 const names = { keep: 'Proposed access', block: 'Block everything', reports: 'Keep report access only' };
 const initialRows = ['Structure package', 'Services package', 'Fit-out package'];
-let texts, record, original = null, choice = 'keep', revision = 0, acting = false, scene, worldWanted = false;
-let comparisons = {}, graphicsLoading = false;
+let texts, record, original = null, choice = 'keep', revision = 0, acting = false;
+let comparisons = {};
 const flat = createDiagram($('#diagram'));
 let sandbox = freshSandbox();
 let guide, guided = new URLSearchParams(location.search).get('mode') !== 'manual';
@@ -42,7 +42,6 @@ function syncControls() {
   $('#choices').disabled = acting || !record || !original || guided;
   $('#rewind').disabled = acting || !record || guided;
   $('#reset').disabled = acting || guided;
-  $('#useDiagram').disabled = acting || graphicsLoading;
 }
 async function prepareComparisons() {
   comparisons = {};
@@ -58,7 +57,7 @@ async function selectChoice(value) {
   const current = ++revision; choice = value; record = null; sandbox = freshSandbox();
   $('#rehearsal').dataset.ready = 'false'; $('#attempt').disabled = true; $('#download').disabled = true; $('#choices').disabled = true;
   $('#downloadStatus').textContent = ''; $('#actionStatus').textContent = 'Checking the selected policy…';
-  scene?.setRecord(null); scene?.draw(0); renderSandbox(); renderComparison(); renderConclusion(); renderEvidence();
+  renderSandbox(); renderComparison(); renderConclusion(); renderEvidence();
   $('#sourceMeaning').textContent = 'Checking the selected candidate. Previous candidate verification is cleared.';
   $('#statementChanges').replaceChildren();
   try {
@@ -75,7 +74,6 @@ async function selectChoice(value) {
     $('#runTitle').textContent = names[choice];
     $('#actionStatus').textContent = original ? 'Same starting data. Try both tasks again.' : 'The role needs its report. Try opening it.';
     $('#sceneStatus').textContent = guided ? 'The guide will try both requests.' : 'Use Open sample report, or select its request above.';
-    scene?.setRecord(record); scene?.setSandbox(sandbox); scene?.focus('overview', true);
     renderSandbox(); renderComparison(); renderEvidence(); renderConclusion();
   } catch (error) { if (current === revision) fail(error); }
 }
@@ -106,7 +104,6 @@ function renderSandbox() {
     $('#attempt').textContent = choice === 'keep' ? 'Try a correction' : 'Try another correction';
   }
   syncControls();
-  scene?.setSandbox(sandbox);
 }
 async function attempt({ signal, checkpoint } = {}) {
   if (!record || acting || (guided && !signal)) return;
@@ -120,7 +117,7 @@ async function attempt({ signal, checkpoint } = {}) {
   $('#actionStatus').textContent = task === 'reports' ? 'Following the report request through the policy…' : 'Following the deletion request through the policy…';
   $('#sceneStatus').textContent = task === 'reports' ? 'Request: open daily.csv' : 'Request: delete prod-1 in the sandbox';
   try {
-    if (!reduced.matches) await (worldWanted && scene ? scene : flat).run(task);
+    if (!reduced.matches) await flat.run(task);
     if (signal?.aborted) return;
     if (checkpoint) await checkpoint();
     if (signal?.aborted) return;
@@ -153,7 +150,7 @@ function initializeWalkthrough() {
     { id: 'finish', title: 'Compare the choices', intro: 'Compare all three policy choices below. Try another choice or inspect the rule.', duration: 3500 },
   ];
   guide = createWalkthrough({ steps, manual: !guided,
-    motion: action => { flat[action]?.(); scene?.[action]?.(); },
+    motion: action => { flat[action]?.(); },
     modeChanged(value) { guided = value; $('#rehearsal').dataset.guided = String(value); syncControls(); if (value) $('#sampleData').open = false; },
     async perform(id, context) {
       if (id === 'start') { original = null; $('#intervention').hidden = true; $('[value=keep]').checked = true; await selectChoice('keep'); }
@@ -209,48 +206,23 @@ function inspectRule() {
   $('#rule').open = true; $('#rule').scrollIntoView({ block: 'start', behavior: reduced.matches ? 'instant' : 'smooth' });
 }
 function inspectObject(subject) {
-  if (guided) { guide?.pause('Paused for inspection. Resume or take control.'); if (subject === 'policy') inspectRule(); else scene?.focus(subject, true); return; }
+  if (guided) { guide?.pause('Paused for inspection. Resume or take control.'); if (subject === 'policy') inspectRule(); return; }
   if (subject === 'policy') { inspectRule(); return; }
   if ((subject === 'reports' && sandbox.actions.length === 0) || (subject === 'database' && sandbox.actions.length === 1)) { attempt(); return; }
-  scene?.focus(subject);
   $('#sceneStatus').textContent = subject === 'reports' ? 'The report store is independent of the example database.' : subject === 'database' ? `Example database: ${sandbox.rows.length} fictional rows remain.` : 'The same role makes both checked requests.';
-}
-async function createScene() {
-  if (scene) return true;
-  try {
-    const module = await import('./world.js');
-    scene = module.createWorld($('#worldMount'), $('#worldLabels'), $('#sceneStatus'), inspectObject);
-    scene.setRecord(record); scene.setSandbox(sandbox); return true;
-  } catch { $('#sceneStatus').textContent = '3D is unavailable. The request view and real checks still work.'; return false; }
-}
-function renderView() {
-  $('#diagram').hidden = worldWanted; $('#worldMount').hidden = !worldWanted; $('#worldLabels').hidden = !worldWanted;
-  $('.scene-note').hidden = !worldWanted; $('#useDiagram').textContent = worldWanted ? 'Use request view' : 'View in 3D';
-  $('#useDiagram').setAttribute('aria-pressed', String(worldWanted));
-  if (worldWanted) { scene?.setSandbox(sandbox); scene?.resize(); }
 }
 $('#attempt').onclick = attempt;
 $('#showRule').onclick = inspectRule;
 document.querySelectorAll('[data-object]').forEach(button => { button.onclick = () => inspectObject(button.dataset.object); });
-document.querySelectorAll('[data-focus]').forEach(button => { button.onclick = () => { guide?.pause('Paused for inspection. Resume when ready.'); scene?.focus(button.dataset.focus, guided); }; });
 document.querySelectorAll('[name=candidate]').forEach(input => { input.onchange = () => { if (input.checked) { guide?.takeControl(); selectChoice(input.value); } }; });
 $('#rewind').onclick = () => { if (!acting && record && !guided) selectChoice(choice); };
 $('#reset').onclick = () => { if (acting || guided) return; guide?.takeControl(); original = null; $('#intervention').hidden = true; $('[value=keep]').checked = true; $('#rule').open = false; if (texts) selectChoice('keep'); else load(); };
 $('#retry').onclick = load;
-$('#useDiagram').onclick = async () => {
-  if (acting || graphicsLoading) return;
-  guide?.pause('Paused for visual inspection. Resume when ready.');
-  graphicsLoading = true; syncControls();
-  if (worldWanted) worldWanted = false;
-  else worldWanted = await createScene();
-  graphicsLoading = false; renderView(); syncControls();
-};
-document.addEventListener('policylens-graphics-lost', () => { worldWanted = false; renderView(); $('#sceneStatus').textContent = '3D stopped. The request view and real checks remain available.'; });
 $('#download').onclick = () => {
   const output = exportedRecord(); if (!output || acting) return;
   const link = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' }));
   link.href = url; link.download = `policylens-rehearsal-${choice}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   $('#downloadStatus').textContent = 'Engine evidence and separately labelled sandbox activity prepared.';
 };
-window.addEventListener('pagehide', () => { guide?.dispose(); flat.dispose(); scene?.dispose(); });
+window.addEventListener('pagehide', () => { guide?.dispose(); flat.dispose(); });
 load();

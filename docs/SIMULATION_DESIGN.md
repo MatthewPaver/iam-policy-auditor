@@ -71,11 +71,11 @@ components:
 
 The default walkthrough is a compact 2D request view. A five-chapter silent guide exposes proposed deletion access, removes the deletion grant, then repeats both checked tasks. The existing deterministic engine supplies every verdict; a separately labelled in-memory sandbox reveals a sample report or clears fictional rows only for definite Allow.
 
-Dark slate, self-hosted Atkinson lettering, blue controls and written outcomes retain PolicyLens’s operational world. Optional 3D is an inspection tool loaded only on request. This contract applies only to the interactive walkthrough; the engine, account-analysis views and historical previews remain outside its scope. No human impact, enterprise coverage or production approval is claimed.
+Dark slate, self-hosted Atkinson lettering, blue controls and written outcomes retain PolicyLens’s operational world. This contract applies only to the interactive walkthrough; the engine, account-analysis views and historical previews remain outside its scope. No human impact, enterprise coverage or production approval is claimed.
 
 **Key Characteristics:**
 - One caption and one current result precede the working visual.
-- Compact 2D first; optional lazy 3D preserves checked state.
+- One compact request view. No 3D scene (removed 28 Oct 2026: decorative, not needed to understand the check).
 - All three policies have persistent engine-derived comparison rows.
 - Exact evidence distinguishes permission decisions from fictional effects.
 
@@ -103,7 +103,6 @@ Header and main cap at 1240px with desktop horizontal gutters (28px). Caption, p
 
 At 700px, gutters become 16px. The reader and policy check share one row; the two request destinations share the next. Caption and current result remain above the visual. Three-way comparison converts to labelled rows using each cell’s data label. Sample content, transcript and exact evidence remain disclosures. Completed task lists and task content hide after two actions, and guided mode hides them throughout.
 
-Optional 3D uses a 1.2:1 visual/workbench grid with a 280px minimum workbench and a 380px minimum desktop visual. Phone stacks these regions and uses a 280px visual. These are walkthrough measurements, not global production rules.
 
 ## Elevation & Depth
 
@@ -117,7 +116,7 @@ Actions have gently rounded corners (5px) and minimum height (44px). Request des
 
 ### Request view and current result
 
-The compact 2D view is the default and requests no 3D vendor modules until View in 3D is selected. Each destination starts as Not tried. A user or guide action highlights the checked request for 650ms, then reveals its written outcome. The current result stays above the visual, avoiding dependence on camera state or remembered selections. Reduced motion skips spatial/progress animation.
+The compact request view is the only view. Each destination starts as Not tried. A user or guide action highlights the checked request for 650ms, then reveals its written outcome. The current result stays above the visual, avoiding dependence on camera state or remembered selections. Reduced motion skips spatial/progress animation.
 
 ### Captioned guide and controls
 
@@ -145,10 +144,6 @@ Sample-data disclosure reveals authored report content and three fictional datab
 
 **The Independent Stores Rule.** The stored report is independent of the fictional database; deleting database rows never removes report content.
 
-### Optional 3D
-
-View in 3D lazily imports the scene and pauses the guide for inspection without changing the selected policy or record. Use request view returns to the default. Orbit supports drag, scroll, arrows, plus/minus and Home. Gates start neutral and reveal engine decisions only as the request reaches its checkpoint. Path movement uses 1250ms; camera focus uses 550ms cubic ease-out. Graphics failure or loss preserves request view, written checks and evidence.
-
 ### Source and exact export
 
 Source rules and correction disclose the checked statement, citation and structural changes. Technical evidence stays directly linked. Download includes review/correction inputs and identities plus all three comparison inputs, results and SHA-256 hashes. A separately labelled simulation object records synthetic activity, no cloud actions, independent report storage, current run and retained original. Only supplied policies and two declared requests are checked; other account rules and actual cloud execution remain outside scope.
@@ -160,7 +155,6 @@ Source rules and correction disclose the checked statement, citation and structu
 - Do use the same three choice names in controls, comparison and evidence.
 - Do retain exact implicit and explicit deny distinctions in evidence while plain UI says Blocked.
 - Do preserve immutable original evidence, independent stores, cancellation and three-way export identities.
-- Do load 3D only when selected and retain the request view when graphics are unavailable.
 
 ### Don't:
 - Don't claim cloud execution, network timing, enterprise coverage or measured human benefit.

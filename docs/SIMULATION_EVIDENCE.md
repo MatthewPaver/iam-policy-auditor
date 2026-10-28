@@ -15,7 +15,7 @@ The walkthrough exposes source rules and exact statement changes beside the resu
 - [Design and motion contract](SIMULATION_DESIGN.md)
 - Run `npm ci`, install Playwright Chromium, then `npm run test:simulation`. CI runs this check too.
 
-The journey check covers all three choices on desktop and phone, both captioned guides, pause/replay/manual control, reduced motion, optional 3D, graphics failure, fixture retry, source inspection, exports and agreement with the Node engine. The 2D view loads first; 3D assets load only when requested. The page uses self-hosted assets and sample data.
+The journey check covers all three choices on desktop and phone, both captioned guides, pause/replay/manual control, reduced motion, fixture retry, source inspection, exports and agreement with the Node engine. There is no 3D view. The page uses self-hosted assets and sample data.
 
 ## Limits
 

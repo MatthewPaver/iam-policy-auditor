@@ -103,7 +103,7 @@ body.product-home #tools,body.product-home #hero,body:not(.product-home) #produc
 .demo-edit label{display:block;margin:14px 0 6px;font-size:15px}
 .demo-edit textarea{min-height:220px;font:13px/1.6 var(--mono)}
 .demo-edit input{display:block;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--product-line);border-radius:5px;background:#0d141d;color:var(--text);font:14px/1.5 var(--mono)}
-.verification-result{align-self:start;padding:20px 0;border-top:1px solid var(--product-line);color:var(--muted)}
+.verification-result{align-self:start;position:sticky;top:24px;padding:20px 0;border-top:1px solid var(--product-line);color:var(--muted)}
 .verification-result.verified{border-color:#4b9274}
 .verification-result.verified h3{color:#90dbb3}
 .verification-result.not-verified h3{color:var(--product-risk)}
@@ -241,7 +241,7 @@ body.change-view #tools{padding:30px 24px 48px}
   .original-outcome{font-size:14px;line-height:1.6;margin-bottom:20px}
   .original-outcome strong{display:block}
   .demo-edit textarea,.demo-edit input{font-size:16px}
-  .verification-result{padding:16px 0}
+  .verification-result{position:static;padding:16px 0}
   .chapter-next{width:100%;white-space:nowrap}
   .record-summary{grid-template-columns:minmax(0,1fr);gap:24px}
   .record-summary strong{font-size:22px}
