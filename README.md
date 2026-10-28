@@ -16,7 +16,7 @@ The browser demo checks supplied policies and declared requests. It does not est
 
 **Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
 
-**Interactive walkthrough:** [Keep the report. Block the deletion.](https://matthewpaver.github.io/iam-policy-auditor/impact/): compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
+**Interactive walkthrough:** [Block the deletion and keep the report](https://matthewpaver.github.io/iam-policy-auditor/impact/): compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
 
 PolicyLens is the product name; `iam-policy-auditor` is its repository name.
 
@@ -55,7 +55,7 @@ npm run demo        # serves http://127.0.0.1:4177, this machine only
 
 The terminal prints `Mode: local` and `AI layer: disabled — set ANTHROPIC_API_KEY to enable`. Then, in the browser:
 
-1. The **Change review** workbench opens by default. Select **Run example change**.
+1. The **Change review** workbench opens by default. Select **Load the example**.
 2. Expected result: **Stop and review**, `ImplicitDeny → Allow`, with evidence `S2 after.json:10 (DeleteProductionDatabase)`.
 3. Open **Edit and verify correction** (the corrected policy is pre-filled) and click **Verify correction**. Expected result: **Correction verified**, with `risk closed: yes · required access preserved: yes` for `s3:GetObject` on the reports bucket.
 
@@ -69,7 +69,7 @@ The same check is available over HTTP (`POST /api/change/review`, `POST /api/cha
 
 The default page is a product landing with a real-engine synthetic example. Its three chapters explain introduced access, verify a correction against required report access, and export the evidence. The cited statement stays inspectable and copyable. A user-triggered source trace supports reduced motion; chapter controls work by keyboard. The example never shares state with a visitor’s own review.
 
-Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, declare a sensitive request and select **Review this change**. **Run example change** remains available there. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
+Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, name the action and resource to check, and select **Check my policies**. The fields start empty; **Load the example** fills and checks the made-up example. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
 
 The correction view compares the exact proposed and candidate statements: removed, retained and added, with inspectable JSON and source pointers. It appears in the guided example and completed own-policy verification. This is a document comparison, not an access verdict: an added deny can close the request while leaving its original allow statement in place. Editing a candidate refreshes the comparison and invalidates verification; only the existing engine can establish the declared access outcome.
 

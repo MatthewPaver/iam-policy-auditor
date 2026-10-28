@@ -8,7 +8,10 @@ test('published browser engine matches the server result and completes correctio
   await page.goto('/');
   await expect(page.locator('.pill.local')).toContainText('no upload');
   await page.getByRole('link', { name: 'Use your own policies', exact: true }).click();
-  await page.getByRole('button', { name: 'Run example change' }).click();
+  await expect(page.locator('#beforeBox')).toHaveValue('');
+  await expect(page.locator('#compareAction')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Check my policies', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Load the example', exact: true }).click();
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
   const before = await page.locator('#beforeBox').inputValue(), after = await page.locator('#afterBox').inputValue();
   const serverResult = reviewChange({ before, after, request: { action: 'rds:DeleteDBInstance', resource: 'arn:aws:rds:eu-west-1:111122223333:db:prod-1', context: {} } });

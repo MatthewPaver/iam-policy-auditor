@@ -21,7 +21,7 @@ test('product landing completes a real-engine review, correction and exact evide
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => requests.push(request));
   await ready(page);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Understand the permission change before it ships.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Check a permission change before it ships');
   await expect(page.locator('main')).toHaveCount(1);
   await expect(page.getByRole('main')).toHaveCount(1);
   await expect(page.locator('#tools')).toBeHidden();
@@ -30,7 +30,12 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoAfterMeaning')).toHaveText('Allowed');
   await expect(page.locator('#demoCitation')).toContainText('S2 · after.json:10');
   await expect(page.locator('#demoEvidence')).not.toHaveAttribute('open');
-  await expect(page.getByRole('button', { name: 'Check correction', exact: true })).toBeVisible();
+  // The hero action goes straight to the correction step; the risk step stays one tab away.
+  await page.locator('#tryPermission').click();
+  await expect(page.locator('#demoCorrection')).toBeVisible();
+  await expect(page.locator('#chapterCorrection')).toHaveAttribute('aria-selected', 'true');
+  await page.locator('#chapterRisk').click();
+  await expect(page.getByRole('button', { name: 'Check the correction', exact: true })).toBeVisible();
   await page.locator('#demoEvidence summary').click();
   await expect(page.locator('#demoSource')).toContainText('arn:aws:rds:eu-west-1:111122223333:db:prod-1');
   await expect(page.locator('#demoSource .source-risk')).toHaveCount(4);
@@ -38,9 +43,9 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('#demoSource')).toContainText('Version');
   await page.locator('#viewDemoPolicy').click();
   await expect(page.locator('#demoSource')).not.toContainText('Version');
-  await page.locator('#tryPermission').click();
+  await page.locator('#replayTrace').click();
   await expect(page.locator('#demoTraceStatus')).toContainText('after.json line 10');
-  await page.getByRole('button', { name: 'Check correction', exact: true }).click();
+  await page.getByRole('button', { name: 'Check the correction', exact: true }).click();
   await expect(page.locator('#demoChanges [data-change-kind=removed]')).toContainText('DeleteProductionDatabase');
   await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('ReadReports');
   await expect(page.locator('#demoChanges [data-change-kind=retained]')).toContainText('arn:aws:s3:::reports/*');
@@ -49,13 +54,14 @@ test('product landing completes a real-engine review, correction and exact evide
   await expect(page.locator('.original-outcome')).toContainText('database deletion went from not allowed to allowed');
   await expect(page.locator('.original-outcome')).not.toContainText('ImplicitDeny');
   await page.locator('#verifyDemoCorrection').click();
-  await expect(page.locator('#demoVerification h3')).toHaveText('Deletion not allowed by this policy. Required access preserved.');
+  await expect(page.locator('#demoVerification h3')).toHaveText('Deletion access removed and required access kept');
   await expect(page.locator('.verification-evidence')).not.toHaveAttribute('open');
   await page.locator('.verification-evidence summary').click();
   await expect(page.locator('#demoVerification')).toContainText('rds:DeleteDBInstance');
   await expect(page.locator('#demoVerification')).toContainText('Correction verified for declared requests');
   await expect(page.locator('.verification-evidence')).toContainText('Stop and review · ImplicitDeny → Allow');
-  await page.getByRole('button', { name: 'View review record' }).click();
+  await page.getByRole('button', { name: 'Export the record', exact: true }).click();
+  await expect(page.locator('#demoExport')).toBeVisible();
   const record = await downloadRecord(page, '#exportDemoReview');
   expect(record.inputIdentity).toBe(hash(record.inputs));
   expect(record.correction.inputIdentity).toBe(hash(record.correction.inputs));
@@ -108,10 +114,15 @@ test('own JSON files complete review and correction while home navigation preser
   await page.locator('#beforeFile').setInputFiles(path.join(samples, 'aws-change-before.json'));
   await page.locator('#afterFile').setInputFiles(path.join(samples, 'aws-change-after.json'));
   await expect(page.locator('#changeStatus')).toContainText('loaded');
+  await expect(page.locator('#compareAction')).toHaveValue('');
+  await page.locator('#compareAction').fill('rds:DeleteDBInstance');
+  await page.locator('#compareResource').fill('arn:aws:rds:eu-west-1:111122223333:db:prod-1');
   await page.locator('#compareBtn').click();
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
   await page.locator('#candidateBox').fill(await fs.readFile(path.join(samples, 'aws-change-corrected.json'), 'utf8'));
   expect(await page.locator('#candidateBox').evaluate(element => getComputedStyle(element).fontFamily)).toContain('monospace');
+  await page.locator('#requiredAction').fill('s3:GetObject');
+  await page.locator('#requiredResource').fill('arn:aws:s3:::reports/daily.csv');
   await page.locator('#verifyCorrectionBtn').click();
   await expect(page.locator('#correctionResult')).toContainText('Correction verified');
   await expect(page.locator('#correctionResult [data-change-kind=removed]')).toContainText('DeleteProductionDatabase');
@@ -174,7 +185,7 @@ test('keyboard chapter navigation, reduced motion and phone correction/export re
   await page.setViewportSize({ width: 320, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await ready(page);
-  const next = page.getByRole('button', { name: 'Check correction', exact: true });
+  const next = page.getByRole('button', { name: 'Check the correction', exact: true });
   expect(await next.evaluate(element => element.clientHeight < 70 && element.scrollWidth <= element.clientWidth)).toBe(true);
   await expect(page.locator('.record-contents')).not.toHaveAttribute('open');
   await page.locator('.record-contents summary').focus();
@@ -317,4 +328,17 @@ test('late verification cannot restore a pass after the candidate changes', asyn
   await expect(page.locator('#demoVerification')).toContainText('stale');
   await page.locator('#chapterExport').click();
   expect((await downloadRecord(page, '#exportDemoReview')).correction).toBe(null);
+});
+
+test('limits are stated in one block and other mentions link to it', async ({ page }) => {
+  await ready(page);
+  await expect(page.locator('#limits h2')).toHaveText('Limits');
+  await expect(page.locator('[data-limits]')).toHaveCount(4);
+  await page.locator('.landing-intro [data-limits]').click();
+  await expect(page.locator('#limits')).toBeFocused();
+  await page.getByRole('link', { name: 'Use your own policies', exact: true }).click();
+  await expect(page.locator('#tools')).toBeVisible();
+  await page.locator('#panel-compare [data-limits]').click();
+  await expect(page.locator('#productHome')).toBeVisible();
+  await expect(page.locator('#limits')).toBeFocused();
 });
