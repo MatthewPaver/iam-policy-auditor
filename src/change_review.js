@@ -13,6 +13,7 @@ const { evaluateRequest } = require('./evaluate');
 const { runRules, SEV_ORDER } = require('./rules');
 const { lintModel } = require('./lint');
 const { normalizePolicyInput, ACCEPTED_FORMATS } = require('./adapters');
+const actions = require('./actions');
 
 const DECISION_RANK = {
   ExplicitDeny: 0,
@@ -38,9 +39,54 @@ function analyzePolicy(name, input) {
   return { model, findings };
 }
 
+// Expand statement Action / NotAction patterns into a stable, sorted set.
+// Prefer mutating actions when any exist so adding a pure read (PowerUserAccess
+// v4→v5) does not look like a new finding; otherwise keep the full set so
+// read-only widenings still show up.
+function affectedActionSet(stmt) {
+  const patterns = (stmt.notActions && stmt.notActions.length)
+    ? stmt.notActions
+    : (stmt.actions || []);
+  const expanded = [];
+  for (const pattern of patterns) {
+    const { actions: list } = actions.expand(pattern, { cap: 100000 });
+    // Keep catalogue casing until after isMutating — levels are keyed that way.
+    if (list.length) expanded.push(...list);
+    else expanded.push(String(pattern));
+  }
+  const mutating = expanded.filter((a) => actions.isMutating(a) === true);
+  const chosen = mutating.length ? mutating : expanded;
+  return [...new Set(chosen.map((a) => a.toLowerCase()))].sort();
+}
+
+function findingResources(finding, model) {
+  const resources = [];
+  for (const id of finding.statements || []) {
+    const stmt = model.statements.find((statement) => statement.id === id);
+    if (!stmt) continue;
+    resources.push(...(stmt.resources || []).map((r) => String(r).toLowerCase()));
+    resources.push(...(stmt.notResources || []).map((r) => `!${String(r).toLowerCase()}`));
+  }
+  return [...new Set(resources)].sort();
+}
+
+function findingActionSet(finding, model) {
+  const set = new Set();
+  for (const id of finding.statements || []) {
+    const stmt = model.statements.find((statement) => statement.id === id);
+    if (!stmt) continue;
+    for (const action of affectedActionSet(stmt)) set.add(action);
+  }
+  return [...set].sort();
+}
+
+// Stable identity ignores action-set growth (that is `widened` instead).
+function findingBaseKey(finding, model) {
+  return `${finding.ruleId}|${findingResources(finding, model).join(',')}`;
+}
+
 function findingKey(finding, model) {
-  const sources = (finding.statements || []).map(id => model.statements.find(statement => statement.id === id)).filter(Boolean).map(statement => JSON.stringify({ effect: statement.effect, actions: statement.actions, notActions: statement.notActions, resources: statement.resources, notResources: statement.notResources, conditions: statement.conditions, principals: statement.principals })).sort();
-  return `${finding.ruleId}|${finding.title}|${sources.join('|')}`;
+  return `${finding.ruleId}|${findingActionSet(finding, model).join(',')}|${findingResources(finding, model).join(',')}`;
 }
 
 function decisionRank(decision) {
@@ -76,17 +122,42 @@ function normalizeRequest(request = {}) {
 }
 
 function diffFindings(before, after, beforeModel, afterModel) {
-  const beforeKeys = new Set(before.map(finding => findingKey(finding, beforeModel)));
-  const afterKeys = new Set(after.map(finding => findingKey(finding, afterModel)));
-  return {
-    introduced: after.filter((finding) => !beforeKeys.has(findingKey(finding, afterModel))),
-    resolved: before.filter((finding) => !afterKeys.has(findingKey(finding, beforeModel))),
-  };
+  // Match on ruleId + resources; action-set growth is reported as widened.
+  const beforeByBase = new Map();
+  for (const finding of before) {
+    beforeByBase.set(findingBaseKey(finding, beforeModel), finding);
+  }
+  const afterByBase = new Map();
+  for (const finding of after) {
+    afterByBase.set(findingBaseKey(finding, afterModel), finding);
+  }
+
+  const introduced = [];
+  const widened = [];
+  for (const [base, afterFinding] of afterByBase) {
+    const beforeFinding = beforeByBase.get(base);
+    if (!beforeFinding) {
+      introduced.push(afterFinding);
+      continue;
+    }
+    const beforeActions = findingActionSet(beforeFinding, beforeModel);
+    const afterActions = findingActionSet(afterFinding, afterModel);
+    const beforeSet = new Set(beforeActions);
+    // Pure growth (after has every before action, plus more) counts as widened.
+    const isSuperset = beforeActions.every((action) => afterActions.includes(action))
+      && afterActions.some((action) => !beforeSet.has(action));
+    if (isSuperset) widened.push(afterFinding);
+  }
+
+  const resolved = before.filter((finding) => !afterByBase.has(findingBaseKey(finding, beforeModel)));
+  return { introduced, resolved, widened };
 }
 
-function buildVerdict({ beforeDecision, afterDecision, introduced }) {
+function buildVerdict({ beforeDecision, afterDecision, introduced, widened = [] }) {
   const broadened = decisionRank(afterDecision) > decisionRank(beforeDecision);
-  const severe = introduced.some((finding) => ['critical', 'high'].includes(finding.severity));
+  // Widened findings count as introduced for the verdict (same risk, bigger blast radius).
+  const forVerdict = [...introduced, ...widened];
+  const severe = forVerdict.some((finding) => ['critical', 'high'].includes(finding.severity));
   const conditional = beforeDecision === 'ConditionalAllow' || afterDecision === 'ConditionalAllow';
 
   if (broadened || severe) {
@@ -123,6 +194,7 @@ function reviewChange({ before, after, request }) {
     beforeDecision: beforeEvaluation.decision,
     afterDecision: afterEvaluation.decision,
     introduced: findings.introduced,
+    widened: findings.widened,
   });
 
   return {
@@ -208,6 +280,8 @@ module.exports = {
   reviewChange,
   verifyCorrection,
   analyzePolicy,
+  findingKey,
+  diffFindings,
   decisionRank,
   isPermitted,
 };

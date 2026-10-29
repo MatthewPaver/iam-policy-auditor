@@ -59,4 +59,34 @@ assert.equal(newlyDangerous.riskClosed, true);
 assert.equal(newlyDangerous.requiredPreserved, true);
 assert.ok(newlyDangerous.introducedSevere.length);
 assert.equal(newlyDangerous.verified, false);
-console.log('change-review — 29 passed');
+
+// PowerUserAccess v4 → v5 only adds a read action; iam:CreateUser must stay pass
+// with no introduced findings (same NotAction risk, same mutating Resource "*").
+{
+  const fs = require('fs');
+  const path = require('path');
+  const unwrap = (text) => JSON.stringify(JSON.parse(text).PolicyVersion.Document, null, 2);
+  const fixture = (name) => unwrap(fs.readFileSync(path.join(__dirname, 'fixtures/aws-managed', name), 'utf8'));
+  const powerReview = reviewChange({
+    before: fixture('PowerUserAccess.v4.json'),
+    after: fixture('PowerUserAccess.v5.json'),
+    request: { action: 'iam:CreateUser', resource: 'arn:aws:iam::111122223333:user/eve' },
+  });
+  assert.equal(powerReview.findings.introduced.length, 0);
+  assert.equal(powerReview.verdict.status, 'pass');
+}
+
+// Adding iam:* beside existing s3:* on "*" widens the finding and must stop.
+{
+  const beforeWide = policy([{ Effect: 'Allow', Action: 's3:*', Resource: '*' }]);
+  const afterWide = policy([{ Effect: 'Allow', Action: ['s3:*', 'iam:*'], Resource: '*' }]);
+  const wideReview = reviewChange({
+    before: beforeWide,
+    after: afterWide,
+    request: { action: 's3:GetObject', resource: 'arn:aws:s3:::bucket/obj' },
+  });
+  assert.ok((wideReview.findings.widened || []).length >= 1);
+  assert.equal(wideReview.verdict.status, 'stop');
+}
+
+console.log('change-review — passed');
