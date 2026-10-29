@@ -367,4 +367,82 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   ));
 }
 
+// S2: remote execution and message / data reads.
+{
+  const before = doc({ Sid: 'Describe', Effect: 'Allow', Action: 'ec2:DescribeInstances', Resource: '*' });
+  const after = doc(
+    { Sid: 'Describe', Effect: 'Allow', Action: 'ec2:DescribeInstances', Resource: '*' },
+    {
+      Sid: 'SendCmd',
+      Effect: 'Allow',
+      Action: 'ssm:SendCommand',
+      Resource: 'arn:aws:ec2:*:*:instance/*',
+    },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  const item = review.newlyAllowed.items.find((i) => /ssm:SendCommand/i.test(i.action));
+  assert.ok(item);
+  assert.equal(item.sensitivity, 'remote-exec');
+}
+
+{
+  const queue = 'arn:aws:sqs:eu-west-1:111122223333:orders';
+  const before = doc({
+    Sid: 'OwnerSend',
+    Effect: 'Allow',
+    Principal: { AWS: 'arn:aws:iam::111122223333:role/App' },
+    Action: 'sqs:SendMessage',
+    Resource: queue,
+  });
+  const after = doc(
+    {
+      Sid: 'OwnerSend',
+      Effect: 'Allow',
+      Principal: { AWS: 'arn:aws:iam::111122223333:role/App' },
+      Action: 'sqs:SendMessage',
+      Resource: queue,
+    },
+    {
+      Sid: 'PublicReceive',
+      Effect: 'Allow',
+      Principal: '*',
+      Action: 'sqs:ReceiveMessage',
+      Resource: queue,
+    },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  assert.ok(review.newlyAllowed.items.some(
+    (item) => item.reason === 'principal-widened'
+      && /sqs:ReceiveMessage/i.test(item.action)
+      && item.sensitivity === 'public',
+  ));
+}
+
+{
+  const table = 'arn:aws:dynamodb:eu-west-1:111122223333:table/Customers';
+  const before = doc({
+    Sid: 'OwnerRead',
+    Effect: 'Allow',
+    Principal: { AWS: 'arn:aws:iam::111122223333:role/App' },
+    Action: 'dynamodb:GetItem',
+    Resource: table,
+  });
+  const after = doc({
+    Sid: 'CrossAccountScan',
+    Effect: 'Allow',
+    Principal: { AWS: 'arn:aws:iam::444455556666:root' },
+    Action: 'dynamodb:Scan',
+    Resource: table,
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  assert.ok(review.newlyAllowed.items.some(
+    (item) => item.reason === 'principal-widened'
+      && /dynamodb:Scan/i.test(item.action)
+      && item.sensitivity === 'cross-account',
+  ));
+}
+
 console.log('newly-allowed — passed');

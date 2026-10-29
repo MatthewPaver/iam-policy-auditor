@@ -24,6 +24,14 @@ const SENSITIVITY = {
     'glue:UpdateDevEndpoint',
     'sts:AssumeRole',
   ],
+  // Shell / serial / SSM / ECS exec paths — stop like privilege escalation.
+  'remote-exec': [
+    'ssm:SendCommand', 'ssm:StartSession', 'ssm:StartAutomationExecution',
+    'ec2-instance-connect:SendSSHPublicKey',
+    'ec2-instance-connect:SendSerialConsoleSSHPublicKey',
+    'ecs:ExecuteCommand',
+    'ec2:ModifyInstanceAttribute',
+  ],
   destructive: [
     's3:DeleteBucket', 's3:PutBucketPolicy', 'rds:DeleteDBInstance', 'rds:DeleteDBCluster',
     'dynamodb:DeleteTable', 'kms:ScheduleKeyDeletion', 'kms:DisableKey',
@@ -34,32 +42,47 @@ const SENSITIVITY = {
   'sensitive-read': [
     's3:GetObject', 'kms:Decrypt', 'secretsmanager:GetSecretValue',
     'ssm:GetParameter', 'ssm:GetParameters', 'ssm:GetParameter*', 'ssm:GetParametersByPath',
+    'sqs:ReceiveMessage', 'sns:Subscribe',
+    'dynamodb:GetItem', 'dynamodb:BatchGetItem', 'dynamodb:Query', 'dynamodb:Scan',
+    'rds-data:ExecuteStatement',
+    'logs:GetLogEvents', 'logs:FilterLogEvents',
   ],
   write: [], // filled from catalogue Write / Tagging when classifying
   read: [],
 };
 
+// Message / data-service reads are sensitive even when scoped to one queue/table.
+const ALWAYS_SENSITIVE_READ = new Set([
+  'sqs:receivemessage', 'sns:subscribe',
+  'dynamodb:getitem', 'dynamodb:batchgetitem', 'dynamodb:query', 'dynamodb:scan',
+  'rds-data:executestatement',
+  'logs:getlogevents', 'logs:filterlogevents',
+  'ssm:getparameter', 'ssm:getparameters', 'ssm:getparametersbypath',
+]);
+
 const SENSITIVE_READ_RESOURCES = new Set(['*', 'arn:aws:s3:::*', 'arn:aws:s3:::*/*']);
+
+function matchesSensitivityList(list, action, lower) {
+  for (const name of list) {
+    if (globMatch(name, action) || name.toLowerCase() === lower) return true;
+  }
+  return false;
+}
 
 function classifySensitivity(action, resource) {
   const lower = String(action).toLowerCase();
-  for (const name of SENSITIVITY.privesc) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return 'privesc';
-  }
-  for (const name of SENSITIVITY.destructive) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return 'destructive';
-  }
-  for (const name of SENSITIVITY['sensitive-read']) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) {
-      // Sensitive reads only escalate when scoped to everything / every bucket.
-      if (SENSITIVE_READ_RESOURCES.has(String(resource)) || resource === '*') {
-        return 'sensitive-read';
-      }
-      // Still a read of sensitive data on a narrower ARN — treat as read unless
-      // the resource pattern itself is a full-service wildcard shape.
-      if (/^arn:aws:s3:::\*/i.test(String(resource))) return 'sensitive-read';
-      if (String(resource) === '*') return 'sensitive-read';
+  if (matchesSensitivityList(SENSITIVITY.privesc, action, lower)) return 'privesc';
+  if (matchesSensitivityList(SENSITIVITY['remote-exec'], action, lower)) return 'remote-exec';
+  if (matchesSensitivityList(SENSITIVITY.destructive, action, lower)) return 'destructive';
+  if (matchesSensitivityList(SENSITIVITY['sensitive-read'], action, lower)) {
+    // Queue/table/log/parameter reads are sensitive on any resource ARN.
+    if (ALWAYS_SENSITIVE_READ.has(lower)) return 'sensitive-read';
+    // Classic secrets/object reads only escalate when scoped to everything.
+    if (SENSITIVE_READ_RESOURCES.has(String(resource)) || resource === '*') {
+      return 'sensitive-read';
     }
+    if (/^arn:aws:s3:::\*/i.test(String(resource))) return 'sensitive-read';
+    if (String(resource) === '*') return 'sensitive-read';
   }
   // kms:Decrypt on * is sensitive-read even if the list check above used glob.
   if (/^kms:decrypt$/i.test(action) && (resource === '*' || SENSITIVE_READ_RESOURCES.has(String(resource)))) {
@@ -74,15 +97,10 @@ function classifySensitivity(action, resource) {
 // so sensitive-read actions escalate without the usual resource wildcard check.
 function classifyDenyRemovedSensitivity(action, resource) {
   const lower = String(action).toLowerCase();
-  for (const name of SENSITIVITY.privesc) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return 'privesc';
-  }
-  for (const name of SENSITIVITY.destructive) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return 'destructive';
-  }
-  for (const name of SENSITIVITY['sensitive-read']) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return 'sensitive-read';
-  }
+  if (matchesSensitivityList(SENSITIVITY.privesc, action, lower)) return 'privesc';
+  if (matchesSensitivityList(SENSITIVITY['remote-exec'], action, lower)) return 'remote-exec';
+  if (matchesSensitivityList(SENSITIVITY.destructive, action, lower)) return 'destructive';
+  if (matchesSensitivityList(SENSITIVITY['sensitive-read'], action, lower)) return 'sensitive-read';
   return classifySensitivity(action, resource);
 }
 
@@ -403,7 +421,7 @@ function classifyPrincipalSensitivity(entry, beforeAccounts, scoped) {
 function principalActionIsStopWorthy(action, resource) {
   if (/^sts:AssumeRole$/i.test(action)) return true;
   const sens = classifyDenyRemovedSensitivity(action, resource);
-  return ['write', 'sensitive-read', 'destructive', 'privesc'].includes(sens);
+  return ['write', 'sensitive-read', 'destructive', 'privesc', 'remote-exec'].includes(sens);
 }
 
 function listNewlyAllowed({ beforeModel, afterModel }) {
@@ -565,10 +583,11 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     public: 0,
     'cross-account': 1,
     privesc: 2,
-    destructive: 3,
-    'sensitive-read': 4,
-    write: 5,
-    read: 6,
+    'remote-exec': 3,
+    destructive: 4,
+    'sensitive-read': 5,
+    write: 6,
+    read: 7,
   };
   items.sort((a, b) => ((rank[a.sensitivity] ?? 9) - (rank[b.sensitivity] ?? 9))
     || a.action.localeCompare(b.action)
@@ -585,17 +604,17 @@ function verdictFromNewlyAllowed(newlyAllowed) {
   const items = newlyAllowed.items || [];
   // Unconditional sensitive grants still stop; conditional ones are handled below.
   if (items.some((item) => !item.conditional
-    && ['privesc', 'destructive', 'sensitive-read'].includes(item.sensitivity))) {
+    && ['privesc', 'remote-exec', 'destructive', 'sensitive-read'].includes(item.sensitivity))) {
     return {
       status: 'stop',
       label: 'Stop and review',
-      reason: 'The change newly allows privilege-escalation, destructive, or sensitive-read access.',
+      reason: 'The change newly allows privilege-escalation, remote-execution, destructive, or sensitive-read access.',
     };
   }
   // A removed Deny over write (or the buckets above) is still a stop — the
   // Allow was already there; the guardrail was the only thing holding it back.
   if (items.some((item) => item.reason === 'deny-removed'
-    && ['privesc', 'destructive', 'sensitive-read', 'write'].includes(item.sensitivity))) {
+    && ['privesc', 'remote-exec', 'destructive', 'sensitive-read', 'write'].includes(item.sensitivity))) {
     return {
       status: 'stop',
       label: 'Stop and review',
