@@ -211,7 +211,8 @@ function collectGrants(model) {
       granted = [...set];
     }
 
-    const conditional = Boolean(stmt.conditions);
+    const conditions = stmt.conditions || null;
+    const conditional = Boolean(conditions);
     for (const action of granted) {
       const line = actionLine(model, stmt, action);
       for (const resource of resources) {
@@ -225,12 +226,40 @@ function collectGrants(model) {
           line,
           sid: stmt.sid || null,
           conditional,
+          conditions,
           sensitivity: classifySensitivity(action, resource),
         });
       }
     }
   }
   return { grants, capped };
+}
+
+function grantPairKey(item) {
+  return `${String(item.action).toLowerCase()}|${item.resource}`;
+}
+
+// True when every constraint in `weaker` also appears in `stronger` (same op/key/value).
+// An empty / missing condition is the weakest grant and covers any after-side condition.
+function conditionIsSubset(weaker, stronger) {
+  if (!weaker) return true;
+  if (!stronger) return false;
+  for (const [op, keys] of Object.entries(weaker)) {
+    if (!stronger[op] || typeof stronger[op] !== 'object') return false;
+    for (const [key, val] of Object.entries(keys || {})) {
+      if (!(key in stronger[op])) return false;
+      if (JSON.stringify(stronger[op][key]) !== JSON.stringify(val)) return false;
+    }
+  }
+  return true;
+}
+
+// Before covers after when before has no condition, the same condition, or a weaker one.
+function beforeCoversAfter(beforeCond, afterCond) {
+  if (!beforeCond) return true;
+  if (!afterCond) return false;
+  if (JSON.stringify(beforeCond) === JSON.stringify(afterCond)) return true;
+  return conditionIsSubset(beforeCond, afterCond);
 }
 
 // action|resource pairs that appear as Allow grants, ignoring the conditional bit.
@@ -381,8 +410,38 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   const before = collectGrants(beforeModel);
   const after = collectGrants(afterModel);
   const items = [];
-  for (const [key, item] of after.grants) {
-    if (before.grants.has(key)) continue;
+  const narrowed = [];
+  const narrowedSeen = new Set();
+  const beforeByPair = new Map();
+  for (const item of before.grants.values()) {
+    const pair = grantPairKey(item);
+    if (!beforeByPair.has(pair)) beforeByPair.set(pair, []);
+    beforeByPair.get(pair).push(item);
+  }
+  const afterSeen = new Set();
+  for (const item of after.grants.values()) {
+    const pair = grantPairKey(item);
+    // Same action|resource can appear as both conditional and unconditional keys;
+    // only report each pair once for the after side.
+    const dedupe = `${pair}|${item.conditional ? 'c' : 'u'}`;
+    if (afterSeen.has(dedupe)) continue;
+    afterSeen.add(dedupe);
+
+    const befores = beforeByPair.get(pair) || [];
+    const covering = befores.find((b) => beforeCoversAfter(b.conditions, item.conditions));
+    if (covering) {
+      // Unconditional before + conditional after is a narrowing, not new access.
+      if (!covering.conditions && item.conditions && !narrowedSeen.has(pair)) {
+        narrowedSeen.add(pair);
+        narrowed.push({
+          action: item.action,
+          resource: item.resource,
+          line: item.line,
+          reason: 'condition-added',
+        });
+      }
+      continue;
+    }
     items.push(item);
   }
 
@@ -516,6 +575,7 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     || a.resource.localeCompare(b.resource));
   return {
     items,
+    narrowed,
     capped: before.capped || after.capped || beforePrinc.capped || afterPrinc.capped,
     findings,
   };
@@ -523,7 +583,9 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
 
 function verdictFromNewlyAllowed(newlyAllowed) {
   const items = newlyAllowed.items || [];
-  if (items.some((item) => ['privesc', 'destructive', 'sensitive-read'].includes(item.sensitivity))) {
+  // Unconditional sensitive grants still stop; conditional ones are handled below.
+  if (items.some((item) => !item.conditional
+    && ['privesc', 'destructive', 'sensitive-read'].includes(item.sensitivity))) {
     return {
       status: 'stop',
       label: 'Stop and review',
@@ -549,18 +611,20 @@ function verdictFromNewlyAllowed(newlyAllowed) {
       reason: 'The change newly allows a public or cross-account principal on sensitive access.',
     };
   }
-  if (items.length && items.every((item) => item.conditional)) {
+  // Conditional non-read access still needs a human (Review Focus 3).
+  if (items.some((item) => item.conditional && item.sensitivity !== 'read')) {
     return {
       status: 'review',
       label: 'Needs context',
-      reason: 'Every newly allowed grant is conditional; supply context before relying on the result.',
+      reason: 'The change newly allows conditional access that is not read-only; supply context before relying on the result.',
     };
   }
-  if (items.some((item) => item.conditional) && !items.some((item) => !item.conditional)) {
+  if (items.some((item) => item.conditional && item.sensitivity === 'read')) {
     return {
-      status: 'review',
-      label: 'Needs context',
-      reason: 'Every newly allowed grant is conditional; supply context before relying on the result.',
+      status: 'pass',
+      label: 'No checked access increase',
+      reason: 'Newly allowed access is conditional read-only under the local rule set.',
+      note: 'One or more new grants are conditional; confirm the condition keys match the intended callers.',
     };
   }
   return {

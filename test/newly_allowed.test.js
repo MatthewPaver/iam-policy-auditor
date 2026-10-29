@@ -304,4 +304,67 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   assert.equal(getObject.line, getObjectLine);
 }
 
+// S1: conditions narrow; conditional read-only additions pass.
+{
+  const before = doc({
+    Sid: 'PassAny',
+    Effect: 'Allow',
+    Action: 'iam:PassRole',
+    Resource: '*',
+  });
+  const after = doc({
+    Sid: 'PassToRds',
+    Effect: 'Allow',
+    Action: 'iam:PassRole',
+    Resource: '*',
+    Condition: { StringEquals: { 'iam:PassedToService': 'rds.amazonaws.com' } },
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'pass');
+  assert.equal(review.newlyAllowed.items.length, 0);
+  assert.ok(review.newlyAllowed.narrowed);
+  assert.equal(review.newlyAllowed.narrowed.length, 1);
+  assert.equal(review.newlyAllowed.narrowed[0].reason, 'condition-added');
+  assert.match(review.newlyAllowed.narrowed[0].action, /iam:PassRole/i);
+}
+
+{
+  const before = doc({ Sid: 'Base', Effect: 'Allow', Action: 'ec2:DescribeInstances', Resource: '*' });
+  const after = doc(
+    { Sid: 'Base', Effect: 'Allow', Action: 'ec2:DescribeInstances', Resource: '*' },
+    {
+      Sid: 'Metrics',
+      Effect: 'Allow',
+      Action: 'cloudwatch:GetMetricData',
+      Resource: '*',
+      Condition: { StringEquals: { 'aws:SourceAccount': '111122223333' } },
+    },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'pass');
+  const added = review.newlyAllowed.items.find((item) => /cloudwatch:GetMetricData/i.test(item.action));
+  assert.ok(added, 'expected cloudwatch:GetMetricData as newly allowed');
+  assert.equal(added.conditional, true);
+  assert.equal(added.sensitivity, 'read');
+}
+
+{
+  const before = doc({ Sid: 'List', Effect: 'Allow', Action: 's3:ListBucket', Resource: 'arn:aws:s3:::logs' });
+  const after = doc(
+    { Sid: 'List', Effect: 'Allow', Action: 's3:ListBucket', Resource: 'arn:aws:s3:::logs' },
+    {
+      Sid: 'DeleteLogs',
+      Effect: 'Allow',
+      Action: 's3:DeleteObject',
+      Resource: 'arn:aws:s3:::logs/*',
+      Condition: { StringEquals: { 'aws:PrincipalTag/team': 'platform' } },
+    },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'review');
+  assert.ok(review.newlyAllowed.items.some(
+    (item) => /s3:DeleteObject/i.test(item.action) && item.conditional,
+  ));
+}
+
 console.log('newly-allowed — passed');
