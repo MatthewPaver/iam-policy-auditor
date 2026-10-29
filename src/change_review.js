@@ -192,6 +192,10 @@ function reviewChange({ before, after, request } = {}) {
     beforeModel: beforePolicy.model,
     afterModel: afterPolicy.model,
   });
+  // Deny-guardrail findings are change-time only (they need before vs after).
+  if (newlyAllowed.findings && newlyAllowed.findings.length) {
+    findings.introduced.push(...newlyAllowed.findings);
+  }
 
   // Request is optional: without one, the verdict comes from newlyAllowed alone.
   const hasRequest = request != null && request !== undefined

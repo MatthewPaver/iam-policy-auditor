@@ -471,4 +471,41 @@ function runRules(model) {
   return out;
 }
 
-module.exports = { runRules, SEV_ORDER, stmtAllows, stmtExplicitlyAllows };
+// Change-time finding: a Deny that used to block an allowed action is gone or
+ // narrower after the edit. Evidence points at the before Deny, not the Allow.
+function denyGuardrailRemovedFinding({
+  action,
+  resource,
+  denyDoc,
+  denyLine,
+  denyEndLine,
+  denyCondition,
+  snippet,
+}) {
+  const condText = denyCondition == null ? '(no Condition)' : JSON.stringify(denyCondition);
+  return {
+    ruleId: 'AWS-DENY-GUARDRAIL-REMOVED',
+    severity: 'high',
+    title: 'Deny guardrail removed or narrowed',
+    description: `A Deny that previously covered ${action} on ${resource} is gone or no longer covers that action. Removed guardrail condition: ${condText}.`,
+    statements: [],
+    evidence: [{
+      doc: denyDoc || 'before.json',
+      line: denyLine,
+      endLine: denyEndLine || denyLine,
+      snippet: snippet || condText,
+      truncated: false,
+    }],
+    remediation: {
+      summary: 'Restore the Deny (or an equally strong replacement) before merging, or confirm the wider access is intentional and reviewed.',
+    },
+  };
+}
+
+module.exports = {
+  runRules,
+  SEV_ORDER,
+  stmtAllows,
+  stmtExplicitlyAllows,
+  denyGuardrailRemovedFinding,
+};

@@ -81,4 +81,68 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   assert.equal(review.newlyAllowed.items[0].sensitivity, 'read');
 }
 
+// R1: removing or narrowing a Deny is new access (guardrail gone).
+{
+  const role = 'arn:aws:iam::111122223333:role/AppReader';
+  const bucket = 'arn:aws:s3:::corp-data/*';
+  const before = doc(
+    { Sid: 'AllowGet', Effect: 'Allow', Principal: { AWS: role }, Action: 's3:GetObject', Resource: bucket },
+    {
+      Sid: 'DenyInsecure',
+      Effect: 'Deny',
+      Principal: { AWS: role },
+      Action: 's3:*',
+      Resource: bucket,
+      Condition: { Bool: { 'aws:SecureTransport': 'false' } },
+    },
+  );
+  const after = doc(
+    { Sid: 'AllowGet', Effect: 'Allow', Principal: { AWS: role }, Action: 's3:GetObject', Resource: bucket },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  const removed = review.newlyAllowed.items.find((item) => item.reason === 'deny-removed');
+  assert.ok(removed, 'expected a deny-removed item when SecureTransport Deny is gone');
+  assert.match(removed.action, /s3:GetObject/i);
+  assert.ok(
+    review.findings.introduced.some((f) => f.ruleId === 'AWS-DENY-GUARDRAIL-REMOVED'),
+    'expected AWS-DENY-GUARDRAIL-REMOVED finding',
+  );
+}
+
+{
+  const before = doc(
+    { Sid: 'AllowEc2', Effect: 'Allow', Action: 'ec2:*', Resource: '*' },
+    {
+      Sid: 'DenyOutsideHome',
+      Effect: 'Deny',
+      Action: 'ec2:*',
+      Resource: '*',
+      Condition: { StringNotEquals: { 'aws:RequestedRegion': 'eu-west-2' } },
+    },
+  );
+  const after = doc(
+    { Sid: 'AllowEc2', Effect: 'Allow', Action: 'ec2:*', Resource: '*' },
+  );
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  assert.ok(review.newlyAllowed.items.some((item) => item.reason === 'deny-removed'));
+}
+
+{
+  const before = doc(
+    { Sid: 'AllowWrite', Effect: 'Allow', Action: ['s3:PutObject', 's3:DeleteBucket'], Resource: '*' },
+    { Sid: 'DenyAllS3', Effect: 'Deny', Action: 's3:*', Resource: '*', Condition: { Bool: { 'aws:SecureTransport': 'false' } } },
+  );
+  const after = doc(
+    { Sid: 'AllowWrite', Effect: 'Allow', Action: ['s3:PutObject', 's3:DeleteBucket'], Resource: '*' },
+    { Sid: 'DenyDeleteOnly', Effect: 'Deny', Action: 's3:DeleteBucket', Resource: '*', Condition: { Bool: { 'aws:SecureTransport': 'false' } } },
+  );
+  const review = reviewChange({ before, after });
+  const put = review.newlyAllowed.items.find(
+    (item) => item.reason === 'deny-removed' && /s3:PutObject/i.test(item.action),
+  );
+  assert.ok(put, 'narrowing Deny Action from s3:* to s3:DeleteBucket should free s3:PutObject');
+}
+
 console.log('newly-allowed — passed');

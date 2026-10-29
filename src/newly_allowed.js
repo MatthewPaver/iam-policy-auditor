@@ -4,6 +4,7 @@
 // guess the right request. Catalogue expansion must never be capped silently.
 
 const actions = require('./actions');
+const { denyGuardrailRemovedFinding } = require('./rules');
 const { globMatch } = require('./util');
 
 // Sensitivity buckets used by the request-free verdict. Keep them in one place
@@ -63,6 +64,22 @@ function classifySensitivity(action, resource) {
   return 'read';
 }
 
+// Deny removal is still a guardrail loss even when the Allow is bucket-scoped,
+// so sensitive-read actions escalate without the usual resource wildcard check.
+function classifyDenyRemovedSensitivity(action, resource) {
+  const lower = String(action).toLowerCase();
+  for (const name of SENSITIVITY.privesc) {
+    if (globMatch(name, action) || name.toLowerCase() === lower) return 'privesc';
+  }
+  for (const name of SENSITIVITY.destructive) {
+    if (globMatch(name, action) || name.toLowerCase() === lower) return 'destructive';
+  }
+  for (const name of SENSITIVITY['sensitive-read']) {
+    if (globMatch(name, action) || name.toLowerCase() === lower) return 'sensitive-read';
+  }
+  return classifySensitivity(action, resource);
+}
+
 function actionLine(model, stmt) {
   // Prefer the Action / NotAction pointer so the UI can cite the exact grant.
   const doc = model.documents.find((d) => d.name === stmt.doc);
@@ -73,6 +90,48 @@ function actionLine(model, stmt) {
     if (pos) return pos.line;
   }
   return stmt.line;
+}
+
+function stmtMatchesAction(stmt, action) {
+  if (stmt.notActions && stmt.notActions.length) {
+    return !stmt.notActions.some((p) => globMatch(p, action));
+  }
+  return (stmt.actions || []).some((p) => globMatch(p, action));
+}
+
+function stmtMatchesResource(stmt, resource) {
+  const resources = (stmt.resources && stmt.resources.length)
+    ? stmt.resources
+    : (stmt.kind === 'identity' ? ['*'] : []);
+  if (!resources.length) return false;
+  if (stmt.notResources && stmt.notResources.length) {
+    if (stmt.notResources.some((p) => globMatch(p, resource))) return false;
+  }
+  return resources.some((p) => globMatch(p, resource));
+}
+
+// Snapshot every Deny that can still block an (action, resource) pair.
+function collectDenies(model) {
+  const denies = [];
+  for (const stmt of model.statements) {
+    if (stmt.provider !== 'aws' || stmt.effect !== 'Deny') continue;
+    denies.push(stmt);
+  }
+  return denies;
+}
+
+function denyCovers(stmt, action, resource) {
+  return stmtMatchesAction(stmt, action) && stmtMatchesResource(stmt, resource);
+}
+
+function denySnippet(model, stmt) {
+  const doc = model.documents.find((d) => d.name === stmt.doc);
+  if (!doc || !doc.lines) {
+    return stmt.conditions ? JSON.stringify(stmt.conditions) : 'Effect: Deny';
+  }
+  const from = stmt.line;
+  const to = Math.min(stmt.endLine || from, from + 13);
+  return doc.lines.slice(from - 1, to).join('\n');
 }
 
 // Collect every concrete (action, resource) grant an Allow statement makes.
@@ -141,6 +200,16 @@ function collectGrants(model) {
   return { grants, capped };
 }
 
+// action|resource pairs that appear as Allow grants, ignoring the conditional bit.
+function allowPairs(grants) {
+  const pairs = new Map();
+  for (const item of grants.values()) {
+    const key = `${String(item.action).toLowerCase()}|${item.resource}`;
+    if (!pairs.has(key)) pairs.set(key, item);
+  }
+  return pairs;
+}
+
 function listNewlyAllowed({ beforeModel, afterModel }) {
   const before = collectGrants(beforeModel);
   const after = collectGrants(afterModel);
@@ -149,6 +218,53 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     if (before.grants.has(key)) continue;
     items.push(item);
   }
+
+  // Same Allow on both sides, but a Deny that used to cover it is gone / narrower.
+  const beforeDenies = collectDenies(beforeModel);
+  const afterDenies = collectDenies(afterModel);
+  const beforePairs = allowPairs(before.grants);
+  const afterPairs = allowPairs(after.grants);
+  const findings = [];
+  const seenFinding = new Set();
+
+  for (const [key, afterItem] of afterPairs) {
+    if (!beforePairs.has(key)) continue;
+    const coveringBefore = beforeDenies.filter((d) => denyCovers(d, afterItem.action, afterItem.resource));
+    if (!coveringBefore.length) continue;
+    const stillCovered = afterDenies.some((d) => denyCovers(d, afterItem.action, afterItem.resource));
+    if (stillCovered) continue;
+
+    // Prefer the first covering Deny for evidence (stable statement order).
+    const removed = coveringBefore[0];
+    const sensitivity = classifyDenyRemovedSensitivity(afterItem.action, afterItem.resource);
+    items.push({
+      action: afterItem.action,
+      resource: afterItem.resource,
+      doc: afterItem.doc,
+      line: afterItem.line,
+      sid: afterItem.sid,
+      conditional: afterItem.conditional,
+      sensitivity,
+      reason: 'deny-removed',
+      denyLine: removed.line,
+      denyCondition: removed.conditions || null,
+    });
+
+    const findingKey = `${removed.doc}|${removed.line}|${JSON.stringify(removed.conditions || null)}`;
+    if (!seenFinding.has(findingKey)) {
+      seenFinding.add(findingKey);
+      findings.push(denyGuardrailRemovedFinding({
+        action: afterItem.action,
+        resource: afterItem.resource,
+        denyDoc: removed.doc,
+        denyLine: removed.line,
+        denyEndLine: removed.endLine,
+        denyCondition: removed.conditions || null,
+        snippet: denySnippet(beforeModel, removed),
+      }));
+    }
+  }
+
   // Stable order: sensitivity severity then action name.
   const rank = { privesc: 0, destructive: 1, 'sensitive-read': 2, write: 3, read: 4 };
   items.sort((a, b) => (rank[a.sensitivity] - rank[b.sensitivity])
@@ -157,6 +273,7 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   return {
     items,
     capped: before.capped || after.capped,
+    findings,
   };
 }
 
@@ -167,6 +284,16 @@ function verdictFromNewlyAllowed(newlyAllowed) {
       status: 'stop',
       label: 'Stop and review',
       reason: 'The change newly allows privilege-escalation, destructive, or sensitive-read access.',
+    };
+  }
+  // A removed Deny over write (or the buckets above) is still a stop — the
+  // Allow was already there; the guardrail was the only thing holding it back.
+  if (items.some((item) => item.reason === 'deny-removed'
+    && ['privesc', 'destructive', 'sensitive-read', 'write'].includes(item.sensitivity))) {
+    return {
+      status: 'stop',
+      label: 'Stop and review',
+      reason: 'The change removes or narrows a Deny guardrail over sensitive access.',
     };
   }
   if (items.length && items.every((item) => item.conditional)) {
