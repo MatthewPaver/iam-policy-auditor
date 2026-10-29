@@ -14,6 +14,7 @@ const { runRules, SEV_ORDER } = require('./rules');
 const { lintModel } = require('./lint');
 const { normalizePolicyInput, ACCEPTED_FORMATS } = require('./adapters');
 const actions = require('./actions');
+const { listNewlyAllowed, verdictFromNewlyAllowed } = require('./newly_allowed');
 
 const DECISION_RANK = {
   ExplicitDeny: 0,
@@ -183,13 +184,54 @@ function buildVerdict({ beforeDecision, afterDecision, introduced, widened = [] 
   };
 }
 
-function reviewChange({ before, after, request }) {
-  const checkedRequest = normalizeRequest(request);
+function reviewChange({ before, after, request } = {}) {
   const beforePolicy = analyzePolicy('before.json', before);
   const afterPolicy = analyzePolicy('after.json', after);
+  const findings = diffFindings(beforePolicy.findings, afterPolicy.findings, beforePolicy.model, afterPolicy.model);
+  const newlyAllowed = listNewlyAllowed({
+    beforeModel: beforePolicy.model,
+    afterModel: afterPolicy.model,
+  });
+
+  // Request is optional: without one, the verdict comes from newlyAllowed alone.
+  const hasRequest = request != null && request !== undefined
+    && typeof request === 'object'
+    && (request.action != null || request.resource != null);
+
+  if (!hasRequest) {
+    return {
+      schemaVersion: 1,
+      engine,
+      verdict: verdictFromNewlyAllowed(newlyAllowed),
+      request: null,
+      access: null,
+      findings,
+      newlyAllowed,
+      evidence: [],
+      suggestedCorrections: findings.introduced
+        .filter((finding) => finding.remediation)
+        .map((finding) => ({
+          ruleId: finding.ruleId,
+          title: finding.title,
+          summary: finding.remediation.summary,
+          rewrite: finding.remediation.rewrite || null,
+          evidence: finding.evidence,
+        })),
+      statements: {
+        before: publicStatements(beforePolicy.model),
+        after: publicStatements(afterPolicy.model),
+      },
+      limits: [
+        'Only the supplied policy documents are evaluated.',
+        'SCPs, permission boundaries, session policies, and cross-account resource-policy interplay are not evaluated.',
+        'A pass means no sensitive newly allowed access under the local rule set. It does not prove the policy is safe.',
+      ],
+    };
+  }
+
+  const checkedRequest = normalizeRequest(request);
   const beforeEvaluation = evaluateRequest(beforePolicy.model, checkedRequest);
   const afterEvaluation = evaluateRequest(afterPolicy.model, checkedRequest);
-  const findings = diffFindings(beforePolicy.findings, afterPolicy.findings, beforePolicy.model, afterPolicy.model);
   const verdict = buildVerdict({
     beforeDecision: beforeEvaluation.decision,
     afterDecision: afterEvaluation.decision,
@@ -208,6 +250,7 @@ function reviewChange({ before, after, request }) {
       broadened: decisionRank(afterEvaluation.decision) > decisionRank(beforeEvaluation.decision),
     },
     findings,
+    newlyAllowed,
     evidence: [
       ...afterEvaluation.allowMatches,
       ...afterEvaluation.conditionalAllows,

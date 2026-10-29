@@ -82,6 +82,22 @@ function expand(pattern, { cap = 500 } = {}) {
   const p = String(pattern);
   const { service, name } = splitAction(p);
 
+  // Concrete "service:Action" with no wildcards: O(1) catalogue lookup.
+  // Huge managed policies list thousands of these; scanning the whole catalogue
+  // per action was blowing the 2s review budget.
+  if (service && service !== '*' && name && !/[*?]/.test(name) && !/[*?]/.test(service)) {
+    const svc = d.services[service];
+    if (svc && Object.prototype.hasOwnProperty.call(svc.actions, name)) {
+      return { actions: [`${service}:${name}`], total: 1, capped: false };
+    }
+    // Catalogue keys are often PascalCase; try a case-insensitive hit.
+    if (svc) {
+      const hit = Object.keys(svc.actions).find((act) => act.toLowerCase() === name.toLowerCase());
+      if (hit) return { actions: [`${service}:${hit}`], total: 1, capped: false };
+    }
+    return { actions: [], total: 0, capped: false };
+  }
+
   const services = service && service !== '*' ? [service] : Object.keys(d.services);
   const out = [];
   let total = 0;

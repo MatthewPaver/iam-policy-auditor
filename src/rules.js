@@ -21,7 +21,16 @@ const AWS_ESCALATION_ACTIONS = [
   'iam:UpdateAssumeRolePolicy', 'iam:AddUserToGroup',
 ];
 
-const AWS_COMPUTE_LAUNCH = ['lambda:CreateFunction', 'ec2:RunInstances', 'ecs:RunTask', 'glue:CreateDevEndpoint', 'sagemaker:CreateNotebookInstance'];
+const AWS_COMPUTE_LAUNCH = [
+  'lambda:CreateFunction', 'ec2:RunInstances', 'ecs:RunTask',
+  'glue:CreateJob', 'glue:CreateDevEndpoint', 'sagemaker:CreateNotebookInstance',
+];
+
+const AWS_SENSITIVE_READ = [
+  's3:GetObject', 'kms:Decrypt', 'secretsmanager:GetSecretValue',
+  'ssm:GetParameter', 'ssm:GetParameters', 'ssm:GetParametersByPath',
+];
+const AWS_SENSITIVE_READ_RESOURCES = ['*', 'arn:aws:s3:::*', 'arn:aws:s3:::*/*'];
 
 const READ_VERB = /^(Get|List|Describe|Head|View|Read)/i;
 
@@ -186,19 +195,46 @@ function awsRules(model, out) {
       }
     }
 
-    // iam:PassRole on *
-    if (stmtExplicitlyAllows(s, 'iam:PassRole') && s.resources.includes('*') && !adminIds.has(s.id)) {
+    // iam:PassRole on * or role/*, or PassRole anywhere paired with compute launch.
+    const passRoleBroad = stmtExplicitlyAllows(s, 'iam:PassRole')
+      && s.resources.some((r) => r === '*' || /:role\/\*$/i.test(r) || /:role\/\*/i.test(r));
+    const passRoleWithLaunch = stmtExplicitlyAllows(s, 'iam:PassRole')
+      && stmts.some((o) => o.effect === 'Allow' && AWS_COMPUTE_LAUNCH.some((a) => stmtExplicitlyAllows(o, a)));
+    if ((passRoleBroad || passRoleWithLaunch) && !adminIds.has(s.id) && stmtExplicitlyAllows(s, 'iam:PassRole')) {
       const combos = stmts.filter((o) => o.effect === 'Allow' && AWS_COMPUTE_LAUNCH.some((a) => stmtExplicitlyAllows(o, a)));
       out.push(makeFinding(model, {
         ruleId: 'AWS-PASSROLE-WILDCARD', severity: 'critical',
-        title: 'iam:PassRole on all roles — privilege escalation path',
-        description: `Statement ${cite(s)} allows passing ANY role to a service.` + (combos.length
+        title: passRoleBroad
+          ? 'iam:PassRole on a role wildcard — privilege escalation path'
+          : 'iam:PassRole combined with compute launch — privilege escalation path',
+        description: `Statement ${cite(s)} allows iam:PassRole${passRoleBroad ? ' on a broad role Resource' : ''}.` + (combos.length
           ? ` Combined with compute-launch permissions (${combos.map(cite).join(', ')}), the holder can launch a service with a more privileged role (e.g. an admin role) and act as it. This is a classic escalation chain.`
-          : ` If this identity can also start compute (EC2, Lambda, ECS), it can attach a more privileged role to that compute and escalate.`),
+          : ' If this identity can also start compute (EC2, Lambda, ECS, Glue), it can attach a more privileged role to that compute and escalate.'),
         stmts: [s],
         remediation: {
           summary: 'Restrict Resource to the specific role ARN(s) and pin the receiving service with a condition.',
           rewrite: JSON.stringify({ Sid: s.sid || 'PassAppRoleOnly', Effect: 'Allow', Action: 'iam:PassRole', Resource: 'arn:aws:iam::<account>:role/app-worker-role', Condition: { StringEquals: { 'iam:PassedToService': 'lambda.amazonaws.com' } } }, null, 2),
+        },
+      }));
+    }
+
+    // Sensitive reads on account-wide / every-bucket resources.
+    const sensitiveReads = AWS_SENSITIVE_READ.filter((a) => stmtExplicitlyAllows(s, a) || stmtAllows(s, a));
+    const broadReadResource = s.resources.some((r) => AWS_SENSITIVE_READ_RESOURCES.includes(r)
+      || /^arn:aws:s3:::\*(?:\/\*)?$/i.test(r));
+    // Also catch ssm:GetParameter* style wildcards on Action.
+    const ssmParamWild = s.actions.some((a) => /^ssm:GetParameter/i.test(a));
+    if ((sensitiveReads.length || ssmParamWild) && broadReadResource && !adminIds.has(s.id)) {
+      const named = sensitiveReads.length
+        ? sensitiveReads
+        : s.actions.filter((a) => /^ssm:GetParameter/i.test(a));
+      out.push(makeFinding(model, {
+        ruleId: 'AWS-SENSITIVE-READ-WILDCARD', severity: 'high',
+        title: `Sensitive read on a broad resource: ${named.join(', ')}`,
+        description: `Statement ${cite(s)} allows ${named.join(', ')} against ${s.resources.join(', ')}. That is account-wide or every-bucket read of customer data / secrets.`,
+        stmts: [s],
+        remediation: {
+          summary: 'Scope Resource to the specific bucket, key, secret or parameter ARNs this identity needs.',
         },
       }));
     }
