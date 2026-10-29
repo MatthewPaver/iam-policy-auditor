@@ -210,6 +210,139 @@ function allowPairs(grants) {
   return pairs;
 }
 
+// Condition keys that pin who can use a Principal grant (confused-deputy guards).
+const PRINCIPAL_SCOPE_KEYS = /sts:ExternalId|aws:SourceArn|aws:SourceAccount|aws:PrincipalOrgID/i;
+
+function hasPrincipalScope(conditions) {
+  if (!conditions) return false;
+  return PRINCIPAL_SCOPE_KEYS.test(JSON.stringify(conditions));
+}
+
+function principalAccountId(principalId) {
+  const id = String(principalId || '');
+  if (/^\d{12}$/.test(id)) return id;
+  const m = id.match(/^arn:aws:iam::(\d{12}):/);
+  return m ? m[1] : null;
+}
+
+function isPublicPrincipal(entry) {
+  return entry.type === 'any' || entry.id === '*';
+}
+
+function expandStmtActions(stmt, state) {
+  if (stmt.notActions && stmt.notActions.length) {
+    const all = actions.allActions();
+    if (!actions.isLoaded()) state.capped = true;
+    return all.filter((a) => !stmt.notActions.some((p) => globMatch(p, a)));
+  }
+  const set = new Set();
+  for (const pattern of stmt.actions || []) {
+    const raw = String(pattern);
+    if (!/[*?]/.test(raw)) {
+      set.add(raw);
+      continue;
+    }
+    const result = actions.expand(raw, { cap: Number.MAX_SAFE_INTEGER });
+    if (result.capped) state.capped = true;
+    if (result.unavailable) {
+      set.add(raw);
+      state.capped = true;
+    } else if (result.actions.length) {
+      for (const a of result.actions) set.add(a);
+    } else {
+      set.add(raw);
+    }
+  }
+  return [...set];
+}
+
+function stmtResourcesForPrincipal(stmt) {
+  if (stmt.resources && stmt.resources.length) return stmt.resources;
+  // Trust policies rarely name a Resource; treat as *.
+  if (stmt.kind === 'trust' || stmt.kind === 'identity') return ['*'];
+  return ['*'];
+}
+
+// Collect Allow grants that name Principal / NotPrincipal (resource + trust).
+function collectPrincipalGrants(model) {
+  const grants = new Map();
+  const state = { capped: false };
+  const accounts = new Set();
+
+  for (const stmt of model.statements) {
+    if (stmt.provider !== 'aws' || stmt.effect !== 'Allow') continue;
+    const hasPrincipal = (stmt.principals && stmt.principals.length)
+      || (stmt.notPrincipals && stmt.notPrincipals.length);
+    if (!hasPrincipal) continue;
+
+    for (const entry of stmt.principals || []) {
+      const account = principalAccountId(entry.id);
+      if (account) accounts.add(account);
+    }
+
+    const granted = expandStmtActions(stmt, state);
+    const resources = stmtResourcesForPrincipal(stmt);
+    const scoped = hasPrincipalScope(stmt.conditions);
+    const line = actionLine(model, stmt);
+
+    for (const entry of stmt.principals || []) {
+      for (const action of granted) {
+        for (const resource of resources) {
+          const key = `${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
+          if (grants.has(key)) continue;
+          grants.set(key, {
+            action,
+            resource,
+            principal: entry.id,
+            principalType: entry.type,
+            doc: stmt.doc,
+            line,
+            sid: stmt.sid || null,
+            conditional: Boolean(stmt.conditions),
+            scoped,
+          });
+        }
+      }
+    }
+
+    // NotPrincipal: remember exclusions so a removed exclusion counts as widening.
+    for (const entry of stmt.notPrincipals || []) {
+      for (const action of granted) {
+        for (const resource of resources) {
+          const key = `not|${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
+          if (grants.has(key)) continue;
+          grants.set(key, {
+            action,
+            resource,
+            principal: entry.id,
+            principalType: entry.type,
+            notPrincipal: true,
+            doc: stmt.doc,
+            line,
+            sid: stmt.sid || null,
+            conditional: Boolean(stmt.conditions),
+            scoped,
+          });
+        }
+      }
+    }
+  }
+  return { grants, accounts, capped: state.capped };
+}
+
+function classifyPrincipalSensitivity(entry, beforeAccounts, scoped) {
+  if (isPublicPrincipal(entry) && !scoped) return 'public';
+  const account = principalAccountId(entry.id);
+  if (account && !beforeAccounts.has(account)) return 'cross-account';
+  return null;
+}
+
+function principalActionIsStopWorthy(action, resource) {
+  if (/^sts:AssumeRole$/i.test(action)) return true;
+  const sens = classifyDenyRemovedSensitivity(action, resource);
+  return ['write', 'sensitive-read', 'destructive', 'privesc'].includes(sens);
+}
+
 function listNewlyAllowed({ beforeModel, afterModel }) {
   const before = collectGrants(beforeModel);
   const after = collectGrants(afterModel);
@@ -265,14 +398,91 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     }
   }
 
+  // Principal / NotPrincipal set growth (and scope-key removal).
+  const beforePrinc = collectPrincipalGrants(beforeModel);
+  const afterPrinc = collectPrincipalGrants(afterModel);
+
+  for (const [key, afterItem] of afterPrinc.grants) {
+    if (afterItem.notPrincipal) continue; // exclusions are handled below
+    if (beforePrinc.grants.has(key)) continue;
+
+    // Same principal+action+resource already present with a scope pin → dropping
+    // ExternalId / SourceArn / SourceAccount / PrincipalOrgID is widening.
+    const scopedKey = key.replace(/\|u$/, '|s');
+    const hadScoped = beforePrinc.grants.has(scopedKey);
+    const isNewPrincipal = ![...beforePrinc.grants.values()].some((b) => (
+      !b.notPrincipal
+      && b.principal === afterItem.principal
+      && b.principalType === afterItem.principalType
+      && String(b.action).toLowerCase() === String(afterItem.action).toLowerCase()
+      && b.resource === afterItem.resource
+    ));
+
+    if (!isNewPrincipal && !hadScoped && !afterItem.scoped) {
+      // Same principal, still unscoped — not a widening we track here.
+      // (Action/resource changes fall through the normal Allow path.)
+      const sameUnscoped = [...beforePrinc.grants.values()].some((b) => (
+        !b.notPrincipal
+        && b.principal === afterItem.principal
+        && !b.scoped
+        && String(b.action).toLowerCase() === String(afterItem.action).toLowerCase()
+        && b.resource === afterItem.resource
+      ));
+      if (sameUnscoped) continue;
+    }
+
+    const entry = { type: afterItem.principalType, id: afterItem.principal };
+    const principalSens = classifyPrincipalSensitivity(entry, beforePrinc.accounts, afterItem.scoped);
+    const sensitivity = principalSens || classifySensitivity(afterItem.action, afterItem.resource);
+    items.push({
+      action: afterItem.action,
+      resource: afterItem.resource,
+      doc: afterItem.doc,
+      line: afterItem.line,
+      sid: afterItem.sid,
+      conditional: afterItem.conditional,
+      sensitivity,
+      reason: 'principal-widened',
+      principal: afterItem.principal,
+    });
+  }
+
+  // NotPrincipal shrinkage: an exclusion present before but not after.
+  for (const [key, beforeItem] of beforePrinc.grants) {
+    if (!beforeItem.notPrincipal) continue;
+    if (afterPrinc.grants.has(key)) continue;
+    const entry = { type: beforeItem.principalType, id: beforeItem.principal };
+    const principalSens = classifyPrincipalSensitivity(entry, beforePrinc.accounts, false);
+    const sensitivity = principalSens || classifySensitivity(beforeItem.action, beforeItem.resource);
+    items.push({
+      action: beforeItem.action,
+      resource: beforeItem.resource,
+      doc: beforeItem.doc,
+      line: beforeItem.line,
+      sid: beforeItem.sid,
+      conditional: beforeItem.conditional,
+      sensitivity,
+      reason: 'principal-widened',
+      principal: beforeItem.principal,
+    });
+  }
+
   // Stable order: sensitivity severity then action name.
-  const rank = { privesc: 0, destructive: 1, 'sensitive-read': 2, write: 3, read: 4 };
-  items.sort((a, b) => (rank[a.sensitivity] - rank[b.sensitivity])
+  const rank = {
+    public: 0,
+    'cross-account': 1,
+    privesc: 2,
+    destructive: 3,
+    'sensitive-read': 4,
+    write: 5,
+    read: 6,
+  };
+  items.sort((a, b) => ((rank[a.sensitivity] ?? 9) - (rank[b.sensitivity] ?? 9))
     || a.action.localeCompare(b.action)
     || a.resource.localeCompare(b.resource));
   return {
     items,
-    capped: before.capped || after.capped,
+    capped: before.capped || after.capped || beforePrinc.capped || afterPrinc.capped,
     findings,
   };
 }
@@ -294,6 +504,15 @@ function verdictFromNewlyAllowed(newlyAllowed) {
       status: 'stop',
       label: 'Stop and review',
       reason: 'The change removes or narrows a Deny guardrail over sensitive access.',
+    };
+  }
+  if (items.some((item) => item.reason === 'principal-widened'
+    && ['public', 'cross-account'].includes(item.sensitivity)
+    && principalActionIsStopWorthy(item.action, item.resource))) {
+    return {
+      status: 'stop',
+      label: 'Stop and review',
+      reason: 'The change newly allows a public or cross-account principal on sensitive access.',
     };
   }
   if (items.length && items.every((item) => item.conditional)) {

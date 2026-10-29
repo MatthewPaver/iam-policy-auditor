@@ -145,4 +145,95 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   assert.ok(put, 'narrowing Deny Action from s3:* to s3:DeleteBucket should free s3:PutObject');
 }
 
+// R2: who is newly allowed (resource and trust Principal changes).
+{
+  const bucket = 'arn:aws:s3:::reports/*';
+  const roleA = 'arn:aws:iam::111122223333:role/Reporter';
+  const rootB = 'arn:aws:iam::444455556666:root';
+  const before = doc({
+    Sid: 'ReadReports',
+    Effect: 'Allow',
+    Principal: { AWS: roleA },
+    Action: 's3:GetObject',
+    Resource: bucket,
+  });
+  const after = doc({
+    Sid: 'ReadReports',
+    Effect: 'Allow',
+    Principal: { AWS: rootB },
+    Action: 's3:GetObject',
+    Resource: bucket,
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  const widened = review.newlyAllowed.items.find((item) => item.reason === 'principal-widened');
+  assert.ok(widened, 'expected principal-widened when the grant moves to another account');
+  assert.equal(widened.sensitivity, 'cross-account');
+}
+
+{
+  const before = doc({
+    Sid: 'TrustPartner',
+    Effect: 'Allow',
+    Principal: { AWS: 'arn:aws:iam::111122223333:root' },
+    Action: 'sts:AssumeRole',
+    Condition: { StringEquals: { 'sts:ExternalId': 'partner-unique-id' } },
+  });
+  const after = doc({
+    Sid: 'TrustAnyone',
+    Effect: 'Allow',
+    Principal: { AWS: '*' },
+    Action: 'sts:AssumeRole',
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  const widened = review.newlyAllowed.items.find((item) => item.reason === 'principal-widened');
+  assert.ok(widened);
+  assert.equal(widened.sensitivity, 'public');
+}
+
+{
+  const before = doc({
+    Sid: 'OwnerOnly',
+    Effect: 'Allow',
+    Principal: { AWS: 'arn:aws:iam::111122223333:role/App' },
+    Action: 'sqs:SendMessage',
+    Resource: 'arn:aws:sqs:eu-west-1:111122223333:orders',
+  });
+  const after = doc({
+    Sid: 'AnyoneCanSend',
+    Effect: 'Allow',
+    Principal: '*',
+    Action: 'sqs:SendMessage',
+    Resource: 'arn:aws:sqs:eu-west-1:111122223333:orders',
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  assert.ok(review.newlyAllowed.items.some(
+    (item) => item.reason === 'principal-widened' && item.sensitivity === 'public',
+  ));
+}
+
+{
+  const bucket = 'arn:aws:s3:::reports/*';
+  const roleA = 'arn:aws:iam::111122223333:role/Reporter';
+  const roleB = 'arn:aws:iam::111122223333:role/Auditor';
+  const before = doc({
+    Sid: 'ReadReports',
+    Effect: 'Allow',
+    Principal: { AWS: roleA },
+    Action: 's3:GetObject',
+    Resource: bucket,
+  });
+  const after = doc({
+    Sid: 'ReadReports',
+    Effect: 'Allow',
+    Principal: { AWS: [roleA, roleB] },
+    Action: 's3:GetObject',
+    Resource: bucket,
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'pass');
+}
+
 console.log('newly-allowed — passed');
