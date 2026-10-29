@@ -12,6 +12,7 @@ const { analyzeDocuments, publicStatements } = require('./engine');
 const { evaluateRequest } = require('./evaluate');
 const { runRules, SEV_ORDER } = require('./rules');
 const { lintModel } = require('./lint');
+const { normalizePolicyInput, ACCEPTED_FORMATS } = require('./adapters');
 
 const DECISION_RANK = {
   ExplicitDeny: 0,
@@ -20,11 +21,18 @@ const DECISION_RANK = {
   Allow: 2,
 };
 
-function analyzePolicy(name, text) {
-  const model = analyzeDocuments([{ name, text: String(text || '') }]);
-  const doc = model.documents[0];
-  if (!doc || doc.error) throw new Error(`${name}: ${doc?.error || 'could not parse policy'}`);
-  if (doc.provider !== 'aws') throw new Error(`${name}: change review currently supports AWS IAM JSON only`);
+// Accept any shape normalizePolicyInput knows; evaluate every document together
+// so a Deny in any of them still wins, matching how AWS merges attached policies.
+function analyzePolicy(name, input) {
+  const { documents } = normalizePolicyInput(input, name);
+  const model = analyzeDocuments(documents);
+  for (const doc of model.documents) {
+    if (!doc || doc.error) throw new Error(`${doc?.name || name}: ${doc?.error || 'could not parse policy'}`);
+    if (doc.provider !== 'aws') {
+      // Re-use the adapter's wording so CLI / UI get one consistent sentence.
+      throw new Error(`${doc.name || name}: Expected an IAM policy. Accepted formats: ${ACCEPTED_FORMATS.join('; ')}.`);
+    }
+  }
   const findings = [...lintModel(model), ...runRules(model)]
     .sort((a, b) => (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9));
   return { model, findings };

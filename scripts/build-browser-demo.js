@@ -14,6 +14,28 @@ function buildBrowserDemo({ quiet = false } = {}) {
   modules.set('src/engine_identity.js', `module.exports = ${JSON.stringify(browserIdentity)};`);
   modules.set('fs', `module.exports = {readFileSync(file) {if (!file.endsWith('data/aws-actions.json')) throw new Error('Unavailable browser file'); return ${JSON.stringify(catalogue)};}};`);
   modules.set('path', 'module.exports = {join(...parts) {return parts.join("/");}};');
+  // Minimal Node shims so the yaml package can load in the browser bundle.
+  modules.set('process', 'module.exports = {env:{}, browser:true, versions:{node:"browser"}};');
+  modules.set('util', 'module.exports = {inspect:(v)=>String(v)};');
+  modules.set('buffer', 'module.exports = {Buffer:{from:(s)=>typeof s==="string"?s:String(s),isBuffer:()=>false,alloc:()=>""}};');
+  modules.set('console', 'module.exports = console;');
+  // yaml is the only allowed runtime dep. Bundle its CJS dist under path-shaped
+  // ids so relative requires inside the package still resolve in the demo runtime.
+  function addNodeModuleFile(relId) {
+    if (modules.has(relId)) return;
+    const text = fs.readFileSync(path.join(root, relId), 'utf8');
+    modules.set(relId, text);
+    for (const match of text.matchAll(/require\(['"]([^'"]+)['"]\)/g)) {
+      const request = match[1];
+      if (!request.startsWith('.')) {
+        if (!modules.has(request)) throw new Error(`Unsupported browser dependency: ${request}`);
+        continue;
+      }
+      let resolved = path.posix.normalize(path.posix.join(path.posix.dirname(relId), request));
+      if (!path.posix.extname(resolved)) resolved += '.js';
+      addNodeModuleFile(resolved);
+    }
+  }
   function add(id) {
     if (modules.has(id)) return;
     const text = fs.readFileSync(path.join(root, id), 'utf8');
@@ -21,6 +43,12 @@ function buildBrowserDemo({ quiet = false } = {}) {
     for (const match of text.matchAll(/require\(['"]([^'"]+)['"]\)/g)) {
       const request = match[1];
       if (!request.startsWith('.')) {
+        if (request === 'yaml') {
+          const entry = 'node_modules/yaml/dist/index.js';
+          addNodeModuleFile(entry);
+          modules.set('yaml', "module.exports = require('node_modules/yaml/dist/index.js');");
+          continue;
+        }
         if (!modules.has(request)) throw new Error(`Unsupported browser dependency: ${request}`);
         continue;
       }
