@@ -2,6 +2,8 @@
 
 Review an AWS permission change. Check that a correction removes declared risky access while preserving required access.
 
+**Using your own policies?** See [docs/USE_ON_YOUR_OWN_POLICIES.md](docs/USE_ON_YOUR_OWN_POLICIES.md) for browser, CLI and GitHub Action routes.
+
 **For:** engineers and security reviewers, with source-linked evidence that service owners can inspect.
 
 **Start here:** [Try PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/). No install, account or policy upload needed.

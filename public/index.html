@@ -231,16 +231,27 @@
         <summary>Current and proposed policies · edit inputs</summary>
         <div class="policy-switch" role="group" aria-label="Policy editor"><button type="button" data-editor="before" aria-pressed="true">Current</button><button type="button" data-editor="after" aria-pressed="false">Proposed</button></div>
         <div class="compare-inputs" data-editor-pane="before">
-          <div class="before-editor"><div class="editor-heading"><label for="beforeBox">Current policy</label><label class="text-control file-control">Open JSON file<input id="beforeFile" name="beforeFile" type="file" accept=".json,application/json" aria-label="Open current policy JSON file"></label></div><textarea id="beforeBox" name="beforeBox" spellcheck="false" autocomplete="off" placeholder="Paste the current policy…"></textarea></div>
-          <div class="after-editor"><div class="editor-heading"><label for="afterBox">Proposed policy</label><label class="text-control file-control">Open JSON file<input id="afterFile" name="afterFile" type="file" accept=".json,application/json" aria-label="Open proposed policy JSON file"></label></div><textarea id="afterBox" name="afterBox" spellcheck="false" autocomplete="off" placeholder="Paste the proposed policy…"></textarea></div>
+          <div class="before-editor"><div class="editor-heading"><label for="beforeBox">Current policy</label><label class="text-control file-control">Open file<input id="beforeFile" name="beforeFile" type="file" accept=".json,.yaml,.yml,application/json,text/yaml,text/plain" aria-label="Open current policy file"></label></div><textarea id="beforeBox" name="beforeBox" spellcheck="false" autocomplete="off" placeholder="Paste a policy, get-policy-version output, CloudFormation or Terraform plan…"></textarea></div>
+          <div class="after-editor"><div class="editor-heading"><label for="afterBox">Proposed policy</label><label class="text-control file-control">Open file<input id="afterFile" name="afterFile" type="file" accept=".json,.yaml,.yml,application/json,text/yaml,text/plain" aria-label="Open proposed policy file"></label></div><textarea id="afterBox" name="afterBox" spellcheck="false" autocomplete="off" placeholder="Paste the proposed policy in the same formats…"></textarea></div>
         </div>
-        <label for="compareContext">Condition context (JSON object)</label><textarea id="compareContext" name="compareContext" rows="2" spellcheck="false" autocomplete="off">{}</textarea>
-        <p class="fineprint">ConditionalAllow means access is unresolved: information is missing or a condition is unsupported. It cannot prove access is preserved.</p>
+        <label for="compareContext">Default condition context (JSON object)</label><textarea id="compareContext" name="compareContext" rows="2" spellcheck="false" autocomplete="off">{}</textarea>
+        <label class="ai-opt-in"><input id="contextComplete" name="contextComplete" type="checkbox"> Context is complete (omitted condition keys are treated as absent)</label>
+        <p class="fineprint">ConditionalAllow means access is unresolved: information is missing or a condition is unsupported. It cannot prove access is preserved. Leave the action blank to see what the change newly allows.</p>
         <label class="ai-opt-in"><input id="changeUseAI" name="changeUseAI" type="checkbox"> Request an optional AI explanation (sends extracted facts to Anthropic when configured)</label>
       </details>
       <div class="review-query">
-        <label>Action to check<input id="compareAction" name="compareAction" type="text" placeholder="For example, rds:DeleteDBInstance…" autocomplete="off" spellcheck="false"></label>
-        <label>Resource<input id="compareResource" name="compareResource" type="text" placeholder="For example, the production database ARN…" autocomplete="off" spellcheck="false"></label>
+        <label>Action to check (optional)<input id="compareAction" name="compareAction" type="text" placeholder="Leave blank to list newly allowed access…" autocomplete="off" spellcheck="false"></label>
+        <label>Resource (optional)<input id="compareResource" name="compareResource" type="text" placeholder="For example, the production database ARN…" autocomplete="off" spellcheck="false"></label>
+        <label>Principal (optional)<input id="comparePrincipal" name="comparePrincipal" type="text" placeholder="anonymous, account id, or IAM ARN…" autocomplete="off" spellcheck="false"></label>
+      </div>
+      <div id="requiredAccessList" class="required-access-list" aria-label="Required-access checks">
+        <p class="fineprint">Optional required-access checks for correction verification. Each row can carry its own context JSON.</p>
+        <div class="required-access-row" data-required-row>
+          <label>Required action<input class="required-action" type="text" value="s3:GetObject" autocomplete="off" spellcheck="false"></label>
+          <label>Required resource<input class="required-resource" type="text" value="arn:aws:s3:::reports/daily.csv" autocomplete="off" spellcheck="false"></label>
+          <label>Context<input class="required-context" type="text" value="{}" autocomplete="off" spellcheck="false"></label>
+        </div>
+        <button type="button" id="addRequiredAccess" class="btn secondary">Add required-access check</button>
       </div>
       <div class="change-actions"><button id="compareBtn" class="btn primary" type="button">Check my policies</button><button id="loadChangeExample" class="btn secondary" type="button">Load the example</button><button id="exportChange" class="btn secondary" type="button" disabled>Export review JSON</button></div>
       <p id="changeStatus" class="change-status" role="status">Add both policies and the action to check, or load the made-up example.</p>

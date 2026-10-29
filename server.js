@@ -327,15 +327,19 @@ const routes = {
   },
 
   'POST /api/change/review': async (body) => {
+    const hasRequest = Boolean(body.action && String(body.action).trim() && body.resource && String(body.resource).trim());
     const review = reviewChange({
       before: body.before,
       after: body.after,
-      request: {
-        action: body.action,
-        resource: body.resource,
-        context: body.context,
-        contextComplete: body.contextComplete,
-      },
+      request: hasRequest
+        ? {
+          action: body.action,
+          resource: body.resource,
+          context: body.context,
+          contextComplete: body.contextComplete,
+          ...(body.principal ? { principal: body.principal } : {}),
+        }
+        : undefined,
     });
     const out = { ...review, ai: null, aiEvaluation: null, aiError: null };
     if (body.useAI !== false && aiAvailable()) {
