@@ -58,7 +58,21 @@ function normalizeRequest(request = {}) {
   const context = request.context === undefined ? {} : request.context;
   if (!context || typeof context !== 'object' || Array.isArray(context) || Object.getPrototypeOf(context) !== Object.prototype) throw new Error('Condition context must be a plain JSON object.');
   if (request.contextComplete !== undefined && typeof request.contextComplete !== 'boolean') throw new Error('contextComplete must be a boolean.');
-  return { action: request.action.trim(), resource: request.resource.trim(), context, ...(request.contextComplete !== undefined ? { contextComplete: request.contextComplete } : {}) };
+  // principal is optional: 'anonymous', a 12-digit account id, or an IAM ARN.
+  let principal;
+  if (request.principal !== undefined && request.principal !== null) {
+    if (typeof request.principal !== 'string' || !request.principal.trim()) {
+      throw new Error('principal must be a non-empty string when provided.');
+    }
+    principal = request.principal.trim();
+  }
+  return {
+    action: request.action.trim(),
+    resource: request.resource.trim(),
+    context,
+    ...(principal !== undefined ? { principal } : {}),
+    ...(request.contextComplete !== undefined ? { contextComplete: request.contextComplete } : {}),
+  };
 }
 
 function diffFindings(before, after, beforeModel, afterModel) {
