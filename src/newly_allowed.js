@@ -9,13 +9,19 @@ const { globMatch } = require('./util');
 
 // Sensitivity buckets used by the request-free verdict. Keep them in one place
 // so the UI / CLI / rules can share the same wording.
+// Privilege-escalation actions follow Rhino Security Labs' list:
+// https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 const SENSITIVITY = {
   privesc: [
     'iam:CreatePolicyVersion', 'iam:SetDefaultPolicyVersion',
-    'iam:AttachUserPolicy', 'iam:AttachRolePolicy', 'iam:AttachGroupPolicy',
-    'iam:PutUserPolicy', 'iam:PutRolePolicy', 'iam:PutGroupPolicy',
-    'iam:CreateAccessKey', 'iam:CreateLoginProfile', 'iam:UpdateLoginProfile',
-    'iam:UpdateAssumeRolePolicy', 'iam:AddUserToGroup', 'iam:PassRole',
+    'iam:CreateAccessKey',
+    'iam:CreateLoginProfile', 'iam:UpdateLoginProfile',
+    'iam:AttachUserPolicy', 'iam:AttachGroupPolicy', 'iam:AttachRolePolicy',
+    'iam:PutUserPolicy', 'iam:PutGroupPolicy', 'iam:PutRolePolicy',
+    'iam:AddUserToGroup', 'iam:UpdateAssumeRolePolicy',
+    'iam:PassRole',
+    'lambda:UpdateFunctionCode', 'lambda:UpdateFunctionConfiguration',
+    'glue:UpdateDevEndpoint',
     'sts:AssumeRole',
   ],
   destructive: [
@@ -80,12 +86,39 @@ function classifyDenyRemovedSensitivity(action, resource) {
   return classifySensitivity(action, resource);
 }
 
-function actionLine(model, stmt) {
-  // Prefer the Action / NotAction pointer so the UI can cite the exact grant.
+// Line of the specific action string (or the wildcard that expanded to it).
+function actionLine(model, stmt, action) {
   const doc = model.documents.find((d) => d.name === stmt.doc);
   if (!doc || !doc.pointers) return stmt.line;
   const base = stmt.path || '';
-  for (const suffix of ['/Action', '/NotAction', '/Action/0', '/NotAction/0']) {
+
+  const patterns = (stmt.notActions && stmt.notActions.length)
+    ? stmt.notActions
+    : (stmt.actions || []);
+  const keyRoot = (stmt.notActions && stmt.notActions.length) ? 'NotAction' : 'Action';
+
+  if (action != null && patterns.length) {
+    let matchIdx = -1;
+    for (let i = 0; i < patterns.length; i++) {
+      const pat = String(patterns[i]);
+      if (!/[*?]/.test(pat)) {
+        if (pat.toLowerCase() === String(action).toLowerCase()) {
+          matchIdx = i;
+          break;
+        }
+      } else if (globMatch(pat, action)) {
+        // Wildcard matches cite the wildcard's own line, not an expanded name.
+        matchIdx = i;
+        break;
+      }
+    }
+    if (matchIdx >= 0) {
+      const indexed = doc.pointers[`${base}/${keyRoot}/${matchIdx}`];
+      if (indexed) return indexed.line;
+    }
+  }
+
+  for (const suffix of [`/${keyRoot}`, `/${keyRoot}/0`]) {
     const pos = doc.pointers[`${base}${suffix}`];
     if (pos) return pos.line;
   }
@@ -179,8 +212,8 @@ function collectGrants(model) {
     }
 
     const conditional = Boolean(stmt.conditions);
-    const line = actionLine(model, stmt);
     for (const action of granted) {
+      const line = actionLine(model, stmt, action);
       for (const resource of resources) {
         // Include conditional so dropping a Condition block counts as new access.
         const key = `${String(action).toLowerCase()}|${resource}|${conditional ? 'c' : 'u'}`;
@@ -283,10 +316,10 @@ function collectPrincipalGrants(model) {
     const granted = expandStmtActions(stmt, state);
     const resources = stmtResourcesForPrincipal(stmt);
     const scoped = hasPrincipalScope(stmt.conditions);
-    const line = actionLine(model, stmt);
 
     for (const entry of stmt.principals || []) {
       for (const action of granted) {
+        const line = actionLine(model, stmt, action);
         for (const resource of resources) {
           const key = `${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
           if (grants.has(key)) continue;
@@ -308,6 +341,7 @@ function collectPrincipalGrants(model) {
     // NotPrincipal: remember exclusions so a removed exclusion counts as widening.
     for (const entry of stmt.notPrincipals || []) {
       for (const action of granted) {
+        const line = actionLine(model, stmt, action);
         for (const resource of resources) {
           const key = `not|${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
           if (grants.has(key)) continue;

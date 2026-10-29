@@ -57,4 +57,23 @@ function run(args, opts = {}) {
   assert.ok(Array.isArray(sarif.runs));
 }
 
+// R3: newly allowed privilege-escalation action exits stop without a request.
+{
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'policylens-r3-'));
+  const beforePath = path.join(dir, 'before.json');
+  const afterPath = path.join(dir, 'after.json');
+  const doc = (...Statement) => JSON.stringify({ Version: '2012-10-17', Statement }, null, 2);
+  fs.writeFileSync(beforePath, doc({ Effect: 'Allow', Action: 'lambda:GetFunction', Resource: '*' }));
+  fs.writeFileSync(afterPath, doc({
+    Effect: 'Allow',
+    Action: ['lambda:GetFunction', 'lambda:UpdateFunctionCode'],
+    Resource: '*',
+  }));
+  const result = run(['review', '--before', beforePath, '--after', afterPath, '--format', 'json']);
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const body = JSON.parse(result.stdout);
+  assert.equal(body.verdict.status, 'stop');
+}
+
 console.log('cli — passed');

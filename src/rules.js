@@ -14,16 +14,25 @@ const AWS_SENSITIVE_ACTIONS = [
   'logs:DeleteLogGroup', 'redshift:DeleteCluster',
 ];
 
+// Rhino Security Labs IAM privilege-escalation primitives (same source as SENSITIVITY.privesc):
+// https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 const AWS_ESCALATION_ACTIONS = [
-  'iam:CreatePolicyVersion', 'iam:SetDefaultPolicyVersion', 'iam:AttachUserPolicy',
-  'iam:AttachRolePolicy', 'iam:AttachGroupPolicy', 'iam:PutUserPolicy', 'iam:PutRolePolicy',
-  'iam:PutGroupPolicy', 'iam:CreateAccessKey', 'iam:CreateLoginProfile', 'iam:UpdateLoginProfile',
-  'iam:UpdateAssumeRolePolicy', 'iam:AddUserToGroup',
+  'iam:CreatePolicyVersion', 'iam:SetDefaultPolicyVersion', 'iam:CreateAccessKey',
+  'iam:CreateLoginProfile', 'iam:UpdateLoginProfile',
+  'iam:AttachUserPolicy', 'iam:AttachGroupPolicy', 'iam:AttachRolePolicy',
+  'iam:PutUserPolicy', 'iam:PutGroupPolicy', 'iam:PutRolePolicy',
+  'iam:AddUserToGroup', 'iam:UpdateAssumeRolePolicy',
+  'lambda:UpdateFunctionCode', 'lambda:UpdateFunctionConfiguration',
+  'glue:UpdateDevEndpoint',
 ];
 
+// Services that become an escalation path when paired with iam:PassRole.
 const AWS_COMPUTE_LAUNCH = [
   'lambda:CreateFunction', 'ec2:RunInstances', 'ecs:RunTask',
-  'glue:CreateJob', 'glue:CreateDevEndpoint', 'sagemaker:CreateNotebookInstance',
+  'glue:CreateJob', 'glue:CreateDevEndpoint',
+  'cloudformation:CreateStack', 'datapipeline:CreatePipeline',
+  'sagemaker:CreateNotebookInstance', 'sagemaker:CreateTrainingJob',
+  'sagemaker:CreateProcessingJob',
 ];
 
 const AWS_SENSITIVE_READ = [

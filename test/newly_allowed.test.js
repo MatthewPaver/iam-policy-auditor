@@ -236,4 +236,72 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   assert.equal(review.verdict.status, 'pass');
 }
 
+// R3: full privilege-escalation list and per-action line numbers.
+{
+  const before = doc({ Sid: 'ReadFn', Effect: 'Allow', Action: 'lambda:GetFunction', Resource: '*' });
+  const after = doc({
+    Sid: 'EditFn',
+    Effect: 'Allow',
+    Action: ['lambda:GetFunction', 'lambda:UpdateFunctionCode'],
+    Resource: '*',
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  const item = review.newlyAllowed.items.find((i) => /lambda:UpdateFunctionCode/i.test(i.action));
+  assert.ok(item);
+  assert.equal(item.sensitivity, 'privesc');
+}
+
+{
+  const before = doc({ Sid: 'ReadUsers', Effect: 'Allow', Action: 'iam:GetUser', Resource: '*' });
+  const after = doc({
+    Sid: 'Login',
+    Effect: 'Allow',
+    Action: 'iam:CreateLoginProfile',
+    Resource: 'arn:aws:iam::111122223333:user/*',
+  });
+  const review = reviewChange({ before, after });
+  assert.equal(review.verdict.status, 'stop');
+  assert.ok(review.newlyAllowed.items.some(
+    (item) => /iam:CreateLoginProfile/i.test(item.action) && item.sensitivity === 'privesc',
+  ));
+}
+
+{
+  const before = `{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BucketRead",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "*"
+    }
+  ]
+}`;
+  const after = `{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "BucketRead",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Resource": "*"
+    }
+  ]
+}`;
+  const review = reviewChange({ before, after });
+  const getObject = review.newlyAllowed.items.find((item) => /s3:GetObject/i.test(item.action));
+  assert.ok(getObject, 'expected s3:GetObject in newlyAllowed');
+  // GetObject sits on its own line in the Action array (not the statement's first line).
+  const getObjectLine = after.split('\n').findIndex((line) => /s3:GetObject/.test(line)) + 1;
+  assert.equal(getObject.line, getObjectLine);
+}
+
 console.log('newly-allowed — passed');
