@@ -388,10 +388,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, result);
     }
 
-    if (req.method === 'GET' && url.pathname.startsWith('/samples/')) {
+    if (req.method === 'GET' && (url.pathname.startsWith('/samples/') || url.pathname.startsWith('/examples/policies/'))) {
+      const directory = url.pathname.startsWith('/samples/') ? SAMPLES : path.join(__dirname, 'examples/policies');
       const name = path.basename(url.pathname); // strips any traversal
-      const file = path.join(SAMPLES, name);
-      if (!file.startsWith(SAMPLES) || !fs.existsSync(file)) return send(res, 404, { error: 'Not found' });
+      const file = path.join(directory, name);
+      if (!file.startsWith(directory) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return send(res, 404, { error: 'Not found' });
       return send(res, 200, fs.readFileSync(file), 'application/json; charset=utf-8');
     }
 

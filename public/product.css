@@ -293,3 +293,12 @@ table,.record-summary,.verification-result dl,.access-state strong,.declared-req
 #panel-compare #compareContext{min-height:0;height:auto}
 #panel-compare .fineprint{font-size:13px;line-height:1.5;margin-top:8px}
 #panel-compare .input-identity code{font-size:12px}
+
+/* Review findings keep source actions subordinate to the plain sentences. */
+.grant-evidence{padding-left:20px;overflow-wrap:anywhere}
+.grant-evidence li{margin-block:16px}
+.grant-evidence p{margin:0 0 4px}
+.grant-evidence [data-policy-line]{min-height:44px;padding:8px;text-decoration:underline}
+#afterSource .highlighted-line{background:var(--panel);color:var(--text);outline:1px solid var(--accent)}
+#afterSource{max-height:400px;white-space:pre;overflow:auto}
+.lower-risk{margin-block:20px}

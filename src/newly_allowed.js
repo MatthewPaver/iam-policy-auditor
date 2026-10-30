@@ -29,7 +29,7 @@ const SENSITIVITY = {
   destructive: AWS_SENSITIVE_ACTIONS,
   'sensitive-read': [
     ...AWS_SENSITIVE_READ, 'ssm:GetParameter*',
-    'sqs:ReceiveMessage', 'sns:Subscribe',
+    'sqs:ReceiveMessage',
     'dynamodb:GetItem', 'dynamodb:BatchGetItem', 'dynamodb:Query', 'dynamodb:Scan',
     'rds-data:ExecuteStatement',
     'logs:GetLogEvents', 'logs:FilterLogEvents',
@@ -39,7 +39,7 @@ const SENSITIVITY = {
 
 // Message / data-service reads are sensitive even when scoped to one queue/table.
 const ALWAYS_SENSITIVE_READ = new Set([
-  'sqs:receivemessage', 'sns:subscribe',
+  'sqs:receivemessage',
   'dynamodb:getitem', 'dynamodb:batchgetitem', 'dynamodb:query', 'dynamodb:scan',
   'rds-data:executestatement',
   'logs:getlogevents', 'logs:filterlogevents',
@@ -80,6 +80,7 @@ function classifySensitivity(action, resource, conditional = false) {
   if (level === 'Write' && broadResource(resource)
     && /^(Delete|Terminate|Destroy|Remove|Purge|Disable|Stop|Reset|Modify|Update|Put|Create|Run|Start|Invoke|Execute)/i.test(name)) return 'destructive';
   if (!conditional && level === 'Read' && broadResource(resource)
+    && !/(Status|Configuration|Policy)$/i.test(name)
     && /^(Get|BatchGet|Query|Scan|Receive|Download|Export|Decrypt|Retrieve|Select|CreatePresigned)/i.test(name)) return 'sensitive-read';
   if (level === 'Write' || level === 'Tagging') return 'write';
   return 'read';
@@ -191,6 +192,7 @@ function collectGrants(model) {
           sid: stmt.sid || null,
           conditional,
           conditions,
+          principal: (stmt.principals || []).map((p) => p.id).join(", ") || undefined,
           sensitivity: classifySensitivity(action, resource, conditional),
         });
       }
@@ -241,7 +243,7 @@ function ipv4Range(cidr) {
 function securityConditionWeakened(before, after) {
   for (const [op, keys] of Object.entries(before || {})) {
     for (const [key, value] of Object.entries(keys || {})) {
-      if (!SECURITY_KEYS.has(key.toLowerCase())) continue;
+      if (!SECURITY_KEYS.has(key.toLowerCase()) && !/^s3:existingobjecttag\//i.test(key)) continue;
       const entries = Object.entries(after || {}).flatMap(([nextOp, nextKeys]) =>
         Object.entries(nextKeys || {}).filter(([k]) => k.toLowerCase() === key.toLowerCase())
           .map(([, v]) => ({ op: nextOp, values: [].concat(v).map(String) })));
@@ -362,6 +364,7 @@ function collectPrincipalGrants(model) {
               line,
               sid: stmt.sid || null,
               conditional: Boolean(stmt.conditions),
+              conditions: stmt.conditions || null,
               scoped,
             });
           }
@@ -382,11 +385,18 @@ function classifyPrincipalSensitivity(entry, beforeAccounts, scoped) {
 function listNewlyAllowed({ beforeModel, afterModel }) {
   const before = collectGrants(beforeModel);
   const after = collectGrants(afterModel);
+  const commandInstances = [...after.grants.values()].filter((i) => /^ssm:SendCommand$/i.test(i.action)
+    && (i.resource === '*' || /:instance\//.test(i.resource)));
+  const commandScoped = commandInstances.length > 0 && commandInstances.every(scopedSensitive);
   const items = [];
   const narrowed = [];
   const narrowedSeen = new Set();
   const beforeByPair = new Map();
+  const beforeByAction = new Map();
   for (const item of before.grants.values()) {
+    const action = item.action.toLowerCase();
+    if (!beforeByAction.has(action)) beforeByAction.set(action, []);
+    beforeByAction.get(action).push(item);
     const pair = grantPairKey(item);
     if (!beforeByPair.has(pair)) beforeByPair.set(pair, []);
     beforeByPair.get(pair).push(item);
@@ -400,7 +410,9 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     if (afterSeen.has(dedupe)) continue;
     afterSeen.add(dedupe);
 
-    const befores = beforeByPair.get(pair) || [];
+    const befores = [...(beforeByPair.get(pair) || []), ...(beforeByAction.get(item.action.toLowerCase()) || []).filter((b) =>
+      b.action.toLowerCase() === item.action.toLowerCase() && b.resource !== item.resource
+      && (b.resource === '*' || !/[*?]/.test(item.resource) && globMatch(b.resource, item.resource)))];
     const covering = befores.find((b) => conditionIsSubset(b.conditions, item.conditions));
     if (covering) {
       // Unconditional before + conditional after is a narrowing, not new access.
@@ -429,6 +441,19 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   // Same Allow on both sides, but a Deny that used to cover it is gone / narrower.
   const beforeDenies = beforeModel.statements.filter((stmt) => stmt.provider === 'aws' && stmt.effect === 'Deny');
   const afterDenies = afterModel.statements.filter((stmt) => stmt.provider === 'aws' && stmt.effect === 'Deny');
+  // Without an Allow, a lost Deny is only potential access in another policy.
+  if (!before.grants.size && !after.grants.size) {
+    for (const deny of beforeDenies) {
+      for (const action of expandStmtActions(deny, { capped: false })) {
+        for (const resource of deny.resources || ['*']) {
+          if (afterDenies.some((d) => stmtMatchesAction(d, action) && stmtMatchesResource(d, resource)
+            && conditionIsSubset(d.conditions, deny.conditions))) continue;
+          items.push({ action, resource, line: deny.line, doc: deny.doc,
+            sensitivity: 'write', reason: 'deny-removed', potentialOnly: true });
+        }
+      }
+    }
+  }
   const beforePairs = allowPairs(before.grants);
   const afterPairs = allowPairs(after.grants);
   const findings = [];
@@ -451,6 +476,8 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
       line: afterItem.line,
       sid: afterItem.sid,
       conditional: afterItem.conditional,
+      conditions: afterItem.conditions,
+      principal: afterItem.principal,
       sensitivity,
       reason: 'deny-removed',
       denyLine: removed.line,
@@ -482,11 +509,16 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
         && String(entry.action).toLowerCase() === String(afterItem.action).toLowerCase()
         && entry.resource === afterItem.resource);
       if (!existed) {
-        items.push({ ...afterItem, principal: '*', sensitivity: 'public', reason: 'principal-widened' });
+        items.push({ ...afterItem, excludedPrincipal: afterItem.principal, principal: '*', sensitivity: 'public', reason: 'principal-widened' });
       }
       continue;
     } // exclusions removed from existing grants are handled below
     if (beforePrinc.grants.has(key)) continue;
+    if ([...beforePrinc.grants.values()].some((b) => !b.notPrincipal
+      && b.principal === afterItem.principal && b.principalType === afterItem.principalType
+      && b.action.toLowerCase() === afterItem.action.toLowerCase()
+      && (b.resource === '*' || !/[*?]/.test(afterItem.resource) && globMatch(b.resource, afterItem.resource))
+      && conditionIsSubset(b.conditions, afterItem.conditions))) continue;
 
     // Same principal+action+resource already present with a scope pin → dropping
     // ExternalId / SourceArn / SourceAccount / PrincipalOrgID is widening.
@@ -526,9 +558,10 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
       line: afterItem.line,
       sid: afterItem.sid,
       conditional: afterItem.conditional,
+      conditions: afterItem.conditions,
+      principal: afterItem.principal,
       sensitivity,
       reason: 'principal-widened',
-      principal: afterItem.principal,
     });
   }
 
@@ -566,11 +599,19 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     write: 6,
     read: 7,
   };
+  if (commandScoped) for (const item of items) {
+    if (/^ssm:SendCommand$/i.test(item.action)) item.commandScoped = true;
+  }
   items.sort((a, b) => ((rank[a.sensitivity] ?? 9) - (rank[b.sensitivity] ?? 9))
+    || Number(matchesSensitivityList(AWS_SENSITIVE_READ, b.action, b.action.toLowerCase()))
+      - Number(matchesSensitivityList(AWS_SENSITIVE_READ, a.action, a.action.toLowerCase()))
     || a.action.localeCompare(b.action)
     || a.resource.localeCompare(b.resource));
+  const principalLines = new Set(items.filter((item) => item.reason === 'principal-widened')
+    .map((item) => `${grantPairKey(item)}|${item.doc}|${item.line}`));
   return {
-    items,
+    items: items.filter((item) => item.reason || !principalLines.has(`${grantPairKey(item)}|${item.doc}|${item.line}`))
+      .map((item) => ({ ...item, sentence: explainItem(item), risk: classifyVerdict({ items: [item] }).status })),
     narrowed,
     capped: before.capped || after.capped || beforePrinc.capped || afterPrinc.capped,
     findings,
@@ -578,18 +619,21 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
 }
 
 function scopedSensitive(item) {
+  if (item.commandScoped) return true;
+  if (item.sensitivity === 'sensitive-read' && /^logs:/i.test(item.action)
+    && /^arn:[^:]+:logs:[^*?:]+:\d{12}:log-group:[^*?:]+(?::\*)?$/.test(item.resource)) return true;
   if (!['remote-exec', 'destructive', 'privesc'].includes(item.sensitivity)) return false;
   const parts = String(item.resource).split(':');
   // Attaching an arbitrary policy can escalate even a single named identity.
-  if (/^iam:Attach(?:User|Group|Role)Policy$/i.test(item.action)) return false;
+  if (/^iam:(?:Attach|Put)(?:User|Group|Role)Policy$/i.test(item.action)) return false;
   const named = parts[0] === 'arn' && !/[*?]/.test(parts[4] || '')
     && !item.resource.includes('${') && !broadResource(item.resource);
-  const tagged = Object.entries(item.conditions?.StringEquals || {}).some(([key]) =>
+  const tagged = Object.entries({ ...item.conditions?.StringEquals, ...item.conditions?.StringLike }).some(([key]) =>
     /^(aws|ec2|ssm):resourcetag\//i.test(key));
   return named || tagged;
 }
 
-function verdictFromNewlyAllowed(newlyAllowed) {
+function classifyVerdict(newlyAllowed) {
   const items = newlyAllowed.items || [];
   if (items.some((item) => item.reason === 'condition-weakened')) {
     return { status: 'stop', label: 'Stop and review', reason: 'The change weakens a security condition.' };
@@ -606,6 +650,7 @@ function verdictFromNewlyAllowed(newlyAllowed) {
   // A removed Deny over write (or the buckets above) is still a stop — the
   // Allow was already there; the guardrail was the only thing holding it back.
   if (items.some((item) => item.reason === 'deny-removed'
+    && !item.potentialOnly
     && ['privesc', 'remote-exec', 'destructive', 'sensitive-read', 'write'].includes(item.sensitivity))) {
     return {
       status: 'stop',
@@ -624,6 +669,9 @@ function verdictFromNewlyAllowed(newlyAllowed) {
   }
   if (items.some(scopedSensitive)) {
     return { status: 'review', label: 'Needs context', reason: 'The change adds scoped or tag-conditioned sensitive access.' };
+  }
+  if (items.some((item) => item.potentialOnly)) {
+    return { status: 'review', label: 'Needs context', reason: 'A Deny was removed; another policy could now grant this access.' };
   }
   if (items.some((item) => !item.conditional && item.sensitivity === 'write'
     && !broadResource(item.resource))) {
@@ -654,9 +702,50 @@ function verdictFromNewlyAllowed(newlyAllowed) {
   };
 }
 
+function explainItem(item) {
+  const level = actions.accessLevel(item.action);
+  const service = actions.serviceName(item.action);
+  const resource = String(item.resource || '*');
+  const principal = item.principal;
+  const who = item.notPrincipal ? `Everyone except ${item.excludedPrincipal || principal}`
+    : principal === '*' ? (!item.conditional || item.sensitivity === 'public' ? 'Anyone on the internet' : 'Callers matching the supplied conditions')
+      : principal ? `Principal ${principal}` : 'This identity';
+  let what = level === 'Read' ? `read ${service} data` : level === 'List' ? `list ${service} resources`
+    : level === 'Permissions management' ? `change who has access through ${service}`
+      : level === 'Tagging' ? `change ${service} tags` : level === 'Write' ? `change ${service} data`
+        : `request ${item.action}`;
+  let where = resource === '*' ? ' on any resource' : ` on ${resource}`;
+  if (/^s3:GetObject$/i.test(item.action)) {
+    what = resource === '*' ? 'read any object in any S3 bucket' : `read objects in S3 bucket ${resource.replace(/^arn:[^:]+:s3:::/, '')}`;
+    where = '';
+  } else if (/^sqs:ReceiveMessage$/i.test(item.action) && resource !== '*') {
+    what = `read messages from queue ${resource.split(':').pop()}`;
+    where = '';
+  }
+  const condition = item.conditional ? ' when the supplied conditions match' : '';
+  if (item.reason === 'deny-removed') {
+    return `The rule that blocked ${who === 'This identity' ? 'this identity' : who} from being able to ${what}${where} was removed${item.potentialOnly ? '; an Allow in another policy is still needed' : ''}.`;
+  }
+  if (item.reason === 'condition-weakened') {
+    return `The restriction was weakened: ${who} can now ${what}${where}${condition}.`;
+  }
+  return `${who} can now ${what}${where}${condition}.`;
+}
+
+function verdictFromNewlyAllowed(newlyAllowed) {
+  const verdict = classifyVerdict(newlyAllowed);
+  const items = newlyAllowed.items || [];
+  const top = items.find((item) => (item.risk || classifyVerdict({ items: [item] }).status) === verdict.status);
+  const lower = items.filter((item) => (item.risk || classifyVerdict({ items: [item] }).status) === 'pass').length;
+  const label = verdict.status === 'stop' ? 'Stop' : verdict.status === 'review' ? 'Check' : 'Pass';
+  const detail = top ? explainItem(top) : verdict.reason;
+  return { ...verdict, sentence: `${label}: ${detail}${lower && verdict.status !== 'pass' ? ` ${lower} lower-risk addition${lower === 1 ? ' is' : 's are'} listed below.` : ''}` };
+}
+
 module.exports = {
   SENSITIVITY,
   listNewlyAllowed,
   verdictFromNewlyAllowed,
   classifySensitivity,
+  explainItem,
 };

@@ -225,7 +225,7 @@
     </div>
 
     <div id="panel-compare" class="panel">
-      <div class="workflow-intro"><h1 id="reviewTitle">Review a permission change</h1><p>Add your current and proposed policies, name the action to check, then test a correction that keeps the access people need.</p></div>
+      <div class="workflow-intro"><h1 id="reviewTitle">Review a permission change</h1><p>Paste the current and proposed policies. See what becomes possible, who gains access and whether to stop. No action or resource is required.</p></div>
       <p class="review-privacy" id="reviewPrivacy">Checks run on your PolicyLens server. Optional AI sends extracted facts to Anthropic only when requested and configured.</p>
       <details id="changeInputs" class="change-inputs" open>
         <summary>Current and proposed policies · edit inputs</summary>
@@ -253,10 +253,11 @@
         </div>
         <button type="button" id="addRequiredAccess" class="btn secondary">Add required-access check</button>
       </div>
-      <div class="change-actions"><button id="compareBtn" class="btn primary" type="button">Check my policies</button><button id="loadChangeExample" class="btn secondary" type="button">Load the example</button><button id="exportChange" class="btn secondary" type="button" disabled>Export review JSON</button></div>
-      <p id="changeStatus" class="change-status" role="status">Add both policies and the action to check, or load the made-up example.</p>
+      <div class="change-actions"><button id="compareBtn" class="btn primary" type="button">Check my policies</button><button id="loadChangeExample" class="btn secondary" type="button">Load the example</button><button id="loadIncident" class="btn secondary" type="button">Try a real AWS incident</button><button id="copyReview" class="btn secondary" type="button" disabled>Copy review for a pull request</button><button id="exportChange" class="btn secondary" type="button" disabled>Export review JSON</button></div>
+      <p id="changeStatus" class="change-status" role="status">Add both policies, load the made-up example or try the real AWS policy change.</p>
+      <p class="fineprint" id="incidentNote" hidden>AWSSupportServiceRolePolicy v19 to v20. AWS says the added permission was reverted and could not be used by its support systems. <a id="incidentSource" href="https://aws.amazon.com/security/security-bulletins/AWS-2021-007/" target="_blank" rel="noopener">AWS security bulletin AWS-2021-007</a>.</p>
       <div class="change-workbench">
-        <section aria-labelledby="originalTitle"><h2 id="originalTitle" class="workbench-title">Original proposal</h2><div id="compareResult"><p class="empty">The checked transition and granting statement will appear here.</p></div></section>
+        <section aria-labelledby="originalTitle"><h2 id="originalTitle" class="workbench-title">Original proposal</h2><div id="compareResult"><p class="empty">The verdict and newly allowed access will appear here.</p></div><details id="afterEvidence" hidden><summary>Policy source for this line (normalised)</summary><pre id="afterSource" class="source-code" tabindex="0" aria-label="Policy source"></pre></details></section>
         <section aria-labelledby="candidateTitle"><h2 id="candidateTitle" class="workbench-title">Corrected candidate</h2><p id="candidateHint" class="empty">Review the proposal first, then verify a correction. The original result stays visible.</p>
           <details id="correctionCheck" class="correction-check" hidden open>
             <summary>Edit and verify correction</summary>

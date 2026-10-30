@@ -84,10 +84,11 @@ function formatText(results) {
   const lines = [];
   for (const review of results) {
     const label = review.address ? `${review.address}: ` : '';
-    lines.push(`${label}${review.verdict.status} — ${review.verdict.reason}`);
+    lines.push(`${label}${review.verdict.sentence || `${review.verdict.status}: ${review.verdict.reason}`}`);
     if (review.newlyAllowed && review.newlyAllowed.items.length) {
       const top = review.newlyAllowed.items.slice(0, 10);
       for (const item of top) {
+        lines.push(`  ${item.sentence}`);
         lines.push(`  + ${item.action} on ${item.resource} (${item.sensitivity}, line ${item.line})`);
       }
       if (review.newlyAllowed.items.length > 10) {

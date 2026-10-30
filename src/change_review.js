@@ -192,6 +192,8 @@ function reviewChange({ before, after, request } = {}) {
     beforeModel: beforePolicy.model,
     afterModel: afterPolicy.model,
   });
+  newlyAllowed.sources = Object.fromEntries([['before', beforePolicy], ['after', afterPolicy]].map(([side, policy]) =>
+    [side, policy.model.documents.map((doc) => ({ name: doc.name, text: doc.lines.join('\n') }))]));
   // Deny-guardrail findings are change-time only (they need before vs after).
   if (newlyAllowed.findings && newlyAllowed.findings.length) {
     findings.introduced.push(...newlyAllowed.findings);
@@ -242,6 +244,7 @@ function reviewChange({ before, after, request } = {}) {
     introduced: findings.introduced,
     widened: findings.widened,
   });
+  verdict.sentence = `${verdict.status === 'stop' ? 'Stop' : verdict.status === 'review' ? 'Check' : 'Pass'}: ${verdict.reason}`;
 
   return {
     schemaVersion: 1,

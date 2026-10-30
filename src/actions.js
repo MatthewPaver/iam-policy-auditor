@@ -57,12 +57,18 @@ function levelCode(action) {
   const { service, name } = splitAction(action);
   const svc = d.services[service];
   if (!svc) return null;
-  return svc.actions[name] || null;
+  return svc.actions[name] || svc.actions[Object.keys(svc.actions)
+    .find((actionName) => actionName.toLowerCase() === name.toLowerCase())] || null;
 }
 
 function accessLevel(action) {
   const c = levelCode(action);
   return c ? LEVEL_NAME[c] : 'Unknown';
+}
+
+function serviceName(action) {
+  const service = splitAction(action).service;
+  return db()?.services[service]?.name || service || String(action);
 }
 
 // A concrete action that changes state or permissions. Unknown actions return
@@ -188,6 +194,6 @@ function exists(action) {
 }
 
 module.exports = {
-  isLoaded, meta, accessLevel, levelCode, isMutating, expand, exists, LEVEL_NAME,
+  isLoaded, meta, accessLevel, serviceName, levelCode, isMutating, expand, exists, LEVEL_NAME,
   blastRadius, grantedActions, grantedBlast, tally, allActions,
 };

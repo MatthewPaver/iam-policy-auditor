@@ -394,6 +394,9 @@ function invalidateChange() {
   correctionRevision += 1;
   changeRecord = null;
   $('#exportChange').disabled = true;
+  $('#copyReview').disabled = true;
+  $('#afterEvidence').hidden = true;
+  $('#incidentNote').hidden = true;
   $('#changeStatus').textContent = 'Inputs changed, so earlier results are out of date. Select Check my policies again.';
   $('#compareResult').classList.add('stale');
   if (!$('#compareResult .stale-label')) $('#compareResult').insertAdjacentHTML('afterbegin', '<p class="stale-label">Out of date: the inputs changed. Check the policies again.</p>');
@@ -486,6 +489,9 @@ $('#compareBtn').onclick = async () => {
   changeBusy = true;
   changeRecord = null;
   $('#exportChange').disabled = true;
+  $('#copyReview').disabled = true;
+  $('#afterEvidence').hidden = true;
+  $('#incidentNote').hidden = true;
   $('#correctionResult').innerHTML = '';
   $('#correctionCheck').hidden = true;
   const btn = $('#compareBtn');
@@ -498,22 +504,23 @@ $('#compareBtn').onclick = async () => {
     changeRecord = { schemaVersion: r.schemaVersion, engine: r.engine, inputIdentity, inputs, review: r, correction: null, createdAt: new Date().toISOString() };
     const accessTone = r.verdict.status === 'stop' ? 'review-stop' : r.verdict.status === 'review' ? 'review-context' : 'review-pass';
     const newly = (r.newlyAllowed && r.newlyAllowed.items) || [];
-    const newlyHtml = `<h3 class="result-subhead">What this change newly allows</h3>
-      ${newly.length
-        ? `<ul class="grant-evidence">${newly.slice(0, 40).map((item) => `<li><code>${esc(item.action)}</code> on <code>${esc(item.resource)}</code> · ${esc(item.sensitivity)} · line ${esc(item.line)}${item.conditional ? ' · conditional' : ''}</li>`).join('')}${newly.length > 40 ? `<li>… ${newly.length - 40} more</li>` : ''}</ul>`
-        : '<p>No newly allowed grants under the local rule set.</p>'}
-      ${r.newlyAllowed && r.newlyAllowed.capped ? '<p class="fineprint">Action expansion hit a catalogue cap; treat the list as incomplete.</p>' : ''}`;
-    const accessHtml = r.access
-      ? `<div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b><p>${esc(r.verdict.reason)}</p></div>
-        ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}
-        <h3 class="result-subhead">Decision evidence</h3><ul class="grant-evidence">${(r.evidence || []).length ? r.evidence.map((item) => {
-          const statement = r.statements.after.find((s) => s.id === item.id);
-          return `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)} · ${esc(item.sid || 'Unnamed statement')}${statement ? `<pre>${esc(JSON.stringify({ Sid: statement.sid, Effect: statement.effect, Action: statement.actions, Resource: statement.resources, ...(statement.notActions?.length ? { NotAction: statement.notActions } : {}), ...(statement.notResources?.length ? { NotResource: statement.notResources } : {}), ...(Object.keys(statement.conditions || {}).length ? { Condition: statement.conditions } : {}) }, null, 2))}</pre>` : ''}</li>`;
-        }).join('') : '<li>No matching allow or deny statement for this request.</li>'}</ul>`
-      : `<div class="verdict ${accessTone}"><span>${esc(r.verdict.label)}</span><b>Request-free review</b><p>${esc(r.verdict.reason)}</p></div>`;
+    const newlyHtml = ['stop', 'review', 'pass'].map((risk) => {
+      const group = newly.filter((item) => item.risk === risk);
+      if (!group.length) return '';
+      const list = `<ul class="grant-evidence">${group.map((item) => `<li><p>${esc(item.sentence)}</p><code>${esc(item.action)}</code> on <code>${esc(item.resource)}</code> · <button type="button" class="text-control" data-policy-line="${esc(item.line)}" data-policy-doc="${esc(item.doc)}" data-policy-side="${item.potentialOnly ? 'before' : 'after'}">line ${esc(item.line)}</button></li>`).join('')}</ul>`;
+      return risk === 'pass' ? `<details class="lower-risk"><summary>Lower risk (${group.length})</summary>${list}</details>`
+        : `<h3 class="result-subhead">${risk === 'stop' ? 'Stop' : 'Check'}</h3>${list}`;
+    }).join('') || '<p>No newly allowed grants under the local rule set.</p>';
+    const accessHtml = `<div class="verdict ${accessTone}"><p>${esc(r.verdict.sentence || r.verdict.reason)}</p><span>${esc(r.verdict.label)}</span>${r.access ? `<b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b>` : '<b>Request-free review</b>'}</div>`;
+    const decisionHtml = r.access ? `<details><summary>Decision evidence</summary>
+      ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}
+      <ul class="grant-evidence">${(r.evidence || []).length ? r.evidence.map((item) => {
+        const statement = r.statements.after.find((s) => s.id === item.id);
+        return `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)} · ${esc(item.sid || 'Unnamed statement')}${statement ? `<pre>${esc(JSON.stringify({ Sid: statement.sid, Effect: statement.effect, Action: statement.actions, Resource: statement.resources, ...(statement.notActions?.length ? { NotAction: statement.notActions } : {}), ...(statement.notResources?.length ? { NotResource: statement.notResources } : {}), ...(Object.keys(statement.conditions || {}).length ? { Condition: statement.conditions } : {}) }, null, 2))}</pre>` : ''}</li>`;
+      }).join('') : '<li>No matching allow or deny statement for this request.</li>'}</ul></details>` : '';
     $('#compareResult').classList.remove('stale');
-    $('#compareResult').innerHTML = `${newlyHtml}${accessHtml}
-      <details><summary>Rule findings and suggested corrections</summary>${md((r.suggestedCorrections || []).map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${(r.findings.introduced || []).map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
+    $('#compareResult').innerHTML = `${accessHtml}<h3 class="result-subhead">What this change newly allows</h3>${newlyHtml}${r.newlyAllowed?.capped ? '<p>Action expansion is incomplete; inspect the supplied policies.</p>' : ''}
+      ${decisionHtml}<details><summary>Rule findings and suggested corrections</summary>${md((r.suggestedCorrections || []).map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${(r.findings.introduced || []).map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
       <p class="input-identity">Input SHA-256 <code>${esc(inputIdentity)}</code></p>
       ${r.ai ? `<details class="review-explanation"><summary>Optional AI explanation · ${esc(r.ai.model)}</summary>${md(r.ai.text)}</details>` : r.aiError ? `<p class="ai-error">Optional AI explanation unavailable: ${esc(r.aiError)} Engine result remains available.</p>` : ''}`;
     $('#changeStatus').textContent = inputs.action
@@ -523,11 +530,60 @@ $('#compareBtn').onclick = async () => {
     $('#candidateHint').hidden = true;
     $('#changeInputs').open = false;
     $('#exportChange').disabled = false;
+    $('#copyReview').disabled = false;
   } catch (e) {
     if (revision === changeRevision) { changeError(e.message); $('#changeStatus').textContent = 'Review incomplete. No current verdict or export is available.'; }
   } finally {
     changeBusy = false; btn.disabled = false; btn.textContent = 'Check my policies';
   }
+};
+
+$('#compareResult').addEventListener('click', (event) => {
+  const link = event.target.closest('[data-policy-line]');
+  if (!link || !changeRecord) return;
+  const side = link.dataset.policySide;
+  const source = changeRecord.review.newlyAllowed.sources[side].find((doc) => doc.name === link.dataset.policyDoc);
+  if (!source) return;
+  const line = Number(link.dataset.policyLine);
+  $('#afterSource').innerHTML = source.text.split('\n').map((text, index) => `<span class="source-line${index + 1 === line ? ' highlighted-line' : ''}"><span class="line-number">${index + 1}</span>${esc(text)}</span>`).join('');
+  $('#afterSource').setAttribute('aria-label', `${side === 'before' ? 'Current' : 'Proposed'} policy ${source.name}, line ${line}`);
+  $('#afterEvidence').hidden = false; $('#afterEvidence').open = true;
+  $('#afterSource').focus();
+  $('#afterSource .highlighted-line')?.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
+});
+
+$('#copyReview').onclick = async () => {
+  if (!changeRecord) return;
+  const review = changeRecord.review;
+  const stops = review.newlyAllowed.items.filter((item) => item.risk === 'stop');
+  const text = [review.verdict.sentence || review.verdict.reason, '', ...stops.map((item) =>
+    `- ${item.sentence} (\`${item.action}\`, ${item.doc}, line ${item.line})`), '', 'Scope: supplied policies only; SCPs, permission boundaries and session policies are not evaluated.'].join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    $('#changeStatus').textContent = 'Review copied for a pull request.';
+  } catch { $('#changeStatus').textContent = 'Clipboard unavailable. Use Export review JSON or select and copy the review text.'; }
+};
+
+$('#loadIncident').onclick = async () => {
+  if (changeBusy) return;
+  if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the public AWS policy example?')) return;
+  const revision = changeRevision;
+  const button = $('#loadIncident'); button.disabled = true;
+  try {
+    const values = await Promise.all(['19', '20'].map(async (version) => {
+      const response = await fetch(`examples/policies/AWSSupportServiceRolePolicy.v${version}.json`);
+      if (!response.ok) throw new Error('The AWS example could not load. Retry or paste two policies.');
+      return response.text();
+    }));
+    if (revision !== changeRevision) return;
+    invalidateChange();
+    $('#beforeBox').value = values[0]; $('#afterBox').value = values[1];
+    for (const id of ['compareAction', 'compareResource', 'comparePrincipal', 'candidateBox', 'requiredAction', 'requiredResource']) $(`#${id}`).value = '';
+    $('#compareContext').value = '{}'; $('#contextComplete').checked = false; $('#changeUseAI').checked = false;
+    await $('#compareBtn').onclick();
+    if (changeRecord) $('#incidentNote').hidden = false;
+  } catch (error) { changeError(error.message); }
+  finally { button.disabled = false; }
 };
 
 $('#loadChangeExample').onclick = async () => {

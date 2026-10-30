@@ -27,6 +27,10 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   const getObject = review.newlyAllowed.items.find((item) => /s3:getobject/i.test(item.action));
   assert.ok(getObject, 'expected newlyAllowed to include s3:GetObject');
   assert.ok(Number.isInteger(getObject.line) && getObject.line > 0);
+  assert.equal(getObject.line, 1640);
+  assert.match(review.verdict.sentence, /read any object in any S3 bucket/);
+  const source = review.newlyAllowed.sources.after.find((d) => d.name === getObject.doc);
+  assert.match(source.text.split('\n')[getObject.line - 1], /s3:getObject/i);
   assert.ok(elapsed < 2000, `v19→v20 review took ${elapsed}ms (limit 2000)`);
 }
 
@@ -541,6 +545,61 @@ for (const [Action, Resource, Condition, expected] of [
     Effect: 'Allow', Principal: '*', Action: 'kms:Decrypt', Resource: '*',
     Condition: { StringNotEquals: { 'kms:CallerAccount': '111122223333' } },
   }) }).verdict.status, 'stop');
+}
+
+
+// Round 5: modelled category regressions, not copies of benchmark policies.
+// Sources: AWS IAM Resource/Condition/NotAction docs and service authorisation;
+// Rhino inline-policy escalation. See bench/real-cases/SOURCES.md.
+{
+  const grant = (Action, Resource = '*', Condition) => ({ Effect: 'Allow', Action, Resource, Condition });
+  const compare = (before, after) => reviewChange({ before: doc(...before), after: doc(...after) });
+  assert.equal(compare([grant('s3:PutBucketPolicy')], [grant('s3:PutBucketPolicy', 'arn:aws:s3:::build-output-*')]).verdict.status, 'pass', 'resource narrowing');
+  assert.equal(compare([], [grant('ec2:GetInstanceUefiData', '*', { StringEquals: { 'aws:SourceAccount': '123456789012' } })]).verdict.status, 'pass');
+  assert.equal(compare([], [grant('dynamodb:GetAbacStatus')]).verdict.status, 'pass', 'metadata status read');
+  assert.equal(compare([], [grant('logs:GetLogEvents', 'arn:aws:logs:eu-west-2:123456789012:log-group:Payments:*')]).verdict.status, 'review', 'named log group');
+  assert.equal(compare([], [grant('iam:PutRolePolicy', 'arn:aws:iam::123456789012:role/Deployer')]).verdict.status, 'stop', 'inline policy escalation');
+  assert.equal(compare([grant('sns:Subscribe', 'arn:aws:sns:eu-west-2:123456789012:Updates', { StringEquals: { 'sns:Protocol': 'https' } })], [grant('sns:Subscribe', 'arn:aws:sns:eu-west-2:123456789012:Updates')]).verdict.status, 'review');
+  const read = grant('s3:GetObject', 'arn:aws:s3:::team-records/*');
+  assert.equal(compare([{ ...read, Condition: { StringEquals: { 's3:ExistingObjectTag/team': 'audit' } } }], [read]).verdict.status, 'stop', 'removed data selector');
+  assert.equal(compare([{ Effect: 'Deny', NotAction: ['s3:ListBucket'], Resource: '*' }], [{ Effect: 'Deny', NotAction: ['s3:ListBucket', 's3:GetObject'], Resource: '*' }]).verdict.status, 'review', 'deny-only guardrail loss is potential access');
+  assert.equal(compare([], [grant('ssm:SendCommand', 'arn:aws:ec2:*:*:instance/*', { StringLike: { 'ssm:resourceTag/team': 'billing' } })]).verdict.status, 'review', 'tag selector with StringLike');
+}
+{
+  const after = doc(
+    { Effect: 'Allow', Action: 'ssm:SendCommand', Resource: 'arn:aws:ssm:*:*:document/*' },
+    { Effect: 'Allow', Action: 'ssm:SendCommand', Resource: 'arn:aws:ec2:*:*:instance/*', Condition: { StringLike: { 'ssm:resourceTag/team': 'billing' } } },
+  );
+  assert.equal(reviewChange({ before: doc(), after }).verdict.status, 'review', 'SSM requires both instance and document permission');
+}
+
+// Deterministic sentences: access levels, callers, scope and lost guards.
+{
+  const { explainItem } = require('../src/newly_allowed');
+  const sentence = (action, extra = {}) => explainItem({ action, resource: '*', ...extra });
+  assert.equal(sentence('s3:GetObject'), 'This identity can now read any object in any S3 bucket.');
+  assert.match(sentence('s3:PutObject'), /change Amazon S3 data/);
+  assert.match(sentence('iam:PutRolePolicy'), /change who has access/);
+  assert.equal(sentence('sqs:ReceiveMessage', { principal: '*', sensitivity: 'public', resource: 'arn:aws:sqs:eu-west-2:123456789012:Invoices' }), 'Anyone on the internet can now read messages from queue Invoices.');
+  assert.match(sentence('s3:GetObject', { principal: 'arn:aws:iam::210987654321:role/Partner', sensitivity: 'cross-account' }), /210987654321.*Partner/);
+  assert.match(sentence('s3:GetObject', { reason: 'deny-removed' }), /^The rule that blocked/);
+  assert.match(sentence('s3:GetObject', { reason: 'condition-weakened' }), /restriction was weakened/);
+  assert.match(sentence('s3:ListBucket'), /list Amazon S3 resources/);
+  assert.match(sentence('newservice:Unknown'), /request newservice:Unknown/);
+  assert.match(sentence('s3:GetObject', { conditional: true }), /when the supplied conditions match/);
+  assert.match(sentence('kms:Decrypt', { principal: '*', conditional: true, sensitivity: 'sensitive-read' }), /^Callers matching the supplied conditions/);
+  const review = reviewChange({ before: doc(), after: doc({ Effect: 'Allow', Action: ['s3:GetObject', 's3:ListBucket'], Resource: '*' }) });
+  assert.match(review.verdict.sentence, /^Stop:/);
+  assert.ok(review.newlyAllowed.items.every((i) => i.sentence && i.risk));
+}
+
+// Narrowing keeps the same caller, including resource policies with a principal.
+{
+  const Principal = { AWS: 'arn:aws:iam::123456789012:role/QueueWorker' };
+  const statement = { Effect: 'Allow', Principal, Action: 'sqs:ReceiveMessage', Resource: '*' };
+  assert.equal(reviewChange({ before: doc(statement), after: doc({ ...statement, Resource: 'arn:aws:sqs:eu-west-2:123456789012:Invoices' }) }).verdict.status, 'pass');
+  const publicRead = reviewChange({ before: doc(), after: doc({ ...statement, Principal: '*' }) });
+  assert.equal(publicRead.newlyAllowed.items.length, 1, 'do not repeat the same grant as identity and principal access');
 }
 
 console.log('newly-allowed — passed');
