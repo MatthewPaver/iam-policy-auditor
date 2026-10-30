@@ -18,7 +18,8 @@
     "ingest": "node scripts/ingest-aws-actions.js",
     "test:browser": "playwright test",
     "build:demo": "node scripts/build-browser-demo.js",
-    "test:simulation": "npm run build:demo && node test/simulation/verify-impact.cjs"
+    "test:simulation": "npm run build:demo && node test/simulation/verify-impact.cjs",
+    "bench:real": "node bench/real-cases/run.js"
   },
   "engines": {
     "node": ">=18"

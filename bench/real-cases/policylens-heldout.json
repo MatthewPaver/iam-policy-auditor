@@ -1,0 +1,1882 @@
+[
+ {
+  "id": "PLH-A01",
+  "title": "AdministratorAccess-Amplify v1 -> v2 (Jan 2021): unconditioned IAM role-policy writes and sts:AssumeRole on *",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/937690cdff272d6516c9a7a3d7bf974ebf76f0c9/policies/AdministratorAccess-Amplify",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AdministratorAccess-Amplify",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v1",
+    "createDate": "2020-12-01T19:03:08Z",
+    "commit": "d24b16d1a6142b2727c7f087177a74596da987ed",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/d24b16d1a6142b2727c7f087177a74596da987ed/policies/AdministratorAccess-Amplify"
+   },
+   "after": {
+    "versionId": "v2",
+    "createDate": "2021-01-13T22:36:27Z",
+    "commit": "937690cdff272d6516c9a7a3d7bf974ebf76f0c9",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/937690cdff272d6516c9a7a3d7bf974ebf76f0c9/policies/AdministratorAccess-Amplify"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files (aws iam get-policy-version output), unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "CLICloudformationPolicy",
+     "Effect": "Allow",
+     "Action": [
+      "cloudformation:CreateChangeSet",
+      "cloudformation:CreateStack",
+      "cloudformation:DeleteStack",
+      "cloudformation:DescribeChangeSet",
+      "cloudformation:DescribeStackEvents",
+      "cloudformation:DescribeStackResource",
+      "cloudformation:DescribeStackResources",
+      "cloudformation:DescribeStacks",
+      "cloudformation:ExecuteChangeSet",
+      "cloudformation:GetTemplate",
+      "cloudformation:UpdateStack"
+     ],
+     "Resource": [
+      "arn:aws:cloudformation:*:*:stack/amplify-*"
+     ]
+    },
+    {
+     "Sid": "CLIManageviaCFNPolicy",
+     "Effect": "Allow",
+     "Action": [
+      "iam:CreateRole",
+      "iam:ListRoleTags",
+      "iam:TagRole",
+      "iam:AttachRolePolicy",
+      "iam:CreatePolicy",
+      "iam:DeletePolicy",
+      "iam:DeleteRole",
+      "iam:DeleteRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:UpdateRole",
+      "iam:GetRole",
+      "iam:GetPolicy",
+      "iam:GetRolePolicy",
+      "iam:PassRole",
+      "appsync:CreateApiKey",
+      "appsync:CreateDataSource",
+      "appsync:CreateFunction",
+      "appsync:CreateResolver",
+      "appsync:CreateType",
+      "appsync:DeleteApiKey",
+      "appsync:DeleteDataSource",
+      "appsync:DeleteFunction",
+      "appsync:DeleteResolver",
+      "appsync:DeleteType",
+      "appsync:GetDataSource",
+      "appsync:GetFunction",
+      "appsync:GetIntrospectionSchema",
+      "appsync:GetResolver",
+      "appsync:GetSchemaCreationStatus",
+      "appsync:GetType",
+      "appsync:GraphQL",
+      "appsync:ListApiKeys",
+      "appsync:ListDataSources",
+      "appsync:ListFunctions",
+      "appsync:ListGraphqlApis",
+      "appsync:ListResolvers",
+      "appsync:ListResolversByFunction",
+      "appsync:ListTypes",
+      "appsync:StartSchemaCreation",
+      "appsync:UpdateApiKey",
+      "appsync:UpdateDataSource",
+      "appsync:UpdateFunction",
+      "appsync:UpdateResolver",
+      "appsync:UpdateType",
+      "appsync:TagResource",
+      "appsync:CreateGraphqlApi",
+      "appsync:DeleteGraphqlApi",
+      "appsync:GetGraphqlApi",
+      "appsync:ListTagsForResource",
+      "appsync:UpdateGraphqlApi",
+      "apigateway:DELETE",
+      "apigateway:GET",
+      "apigateway:PATCH",
+      "apigateway:POST",
+      "apigateway:PUT",
+      "cognito-idp:CreateUserPool",
+      "cognito-identity:CreateIdentityPool",
+      "cognito-identity:DeleteIdentityPool",
+      "cognito-identity:DescribeIdentity",
+      "cognito-identity:DescribeIdentityPool",
+      "cognito-identity:SetIdentityPoolRoles",
+      "cognito-identity:GetIdentityPoolRoles",
+      "cognito-identity:UpdateIdentityPool",
+      "cognito-idp:CreateUserPoolClient",
+      "cognito-idp:DeleteGroup",
+      "cognito-idp:DeleteUserPool",
+      "cognito-idp:DeleteUserPoolClient",
+      "cognito-idp:DescribeUserPool",
+      "cognito-idp:DescribeUserPoolClient",
+      "cognito-idp:ListTagsForResource",
+      "cognito-idp:ListUserPoolClients",
+      "cognito-idp:UpdateUserPoolClient",
+      "cognito-idp:CreateGroup",
+      "cognito-idp:DeleteGroup",
+      "cognito-identity:TagResource",
+      "cognito-idp:TagResource",
+      "cognito-idp:UpdateUserPool",
+      "lambda:AddPermission",
+      "lambda:CreateFunction",
+      "lambda:DeleteFunction",
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:InvokeAsync",
+      "lambda:InvokeFunction",
+      "lambda:RemovePermission",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:DeleteFunction",
+      "lambda:AddLayerVersionPermission",
+      "lambda:CreateEventSourceMapping",
+      "lambda:DeleteEventSourceMapping",
+      "lambda:DeleteLayerVersion",
+      "lambda:GetEventSourceMapping",
+      "lambda:GetLayerVersion",
+      "lambda:ListEventSourceMappings",
+      "lambda:ListLayerVersions",
+      "lambda:PublishLayerVersion",
+      "lambda:RemoveLayerVersionPermission",
+      "dynamodb:CreateTable",
+      "dynamodb:DeleteItem",
+      "dynamodb:DeleteTable",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:ListStreams",
+      "dynamodb:PutItem",
+      "dynamodb:TagResource",
+      "dynamodb:ListTagsOfResource",
+      "dynamodb:UpdateContinuousBackups",
+      "dynamodb:UpdateItem",
+      "dynamodb:UpdateTable",
+      "dynamodb:UpdateTimeToLive",
+      "s3:CreateBucket",
+      "s3:ListBucket",
+      "s3:PutBucketAcl",
+      "s3:PutBucketCORS",
+      "s3:PutBucketNotification",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketWebsite",
+      "s3:PutObjectAcl",
+      "cloudfront:CreateCloudFrontOriginAccessIdentity",
+      "cloudfront:CreateDistribution",
+      "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+      "cloudfront:DeleteDistribution",
+      "cloudfront:GetCloudFrontOriginAccessIdentity",
+      "cloudfront:GetCloudFrontOriginAccessIdentityConfig",
+      "cloudfront:GetDistribution",
+      "cloudfront:GetDistributionConfig",
+      "cloudfront:TagResource",
+      "cloudfront:UntagResource",
+      "cloudfront:UpdateCloudFrontOriginAccessIdentity",
+      "cloudfront:UpdateDistribution",
+      "events:DeleteRule",
+      "events:DescribeRule",
+      "events:ListRuleNamesByTarget",
+      "events:PutRule",
+      "events:PutTargets",
+      "events:RemoveTargets",
+      "mobiletargeting:GetApp",
+      "kinesis:AddTagsToStream",
+      "kinesis:CreateStream",
+      "kinesis:DeleteStream",
+      "kinesis:DescribeStream",
+      "kinesis:PutRecords"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "ForAnyValue:StringEquals": {
+       "aws:CalledVia": [
+        "cloudformation.amazonaws.com"
+       ]
+      }
+     }
+    },
+    {
+     "Sid": "CLISDKCalls",
+     "Effect": "Allow",
+     "Action": [
+      "appsync:GetIntrospectionSchema",
+      "appsync:GraphQL",
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
+      "s3:DeleteObject",
+      "s3:GetBucketLocation",
+      "s3:ListAllMyBuckets",
+      "amplify:CreateApp",
+      "amplify:CreateBackendEnvironment",
+      "amplify:GetApp",
+      "amplify:GetBackendEnvironment",
+      "amplify:ListApps",
+      "amplify:ListBackendEnvironments",
+      "amplify:CreateBranch",
+      "amplify:GetBranch",
+      "amplify:UpdateApp",
+      "amplify:ListBranches",
+      "amplify:ListDomainAssociations",
+      "amplify:DeleteBranch",
+      "amplify:DeleteApp",
+      "amplify:DeleteBackendEnvironment",
+      "amplifybackend: *",
+      "cognito-idp:AdminAddUserToGroup",
+      "cognito-idp:AdminCreateUser",
+      "cognito-idp:CreateGroup",
+      "cognito-idp:DeleteGroup",
+      "cognito-idp:DeleteUser",
+      "cognito-idp:ListUsers",
+      "cognito-idp:AdminGetUser",
+      "cognito-idp:ListUsersInGroup",
+      "cognito-idp:AdminDisableUser",
+      "cognito-idp:AdminRemoveUserFromGroup",
+      "cognito-idp:AdminResetUserPassword",
+      "cognito-idp:AdminListGroupsForUser",
+      "cognito-idp:ListGroups",
+      "cognito-idp:AdminDeleteUser",
+      "cognito-idp:AdminListUserAuthEvents",
+      "cognito-idp:AdminDeleteUser",
+      "cognito-idp:AdminConfirmSignUp",
+      "cognito-idp:AdminEnableUser",
+      "cognito-idp:AdminUpdateUserAttributes"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "CLICloudformationPolicy",
+     "Effect": "Allow",
+     "Action": [
+      "cloudformation:CreateChangeSet",
+      "cloudformation:CreateStack",
+      "cloudformation:DeleteStack",
+      "cloudformation:DescribeChangeSet",
+      "cloudformation:DescribeStackEvents",
+      "cloudformation:DescribeStackResource",
+      "cloudformation:DescribeStackResources",
+      "cloudformation:DescribeStacks",
+      "cloudformation:ExecuteChangeSet",
+      "cloudformation:GetTemplate",
+      "cloudformation:UpdateStack"
+     ],
+     "Resource": [
+      "arn:aws:cloudformation:*:*:stack/amplify-*"
+     ]
+    },
+    {
+     "Sid": "CLIManageviaCFNPolicy",
+     "Effect": "Allow",
+     "Action": [
+      "iam:CreateRole",
+      "iam:ListRoleTags",
+      "iam:TagRole",
+      "iam:AttachRolePolicy",
+      "iam:CreatePolicy",
+      "iam:DeletePolicy",
+      "iam:DeleteRole",
+      "iam:DeleteRolePolicy",
+      "iam:DetachRolePolicy",
+      "iam:PutRolePolicy",
+      "iam:UpdateRole",
+      "iam:GetRole",
+      "iam:GetPolicy",
+      "iam:GetRolePolicy",
+      "iam:PassRole",
+      "iam:ListPolicyVersions",
+      "appsync:CreateApiKey",
+      "appsync:CreateDataSource",
+      "appsync:CreateFunction",
+      "appsync:CreateResolver",
+      "appsync:CreateType",
+      "appsync:DeleteApiKey",
+      "appsync:DeleteDataSource",
+      "appsync:DeleteFunction",
+      "appsync:DeleteResolver",
+      "appsync:DeleteType",
+      "appsync:GetDataSource",
+      "appsync:GetFunction",
+      "appsync:GetIntrospectionSchema",
+      "appsync:GetResolver",
+      "appsync:GetSchemaCreationStatus",
+      "appsync:GetType",
+      "appsync:GraphQL",
+      "appsync:ListApiKeys",
+      "appsync:ListDataSources",
+      "appsync:ListFunctions",
+      "appsync:ListGraphqlApis",
+      "appsync:ListResolvers",
+      "appsync:ListResolversByFunction",
+      "appsync:ListTypes",
+      "appsync:StartSchemaCreation",
+      "appsync:UpdateApiKey",
+      "appsync:UpdateDataSource",
+      "appsync:UpdateFunction",
+      "appsync:UpdateResolver",
+      "appsync:UpdateType",
+      "appsync:TagResource",
+      "appsync:CreateGraphqlApi",
+      "appsync:DeleteGraphqlApi",
+      "appsync:GetGraphqlApi",
+      "appsync:ListTagsForResource",
+      "appsync:UpdateGraphqlApi",
+      "apigateway:DELETE",
+      "apigateway:GET",
+      "apigateway:PATCH",
+      "apigateway:POST",
+      "apigateway:PUT",
+      "cognito-idp:CreateUserPool",
+      "cognito-identity:CreateIdentityPool",
+      "cognito-identity:DeleteIdentityPool",
+      "cognito-identity:DescribeIdentity",
+      "cognito-identity:DescribeIdentityPool",
+      "cognito-identity:SetIdentityPoolRoles",
+      "cognito-identity:GetIdentityPoolRoles",
+      "cognito-identity:UpdateIdentityPool",
+      "cognito-idp:CreateUserPoolClient",
+      "cognito-idp:DeleteGroup",
+      "cognito-idp:DeleteUserPool",
+      "cognito-idp:DeleteUserPoolClient",
+      "cognito-idp:DescribeUserPool",
+      "cognito-idp:DescribeUserPoolClient",
+      "cognito-idp:ListTagsForResource",
+      "cognito-idp:ListUserPoolClients",
+      "cognito-idp:UpdateUserPoolClient",
+      "cognito-idp:CreateGroup",
+      "cognito-idp:DeleteGroup",
+      "cognito-identity:TagResource",
+      "cognito-idp:TagResource",
+      "cognito-idp:UpdateUserPool",
+      "lambda:AddPermission",
+      "lambda:CreateFunction",
+      "lambda:DeleteFunction",
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:InvokeAsync",
+      "lambda:InvokeFunction",
+      "lambda:RemovePermission",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:DeleteFunction",
+      "lambda:AddLayerVersionPermission",
+      "lambda:CreateEventSourceMapping",
+      "lambda:DeleteEventSourceMapping",
+      "lambda:DeleteLayerVersion",
+      "lambda:GetEventSourceMapping",
+      "lambda:GetLayerVersion",
+      "lambda:ListEventSourceMappings",
+      "lambda:ListLayerVersions",
+      "lambda:PublishLayerVersion",
+      "lambda:RemoveLayerVersionPermission",
+      "dynamodb:CreateTable",
+      "dynamodb:DeleteItem",
+      "dynamodb:DeleteTable",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:ListStreams",
+      "dynamodb:PutItem",
+      "dynamodb:TagResource",
+      "dynamodb:ListTagsOfResource",
+      "dynamodb:UpdateContinuousBackups",
+      "dynamodb:UpdateItem",
+      "dynamodb:UpdateTable",
+      "dynamodb:UpdateTimeToLive",
+      "s3:CreateBucket",
+      "s3:ListBucket",
+      "s3:PutBucketAcl",
+      "s3:PutBucketCORS",
+      "s3:PutBucketNotification",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketWebsite",
+      "s3:PutObjectAcl",
+      "cloudfront:CreateCloudFrontOriginAccessIdentity",
+      "cloudfront:CreateDistribution",
+      "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+      "cloudfront:DeleteDistribution",
+      "cloudfront:GetCloudFrontOriginAccessIdentity",
+      "cloudfront:GetCloudFrontOriginAccessIdentityConfig",
+      "cloudfront:GetDistribution",
+      "cloudfront:GetDistributionConfig",
+      "cloudfront:TagResource",
+      "cloudfront:UntagResource",
+      "cloudfront:UpdateCloudFrontOriginAccessIdentity",
+      "cloudfront:UpdateDistribution",
+      "events:DeleteRule",
+      "events:DescribeRule",
+      "events:ListRuleNamesByTarget",
+      "events:PutRule",
+      "events:PutTargets",
+      "events:RemoveTargets",
+      "mobiletargeting:GetApp",
+      "kinesis:AddTagsToStream",
+      "kinesis:CreateStream",
+      "kinesis:DeleteStream",
+      "kinesis:DescribeStream",
+      "kinesis:PutRecords"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "ForAnyValue:StringEquals": {
+       "aws:CalledVia": [
+        "cloudformation.amazonaws.com"
+       ]
+      }
+     }
+    },
+    {
+     "Sid": "CLISDKCalls",
+     "Effect": "Allow",
+     "Action": [
+      "appsync:GetIntrospectionSchema",
+      "appsync:GraphQL",
+      "appsync:UpdateApiKey",
+      "appsync:ListApiKeys",
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
+      "s3:DeleteObject",
+      "s3:GetBucketLocation",
+      "s3:ListAllMyBuckets",
+      "sts:AssumeRole",
+      "iam:PutRolePolicy",
+      "iam:CreatePolicy",
+      "iam:AttachRolePolicy",
+      "mobiletargeting:*",
+      "amplify:CreateApp",
+      "amplify:CreateBackendEnvironment",
+      "amplify:GetApp",
+      "amplify:GetBackendEnvironment",
+      "amplify:ListApps",
+      "amplify:ListBackendEnvironments",
+      "amplify:CreateBranch",
+      "amplify:GetBranch",
+      "amplify:UpdateApp",
+      "amplify:ListBranches",
+      "amplify:ListDomainAssociations",
+      "amplify:DeleteBranch",
+      "amplify:DeleteApp",
+      "amplify:DeleteBackendEnvironment",
+      "amplifybackend:*",
+      "cognito-idp:AdminAddUserToGroup",
+      "cognito-idp:AdminCreateUser",
+      "cognito-idp:CreateGroup",
+      "cognito-idp:DeleteGroup",
+      "cognito-idp:DeleteUser",
+      "cognito-idp:ListUsers",
+      "cognito-idp:AdminGetUser",
+      "cognito-idp:ListUsersInGroup",
+      "cognito-idp:AdminDisableUser",
+      "cognito-idp:AdminRemoveUserFromGroup",
+      "cognito-idp:AdminResetUserPassword",
+      "cognito-idp:AdminListGroupsForUser",
+      "cognito-idp:ListGroups",
+      "cognito-idp:AdminDeleteUser",
+      "cognito-idp:AdminListUserAuthEvents",
+      "cognito-idp:AdminDeleteUser",
+      "cognito-idp:AdminConfirmSignUp",
+      "cognito-idp:AdminEnableUser",
+      "cognito-idp:AdminUpdateUserAttributes",
+      "cognito-idp:DescribeIdentityProvider"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/amplify-developer",
+  "expect": {
+   "status": "stop",
+   "why": "In v1 every IAM write (iam:AttachRolePolicy, iam:PutRolePolicy, iam:PassRole...) sits in CLIManageviaCFNPolicy behind ForAnyValue:StringEquals aws:CalledVia = cloudformation.amazonaws.com, and v1 grants no sts:AssumeRole. v2 adds sts:AssumeRole, iam:PutRolePolicy, iam:AttachRolePolicy and iam:CreatePolicy to the unconditioned CLISDKCalls statement on Resource \"*\". Direct calls go ImplicitDeny -> Allow. Rhino methods 9 (AttachRolePolicy) and 12 (PutRolePolicy) plus AssumeRole let the holder give any assumable role admin rights and become it: privilege escalation."
+  },
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-calledvia",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ]
+ },
+ {
+  "id": "PLH-A02",
+  "title": "ConsoleViewOnlyAccessFromVercel v5 -> v6 (Oct 2026): a view-only policy gains object/table/vector data reads on *",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/1e6a27c1c63a5e2fb04ae5dc69b3d59120f7446f/policies/ConsoleViewOnlyAccessFromVercel",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/ConsoleViewOnlyAccessFromVercel",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v5",
+    "createDate": "2026-04-09T18:27:08+00:00",
+    "commit": "f5e28b7b9361a11ad672f97f9085bc6801e41460",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/f5e28b7b9361a11ad672f97f9085bc6801e41460/policies/ConsoleViewOnlyAccessFromVercel"
+   },
+   "after": {
+    "versionId": "v6",
+    "createDate": "2026-10-08T13:47:07+00:00",
+    "commit": "1e6a27c1c63a5e2fb04ae5dc69b3d59120f7446f",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/1e6a27c1c63a5e2fb04ae5dc69b3d59120f7446f/policies/ConsoleViewOnlyAccessFromVercel"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files (aws iam get-policy-version output), unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "DSQL",
+     "Effect": "Allow",
+     "Action": [
+      "dsql:GetCluster",
+      "dsql:ListClusters",
+      "dsql:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "DynamoDB",
+     "Effect": "Allow",
+     "Action": [
+      "dynamodb:ListTables",
+      "dynamodb:ListTagsOfResource",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeLimits"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "Aurora",
+     "Effect": "Allow",
+     "Action": [
+      "rds:Describe*",
+      "rds:ListTagsForResource",
+      "ec2:DescribeAvailabilityZones"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "OpenSearchServerless",
+     "Effect": "Allow",
+     "Action": [
+      "aoss:BatchGetCollection",
+      "aoss:BatchGetCollectionGroup",
+      "aoss:GetAccessPolicy",
+      "aoss:GetIndex",
+      "aoss:GetSecurityPolicy",
+      "aoss:ListAccessPolicies",
+      "aoss:ListCollectionGroups",
+      "aoss:ListCollections",
+      "aoss:ListSecurityPolicies",
+      "aoss:ListSecurityConfigs",
+      "aoss:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "OpenSearchApplications",
+     "Effect": "Allow",
+     "Action": [
+      "es:GetApplication",
+      "es:ListApplications"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "Observability",
+     "Effect": "Allow",
+     "Action": [
+      "cloudwatch:DescribeAlarms",
+      "cloudwatch:GetMetricData",
+      "cloudwatch:GetMetricStatistics",
+      "cloudwatch:ListMetrics",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "tag:GetTagKeys",
+      "tag:GetTagValues"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "ApplicationAutoscalingDescribeActions",
+     "Effect": "Allow",
+     "Action": [
+      "application-autoscaling:DescribeScalableTargets",
+      "application-autoscaling:DescribeScalingActivities",
+      "application-autoscaling:DescribeScalingPolicies"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ViewFreeTierState",
+     "Effect": "Allow",
+     "Action": [
+      "freetier:GetAccountPlanState"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "DSQL",
+     "Effect": "Allow",
+     "Action": [
+      "dsql:GetCluster",
+      "dsql:ListClusters",
+      "dsql:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "DynamoDB",
+     "Effect": "Allow",
+     "Action": [
+      "dynamodb:ListTables",
+      "dynamodb:ListTagsOfResource",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeLimits"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "Aurora",
+     "Effect": "Allow",
+     "Action": [
+      "rds:Describe*",
+      "rds:ListTagsForResource",
+      "ec2:DescribeAvailabilityZones"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "OpenSearchServerless",
+     "Effect": "Allow",
+     "Action": [
+      "aoss:BatchGetCollection",
+      "aoss:BatchGetCollectionGroup",
+      "aoss:GetAccessPolicy",
+      "aoss:GetIndex",
+      "aoss:GetSecurityPolicy",
+      "aoss:ListAccessPolicies",
+      "aoss:ListCollectionGroups",
+      "aoss:ListCollections",
+      "aoss:ListSecurityPolicies",
+      "aoss:ListSecurityConfigs",
+      "aoss:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "OpenSearchApplications",
+     "Effect": "Allow",
+     "Action": [
+      "es:GetApplication",
+      "es:ListApplications"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "S3GeneralPurpose",
+     "Effect": "Allow",
+     "Action": [
+      "s3:ListAllMyBuckets",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListBucketMultipartUploads",
+      "s3:ListMultipartUploadParts",
+      "s3:GetBucketAcl",
+      "s3:GetBucketCORS",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetIntelligentTieringConfiguration",
+      "s3:GetInventoryConfiguration",
+      "s3:GetAnalyticsConfiguration",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetBucketLocation",
+      "s3:GetBucketLogging",
+      "s3:GetBucketMetadataTableConfiguration",
+      "s3:GetBucketNotification",
+      "s3:GetBucketOwnershipControls",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketPolicyStatus",
+      "s3:GetReplicationConfiguration",
+      "s3:GetBucketRequestPayment",
+      "s3:GetBucketTagging",
+      "s3:GetBucketVersioning",
+      "s3:GetBucketWebsite",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:GetObjectAttributes",
+      "s3:GetObjectLegalHold",
+      "s3:GetBucketObjectLockConfiguration",
+      "s3:GetObjectRetention",
+      "s3:GetObjectTagging",
+      "s3:GetBucketPublicAccessBlock",
+      "s3:GetBucketAbac",
+      "s3:GetObjectAnnotation",
+      "s3:ListObjectAnnotations",
+      "s3:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "S3Tables",
+     "Effect": "Allow",
+     "Action": [
+      "s3tables:GetNamespace",
+      "s3tables:GetTable",
+      "s3tables:GetTableBucket",
+      "s3tables:GetTableBucketEncryption",
+      "s3tables:GetTableBucketMaintenanceConfiguration",
+      "s3tables:GetTableBucketPolicy",
+      "s3tables:GetTableBucketReplication",
+      "s3tables:GetTableBucketStorageClass",
+      "s3tables:GetTableData",
+      "s3tables:GetTableEncryption",
+      "s3tables:GetTableMaintenanceConfiguration",
+      "s3tables:GetTableMaintenanceJobStatus",
+      "s3tables:GetTableMetadataLocation",
+      "s3tables:GetTablePolicy",
+      "s3tables:GetTableRecordExpirationConfiguration",
+      "s3tables:GetTableRecordExpirationJobStatus",
+      "s3tables:GetTableReplication",
+      "s3tables:GetTableReplicationStatus",
+      "s3tables:GetTableStorageClass",
+      "s3tables:ListNamespaces",
+      "s3tables:ListTables",
+      "s3tables:ListTableBuckets",
+      "s3tables:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "S3Vectors",
+     "Effect": "Allow",
+     "Action": [
+      "s3vectors:GetIndex",
+      "s3vectors:GetVectorBucket",
+      "s3vectors:GetVectorBucketPolicy",
+      "s3vectors:GetVectors",
+      "s3vectors:QueryVectors",
+      "s3vectors:ListIndexes",
+      "s3vectors:ListVectorBuckets",
+      "s3vectors:ListVectors",
+      "s3vectors:ListTagsForResource"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "Observability",
+     "Effect": "Allow",
+     "Action": [
+      "cloudwatch:DescribeAlarms",
+      "cloudwatch:GetMetricData",
+      "cloudwatch:GetMetricStatistics",
+      "cloudwatch:ListMetrics",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "tag:GetTagKeys",
+      "tag:GetTagValues"
+     ],
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Sid": "ApplicationAutoscalingDescribeActions",
+     "Effect": "Allow",
+     "Action": [
+      "application-autoscaling:DescribeScalableTargets",
+      "application-autoscaling:DescribeScalingActivities",
+      "application-autoscaling:DescribeScalingPolicies"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ViewFreeTierState",
+     "Effect": "Allow",
+     "Action": [
+      "freetier:GetAccountPlanState"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/vercel-console-viewer",
+  "expect": {
+   "status": "stop",
+   "why": "v5 grants only list/describe/metadata actions (DSQL, DynamoDB describe, RDS Describe*, OpenSearch, CloudWatch). v6 adds three unconditioned statements on Resource \"*\": S3GeneralPurpose (includes s3:GetObject, s3:ListBucket, s3:ListAllMyBuckets), S3Tables (includes s3tables:GetTableData) and S3Vectors (includes s3vectors:GetVectors, s3vectors:QueryVectors). None of these was allowed in v5, so reading any object, table row or vector the account can reach goes ImplicitDeny -> Allow. AWS's own job-function doc separates view-only (no resource content) from ReadOnlyAccess (\"will also have access to read data in storage services\"). A broadening of data read to every bucket is the high-risk shape."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_view-only-user",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ]
+ },
+ {
+  "id": "PLH-A03",
+  "title": "AmazonMacieServiceRolePolicy v3 -> v4 (Jul 2020): wildcards replaced by explicit actions (s3:GetObject appears in the text)",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/e29851e025b9be37779f85c75f67ce690f6e4f58/policies/AmazonMacieServiceRolePolicy",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AmazonMacieServiceRolePolicy",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v3",
+    "createDate": "2020-04-30T17:41:57Z",
+    "commit": "9384f06c368700eda47b697272ddcef9bdf4324c",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/9384f06c368700eda47b697272ddcef9bdf4324c/policies/AmazonMacieServiceRolePolicy"
+   },
+   "after": {
+    "versionId": "v4",
+    "createDate": "2020-07-17T21:31:07Z",
+    "commit": "e29851e025b9be37779f85c75f67ce690f6e4f58",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/e29851e025b9be37779f85c75f67ce690f6e4f58/policies/AmazonMacieServiceRolePolicy"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files (aws iam get-policy-version output), unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Resource": "*",
+     "Action": [
+      "cloudtrail:DescribeTrails",
+      "cloudtrail:GetEventSelectors",
+      "cloudtrail:GetTrailStatus",
+      "cloudtrail:ListTags",
+      "cloudtrail:LookupEvents",
+      "iam:ListAccountAliases",
+      "s3:Get*",
+      "s3:List*",
+      "organizations:DescribeAccount",
+      "organizations:ListAccounts"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Resource": "arn:aws:cloudtrail:*:*:trail/AWSMacieTrail-DO-NOT-EDIT",
+     "Action": [
+      "cloudtrail:CreateTrail",
+      "cloudtrail:StartLogging",
+      "cloudtrail:StopLogging",
+      "cloudtrail:UpdateTrail",
+      "cloudtrail:DeleteTrail",
+      "cloudtrail:PutEventSelectors"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Resource": [
+      "arn:aws:s3:::awsmacie-*",
+      "arn:aws:s3:::awsmacietrail-*",
+      "arn:aws:s3:::*-awsmacietrail-*"
+     ],
+     "Action": [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
+      "s3:DeleteObject",
+      "s3:DeleteObjectTagging",
+      "s3:DeleteObjectVersion",
+      "s3:DeleteObjectVersionTagging",
+      "s3:PutBucketPolicy"
+     ]
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Resource": "*",
+     "Action": [
+      "cloudtrail:DescribeTrails",
+      "cloudtrail:GetEventSelectors",
+      "cloudtrail:GetTrailStatus",
+      "cloudtrail:ListTags",
+      "cloudtrail:LookupEvents",
+      "iam:ListAccountAliases",
+      "organizations:DescribeAccount",
+      "organizations:ListAccounts",
+      "s3:GetAccountPublicAccessBlock",
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketAcl",
+      "s3:GetBucketLocation",
+      "s3:GetBucketLogging",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketPolicyStatus",
+      "s3:GetBucketPublicAccessBlock",
+      "s3:GetBucketTagging",
+      "s3:GetBucketVersioning",
+      "s3:GetBucketWebsite",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:GetObjectAcl",
+      "s3:GetObjectTagging"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Resource": "arn:aws:cloudtrail:*:*:trail/AWSMacieTrail-DO-NOT-EDIT",
+     "Action": [
+      "cloudtrail:CreateTrail",
+      "cloudtrail:StartLogging",
+      "cloudtrail:StopLogging",
+      "cloudtrail:UpdateTrail",
+      "cloudtrail:DeleteTrail",
+      "cloudtrail:PutEventSelectors"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Resource": [
+      "arn:aws:s3:::awsmacie-*",
+      "arn:aws:s3:::awsmacietrail-*",
+      "arn:aws:s3:::*-awsmacietrail-*"
+     ],
+     "Action": [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
+      "s3:DeleteObject",
+      "s3:DeleteObjectTagging",
+      "s3:DeleteObjectVersion",
+      "s3:DeleteObjectVersionTagging",
+      "s3:PutBucketPolicy"
+     ]
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "v3 statement 1 allows s3:Get*, s3:List*, cloudtrail and organizations read actions on Resource \"*\" with no condition. v4 rewrites it as an explicit list (s3:GetObject, s3:GetBucketPolicy, s3:ListBucket, ...). Every action/resource pair allowed in v4 is already matched by a v3 wildcard on the same resource with the same (absent) condition, and the other two statements are unchanged. The text gains s3:GetObject, but no request goes ImplicitDeny -> Allow; some s3:Get*/List* actions are dropped, so v4 is narrower. Action wildcards match every action with that prefix (IAM Action element doc)."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_action.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "False-positive test: a text diff shows s3:GetObject 'added'; effective access does not grow. Checked by matching every v4 grant against v3 patterns."
+ },
+ {
+  "id": "PLH-A04",
+  "title": "AWSCompromisedKeyQuarantineV2 v4 -> v5 (Oct 2024): 29 actions added to the Deny statement only",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/9621e9a579c0d6bd77a8266b4bc92a623d5b99a2/policies/AWSCompromisedKeyQuarantineV2",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSCompromisedKeyQuarantineV2",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v4",
+    "createDate": "2023-03-16T00:20:25Z",
+    "commit": "aafbae9e6087b732577df3a0556f8677e5d4c79b",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/aafbae9e6087b732577df3a0556f8677e5d4c79b/policies/AWSCompromisedKeyQuarantineV2"
+   },
+   "after": {
+    "versionId": "v5",
+    "createDate": "2024-10-02T16:41:39Z",
+    "commit": "9621e9a579c0d6bd77a8266b4bc92a623d5b99a2",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/9621e9a579c0d6bd77a8266b4bc92a623d5b99a2/policies/AWSCompromisedKeyQuarantineV2"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files (aws iam get-policy-version output), unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "cloudtrail:LookupEvents",
+      "ec2:RequestSpotInstances",
+      "ec2:RunInstances",
+      "ec2:StartInstances",
+      "iam:AddUserToGroup",
+      "iam:AttachGroupPolicy",
+      "iam:AttachRolePolicy",
+      "iam:AttachUserPolicy",
+      "iam:ChangePassword",
+      "iam:CreateAccessKey",
+      "iam:CreateInstanceProfile",
+      "iam:CreateLoginProfile",
+      "iam:CreatePolicyVersion",
+      "iam:CreateRole",
+      "iam:CreateUser",
+      "iam:DetachUserPolicy",
+      "iam:PassRole",
+      "iam:PutGroupPolicy",
+      "iam:PutRolePolicy",
+      "iam:PutUserPermissionsBoundary",
+      "iam:PutUserPolicy",
+      "iam:SetDefaultPolicyVersion",
+      "iam:UpdateAccessKey",
+      "iam:UpdateAccountPasswordPolicy",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:UpdateLoginProfile",
+      "iam:UpdateUser",
+      "lambda:AddLayerVersionPermission",
+      "lambda:AddPermission",
+      "lambda:CreateFunction",
+      "lambda:GetPolicy",
+      "lambda:ListTags",
+      "lambda:PutProvisionedConcurrencyConfig",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:UpdateFunctionCode",
+      "lightsail:Create*",
+      "lightsail:Delete*",
+      "lightsail:DownloadDefaultKeyPair",
+      "lightsail:GetInstanceAccessDetails",
+      "lightsail:Start*",
+      "lightsail:Update*",
+      "organizations:CreateAccount",
+      "organizations:CreateOrganization",
+      "organizations:InviteAccountToOrganization",
+      "s3:DeleteBucket",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutBucketAcl",
+      "s3:PutBucketOwnershipControls",
+      "s3:DeleteBucketPolicy",
+      "s3:ObjectOwnerOverrideToBucketOwner",
+      "s3:PutAccountPublicAccessBlock",
+      "s3:PutBucketPolicy",
+      "s3:ListAllMyBuckets",
+      "ec2:PurchaseReservedInstancesOffering",
+      "ec2:AcceptReservedInstancesExchangeQuote",
+      "ec2:CreateReservedInstancesListing",
+      "savingsplans:CreateSavingsPlan"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Deny"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "cloudtrail:LookupEvents",
+      "ec2:RequestSpotInstances",
+      "ec2:RunInstances",
+      "ec2:StartInstances",
+      "iam:AddUserToGroup",
+      "iam:AttachGroupPolicy",
+      "iam:AttachRolePolicy",
+      "iam:AttachUserPolicy",
+      "iam:ChangePassword",
+      "iam:CreateAccessKey",
+      "iam:CreateInstanceProfile",
+      "iam:CreateLoginProfile",
+      "iam:CreatePolicyVersion",
+      "iam:CreateRole",
+      "iam:CreateUser",
+      "iam:DetachUserPolicy",
+      "iam:PassRole",
+      "iam:PutGroupPolicy",
+      "iam:PutRolePolicy",
+      "iam:PutUserPermissionsBoundary",
+      "iam:PutUserPolicy",
+      "iam:SetDefaultPolicyVersion",
+      "iam:UpdateAccessKey",
+      "iam:UpdateAccountPasswordPolicy",
+      "iam:UpdateAssumeRolePolicy",
+      "iam:UpdateLoginProfile",
+      "iam:UpdateUser",
+      "lambda:AddLayerVersionPermission",
+      "lambda:AddPermission",
+      "lambda:CreateFunction",
+      "lambda:GetPolicy",
+      "lambda:ListTags",
+      "lambda:PutProvisionedConcurrencyConfig",
+      "lambda:TagResource",
+      "lambda:UntagResource",
+      "lambda:UpdateFunctionCode",
+      "lightsail:Create*",
+      "lightsail:Delete*",
+      "lightsail:DownloadDefaultKeyPair",
+      "lightsail:GetInstanceAccessDetails",
+      "lightsail:Start*",
+      "lightsail:Update*",
+      "organizations:CreateAccount",
+      "organizations:CreateOrganization",
+      "organizations:InviteAccountToOrganization",
+      "s3:DeleteBucket",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutBucketAcl",
+      "s3:PutBucketOwnershipControls",
+      "s3:DeleteBucketPolicy",
+      "s3:ObjectOwnerOverrideToBucketOwner",
+      "s3:PutAccountPublicAccessBlock",
+      "s3:PutBucketPolicy",
+      "s3:ListAllMyBuckets",
+      "ec2:PurchaseReservedInstancesOffering",
+      "ec2:AcceptReservedInstancesExchangeQuote",
+      "ec2:CreateReservedInstancesListing",
+      "savingsplans:CreateSavingsPlan",
+      "ecs:CreateService",
+      "ecs:CreateCluster",
+      "ecs:RegisterTaskDefinition",
+      "ecr:GetAuthorizationToken",
+      "bedrock:CreateModelInvocationJob",
+      "bedrock:InvokeModelWithResponseStream",
+      "bedrock:CreateFoundationModelAgreement",
+      "bedrock:PutFoundationModelEntitlement",
+      "bedrock:InvokeModel",
+      "s3:CreateBucket",
+      "s3:PutBucketCors",
+      "s3:GetObject",
+      "s3:ListBucket",
+      "sagemaker:CreateEndpointConfig",
+      "sagemaker:CreateProcessingJob",
+      "ses:GetSendQuota",
+      "ses:ListIdentities",
+      "sts:GetSessionToken",
+      "sts:GetFederationToken",
+      "amplify:CreateDeployment",
+      "amplify:CreateBackendEnvironment",
+      "codebuild:CreateProject",
+      "glue:CreateJob",
+      "iam:DeleteRole",
+      "iam:DeleteAccessKey",
+      "iam:ListUsers",
+      "lambda:GetEventSourceMapping",
+      "sns:GetSMSAttributes",
+      "mediapackagev2:CreateChannel"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Deny"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "The policy is a single Effect: Deny statement on Resource \"*\". v5 only appends actions to its Action list (ecs:CreateService, bedrock:InvokeModel, s3:GetObject, iam:DeleteAccessKey, ...). Adding actions to a Deny can only turn Allow into ExplicitDeny; it never grants anything. Nothing is newly allowed."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html",
+   "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSCompromisedKeyQuarantineV2.html"
+  ],
+  "note": "False-positive test: Allow-centric tools may list the new action names (s3:GetObject, iam:*) as if granted."
+ },
+ {
+  "id": "PLH-A05",
+  "title": "AmazonS3TablesFullAccess v2 -> v1 (Nov 2025): default version rolled back, removing a conditioned iam:PassRole",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/48415f2c17bf9715a2a380b82ca7aa52d14699d5/policies/AmazonS3TablesFullAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AmazonS3TablesFullAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2025-11-22T01:04:08Z",
+    "commit": "bb3a7ba55d5968106898689e6d3ef4e482232b08",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/bb3a7ba55d5968106898689e6d3ef4e482232b08/policies/AmazonS3TablesFullAccess"
+   },
+   "after": {
+    "versionId": "v1",
+    "createDate": "2024-12-03T15:21:07Z",
+    "commit": "48415f2c17bf9715a2a380b82ca7aa52d14699d5",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/48415f2c17bf9715a2a380b82ca7aa52d14699d5/policies/AmazonS3TablesFullAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files (aws iam get-policy-version output), unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "s3tables:*"
+     ],
+     "Resource": "*",
+     "Effect": "Allow"
+    },
+    {
+     "Action": [
+      "iam:PassRole"
+     ],
+     "Resource": "*",
+     "Effect": "Allow",
+     "Condition": {
+      "StringEquals": {
+       "iam:PassedToService": [
+        "replication.s3tables.amazonaws.com"
+       ]
+      }
+     },
+     "Sid": "PassRoleToS3TablesReplication"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "s3tables:*"
+     ],
+     "Resource": "*",
+     "Effect": "Allow"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "v1 is v2 minus the PassRoleToS3TablesReplication statement (iam:PassRole on * with iam:PassedToService = replication.s3tables.amazonaws.com). The remaining statements are identical. Removing an Allow statement cannot allow anything new; the change is strictly narrower."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "The default version moved back from v2 to v1 the day after v2 was published; MAMIP records the rollback as a new default version."
+ },
+ {
+  "id": "PLH-A06",
+  "title": "Rhino method 2: iam:SetDefaultPolicyVersion added on the account's customer managed policies",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 2,
+  "note": "Modelled: Rhino publishes the permission combinations, not real policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_managed-versioning.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ManagePolicyVersions",
+     "Effect": "Allow",
+     "Action": "iam:SetDefaultPolicyVersion",
+     "Resource": "arn:aws:iam::111122223333:policy/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-alice",
+  "expect": {
+   "status": "stop",
+   "why": "iam:SetDefaultPolicyVersion on policy/* goes ImplicitDeny -> Allow. A customer managed policy keeps up to five versions; the holder can make any older, broader version the default without writing new policy text. Rhino method 2: impact from none to full administrator, depending on what old versions exist."
+  }
+ },
+ {
+  "id": "PLH-A07",
+  "title": "Rhino method 4: self-service access-key policy widened from user/${aws:username} to user/*",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 4,
+  "note": "Before is the AWS doc example CreateOwnAccessKeys statement verbatim; after is a modelled widening of its Resource.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-keys_required-permissions.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "CreateOwnAccessKeys",
+     "Effect": "Allow",
+     "Action": [
+      "iam:CreateAccessKey",
+      "iam:GetUser",
+      "iam:ListAccessKeys",
+      "iam:TagUser"
+     ],
+     "Resource": "arn:aws:iam::*:user/${aws:username}"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "CreateOwnAccessKeys",
+     "Effect": "Allow",
+     "Action": [
+      "iam:CreateAccessKey",
+      "iam:GetUser",
+      "iam:ListAccessKeys",
+      "iam:TagUser"
+     ],
+     "Resource": "arn:aws:iam::*:user/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-alice",
+  "expect": {
+   "status": "stop",
+   "why": "Before is AWS's documented CreateOwnAccessKeys statement: ${aws:username} limits iam:CreateAccessKey to the caller's own user. After, the resource is user/*, so creating an access key for any other IAM user (for example an admin user) goes ImplicitDeny -> Allow. The new key carries that user's permissions. Rhino method 4."
+  }
+ },
+ {
+  "id": "PLH-A08",
+  "title": "Rhino method 13: iam:AddUserToGroup added on group/*",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 13,
+  "note": "Modelled: Rhino publishes the permission combinations, not real policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awsidentityandaccessmanagementiam.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ManageTeamMembership",
+     "Effect": "Allow",
+     "Action": "iam:AddUserToGroup",
+     "Resource": "arn:aws:iam::111122223333:group/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-alice",
+  "expect": {
+   "status": "stop",
+   "why": "iam:AddUserToGroup is authorised against the group ARN. On group/* the holder can add their own user to any group, including an Admins group, and inherit its policies. ImplicitDeny -> Allow. Rhino method 13: impact up to full administrator."
+  }
+ },
+ {
+  "id": "PLH-A09",
+  "title": "Rhino method 18: glue:CreateDevEndpoint plus iam:PassRole on * added",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 18,
+  "note": "Modelled: Rhino publishes the permission combinations, not real policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "GlueRead",
+     "Effect": "Allow",
+     "Action": [
+      "glue:Get*",
+      "glue:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "GlueRead",
+     "Effect": "Allow",
+     "Action": [
+      "glue:Get*",
+      "glue:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "GlueDevEndpoints",
+     "Effect": "Allow",
+     "Action": [
+      "glue:CreateDevEndpoint",
+      "glue:GetDevEndpoint",
+      "glue:GetDevEndpoints"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "PassGlueRole",
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-alice",
+  "expect": {
+   "status": "stop",
+   "why": "Both glue:CreateDevEndpoint and iam:PassRole (no resource scope, no iam:PassedToService condition) go ImplicitDeny -> Allow. The holder can create a Glue development endpoint with any existing role that trusts Glue, SSH in and act with that role's permissions. Rhino method 18."
+  }
+ },
+ {
+  "id": "PLH-A10",
+  "title": "Rhino method 17: lambda:UpdateFunctionCode added on every function in the account",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 17,
+  "note": "Modelled: Rhino publishes the permission combinations, not real policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "LambdaRead",
+     "Effect": "Allow",
+     "Action": [
+      "lambda:GetFunction",
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "LambdaRead",
+     "Effect": "Allow",
+     "Action": [
+      "lambda:GetFunction",
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "DeployCode",
+     "Effect": "Allow",
+     "Action": "lambda:UpdateFunctionCode",
+     "Resource": "arn:aws:lambda:eu-west-1:111122223333:function:*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-alice",
+  "expect": {
+   "status": "stop",
+   "why": "lambda:UpdateFunctionCode on function:* goes ImplicitDeny -> Allow. The holder can replace the code of any existing function; the code then runs with that function's execution role the next time it is invoked or triggered. No iam:PassRole is needed. Rhino method 17: impact up to the most privileged function role."
+  }
+ },
+ {
+  "id": "PLH-A11",
+  "title": "Role trust policy: Example Corp + sts:ExternalId widened to Principal AWS \"*\" with no condition",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic-cross-account.html"
+  ],
+  "note": "Before is the AWS confused-deputy doc trust policy, with the placeholder account set to the doc placeholder 444455556666. After is a modelled widening.",
+  "policyType": "role trust policy",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": {
+    "Effect": "Allow",
+    "Principal": {
+     "AWS": "444455556666"
+    },
+    "Action": "sts:AssumeRole",
+    "Condition": {
+     "StringEquals": {
+      "sts:ExternalId": "12345"
+     }
+    }
+   }
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": {
+    "Effect": "Allow",
+    "Principal": {
+     "AWS": "*"
+    },
+    "Action": "sts:AssumeRole"
+   }
+  },
+  "principal": "arn:aws:iam::555555555555:role/any-other-account-role",
+  "expect": {
+   "status": "stop",
+   "why": "Before, only principals in account 444455556666 that pass sts:ExternalId = 12345 can assume the role. After, Principal AWS \"*\" with no Condition lets a principal in any AWS account assume it (it then needs only its own sts:AssumeRole permission). AssumeRole from 555555555555, or from 444455556666 without the external ID, goes ImplicitDeny -> Allow. The Principal doc says not to use * with Allow unless public access is intended, \"especially\" in role trust policies; the confused-deputy doc explains why the external ID matters."
+  }
+ },
+ {
+  "id": "PLH-A12",
+  "title": "Bucket policy: read and list granted to another AWS account (short account-ID form)",
+  "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html",
+  "kind": "modelled",
+  "policyType": "S3 bucket policy",
+  "sources": [
+   "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html#example-bucket-policies-tagging-1",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html#principal-accounts",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-6",
+   "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-walkthroughs-managing-access-example2.html"
+  ],
+  "note": "Before is the S3 doc example 'Allow a user to read only objects that have a specific tag key and value' (Sid added). After adds a modelled cross-account statement. Bucket owner is 111122223333.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ReadProductionTaggedObjects",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/JohnDoe"
+     },
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetObject",
+      "s3:GetObjectVersion"
+     ],
+     "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+     "Condition": {
+      "StringEquals": {
+       "s3:ExistingObjectTag/environment": "production"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ReadProductionTaggedObjects",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/JohnDoe"
+     },
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetObject",
+      "s3:GetObjectVersion"
+     ],
+     "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+     "Condition": {
+      "StringEquals": {
+       "s3:ExistingObjectTag/environment": "production"
+      }
+     }
+    },
+    {
+     "Sid": "ReadForPartnerAccount",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "444455556666"
+     },
+     "Action": [
+      "s3:GetObject",
+      "s3:ListBucket"
+     ],
+     "Resource": [
+      "arn:aws:s3:::amzn-s3-demo-bucket",
+      "arn:aws:s3:::amzn-s3-demo-bucket/*"
+     ]
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::444455556666:root",
+  "expect": {
+   "status": "stop",
+   "why": "The new statement names account 444455556666 (the short account-ID form behaves the same as arn:aws:iam::444455556666:root and delegates to the whole account). Any principal in that account whose own identity policy allows it can now list the bucket and read every object, with no tag condition. Cross-account s3:GetObject and s3:ListBucket go ImplicitDeny -> Allow. The existing same-account statement is unchanged. External data access is the exfiltration risk Security Hub S3.6 describes."
+  }
+ },
+ {
+  "id": "PLH-A13",
+  "title": "Bucket policy: aws:SecureTransport deny removed",
+  "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html#example-bucket-policies-HTTP-HTTPS",
+  "kind": "modelled",
+  "policyType": "S3 bucket policy",
+  "sources": [
+   "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html#example-bucket-policies-HTTP-HTTPS",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-5",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-securetransport",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "Before combines two S3 doc examples (tag-based read and 'Restrict access to only HTTPS requests') in one bucket policy; after drops the TLS statement.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ReadProductionTaggedObjects",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/JohnDoe"
+     },
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetObject",
+      "s3:GetObjectVersion"
+     ],
+     "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+     "Condition": {
+      "StringEquals": {
+       "s3:ExistingObjectTag/environment": "production"
+      }
+     }
+    },
+    {
+     "Sid": "RestrictToTLSRequestsOnly",
+     "Action": "s3:*",
+     "Effect": "Deny",
+     "Resource": [
+      "arn:aws:s3:::amzn-s3-demo-bucket",
+      "arn:aws:s3:::amzn-s3-demo-bucket/*"
+     ],
+     "Condition": {
+      "Bool": {
+       "aws:SecureTransport": "false"
+      }
+     },
+     "Principal": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ReadProductionTaggedObjects",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/JohnDoe"
+     },
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetObject",
+      "s3:GetObjectVersion"
+     ],
+     "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+     "Condition": {
+      "StringEquals": {
+       "s3:ExistingObjectTag/environment": "production"
+      }
+     }
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/JohnDoe",
+  "expect": {
+   "status": "stop",
+   "why": "Before, any s3:* request with aws:SecureTransport = false hits the explicit Deny, which overrides the Allow. After, JohnDoe's GetObject over plain HTTP goes ExplicitDeny -> Allow. The set of principals is unchanged; what broadens is transport. Security Hub S3.5 (Medium) fails a bucket without this deny."
+  },
+  "doubt": "Same principals, same objects; only the transport guard is removed. A reviewer who reserves 'stop' for new principals or new actions could call this 'review'. Labelled 'stop' because a request decision broadens (ExplicitDeny -> Allow), consistent with other guard removals."
+ },
+ {
+  "id": "PLH-A14",
+  "title": "EC2 tag-scoped start/stop policy: ec2:TerminateInstances added in a new statement with no tag condition",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_ec2-start-stop-tags.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_ec2-start-stop-tags.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "Before is the IAM doc example 'EC2: Start or stop instances based on tags' with its placeholders filled as printed (us-east-1, 123456789012).",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "StartStopIfTags",
+     "Effect": "Allow",
+     "Action": [
+      "ec2:StartInstances",
+      "ec2:StopInstances"
+     ],
+     "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/Project": "DataAnalytics",
+       "aws:PrincipalTag/Department": "Data"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "StartStopIfTags",
+     "Effect": "Allow",
+     "Action": [
+      "ec2:StartInstances",
+      "ec2:StopInstances"
+     ],
+     "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/Project": "DataAnalytics",
+       "aws:PrincipalTag/Department": "Data"
+      }
+     }
+    },
+    {
+     "Sid": "TerminateInstances",
+     "Effect": "Allow",
+     "Action": "ec2:TerminateInstances",
+     "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::123456789012:user/data-analyst",
+  "expect": {
+   "status": "stop",
+   "why": "Before, the principal can only start or stop instances tagged Project=DataAnalytics, and only if they are tagged Department=Data. After, ec2:TerminateInstances on every instance in us-east-1 goes ImplicitDeny -> Allow with neither tag condition. Termination is destructive and irreversible for instance-store data, and it reaches instances outside the tag scope."
+  }
+ },
+ {
+  "id": "PLH-A15",
+  "title": "EC2 tag-scoped start/stop policy: ec2:TerminateInstances added inside the tag-conditioned statement",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_ec2-start-stop-tags.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_ec2-start-stop-tags.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "Pair with PLH-A14: same new action, but kept under both tag conditions.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "StartStopIfTags",
+     "Effect": "Allow",
+     "Action": [
+      "ec2:StartInstances",
+      "ec2:StopInstances"
+     ],
+     "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/Project": "DataAnalytics",
+       "aws:PrincipalTag/Department": "Data"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "StartStopIfTags",
+     "Effect": "Allow",
+     "Action": [
+      "ec2:StartInstances",
+      "ec2:StopInstances",
+      "ec2:TerminateInstances"
+     ],
+     "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/Project": "DataAnalytics",
+       "aws:PrincipalTag/Department": "Data"
+      }
+     }
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::123456789012:user/data-analyst",
+  "expect": {
+   "status": "review",
+   "why": "ec2:TerminateInstances is newly allowed, but only when aws:ResourceTag/Project = DataAnalytics and aws:PrincipalTag/Department = Data, the same scope as the existing start/stop grant. Whether any given terminate request is allowed depends on tag values that are not in the policy, so the answer needs context: a new destructive action within an existing, condition-bounded scope. Not a 'pass', because something is newly allowed. Not clearly 'stop', because the grant stays inside the documented tag boundary."
+  },
+  "doubt": "Some reviewers would 'stop' on any new destructive action. Labelled 'review' because the decision depends on condition keys (resource and principal tags)."
+ }
+]
