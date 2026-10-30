@@ -1,0 +1,1337 @@
+[
+  {
+    "id": "PLH4-A01",
+    "title": "AWSCompromisedKeyQuarantineV3 v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/9d479f79b4fd32488764788bb84221e1f8791ff6/policies/AWSCompromisedKeyQuarantineV3",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": [
+            "cloudtrail:LookupEvents",
+            "ec2:RequestSpotInstances",
+            "ec2:RunInstances",
+            "ec2:StartInstances",
+            "iam:AddUserToGroup",
+            "iam:AttachGroupPolicy",
+            "iam:AttachRolePolicy",
+            "iam:AttachUserPolicy",
+            "iam:ChangePassword",
+            "iam:CreateAccessKey",
+            "iam:CreateInstanceProfile",
+            "iam:CreateLoginProfile",
+            "iam:CreatePolicyVersion",
+            "iam:CreateRole",
+            "iam:CreateUser",
+            "iam:DetachUserPolicy",
+            "iam:PassRole",
+            "iam:PutGroupPolicy",
+            "iam:PutRolePolicy",
+            "iam:PutUserPermissionsBoundary",
+            "iam:PutUserPolicy",
+            "iam:SetDefaultPolicyVersion",
+            "iam:UpdateAccessKey",
+            "iam:UpdateAccountPasswordPolicy",
+            "iam:UpdateAssumeRolePolicy",
+            "iam:UpdateLoginProfile",
+            "iam:UpdateUser",
+            "lambda:AddLayerVersionPermission",
+            "lambda:AddPermission",
+            "lambda:CreateFunction",
+            "lambda:GetPolicy",
+            "lambda:ListTags",
+            "lambda:PutProvisionedConcurrencyConfig",
+            "lambda:TagResource",
+            "lambda:UntagResource",
+            "lambda:UpdateFunctionCode",
+            "lightsail:Create*",
+            "lightsail:Delete*",
+            "lightsail:DownloadDefaultKeyPair",
+            "lightsail:GetInstanceAccessDetails",
+            "lightsail:Start*",
+            "lightsail:Update*",
+            "organizations:CreateAccount",
+            "organizations:CreateOrganization",
+            "organizations:InviteAccountToOrganization",
+            "s3:DeleteBucket",
+            "s3:DeleteObject",
+            "s3:DeleteObjectVersion",
+            "s3:PutLifecycleConfiguration",
+            "s3:PutBucketAcl",
+            "s3:PutBucketOwnershipControls",
+            "s3:DeleteBucketPolicy",
+            "s3:ObjectOwnerOverrideToBucketOwner",
+            "s3:PutAccountPublicAccessBlock",
+            "s3:PutBucketPolicy",
+            "s3:ListAllMyBuckets",
+            "ec2:PurchaseReservedInstancesOffering",
+            "ec2:AcceptReservedInstancesExchangeQuote",
+            "ec2:CreateReservedInstancesListing",
+            "savingsplans:CreateSavingsPlan",
+            "ecs:CreateService",
+            "ecs:CreateCluster",
+            "ecs:RegisterTaskDefinition",
+            "ecr:GetAuthorizationToken",
+            "bedrock:CreateModelInvocationJob",
+            "bedrock:InvokeModelWithResponseStream",
+            "bedrock:CreateFoundationModelAgreement",
+            "bedrock:PutFoundationModelEntitlement",
+            "bedrock:InvokeModel",
+            "s3:CreateBucket",
+            "s3:PutBucketCors",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "sagemaker:CreateEndpointConfig",
+            "sagemaker:CreateProcessingJob",
+            "ses:GetSendQuota",
+            "ses:ListIdentities",
+            "sts:GetSessionToken",
+            "sts:GetFederationToken",
+            "amplify:CreateDeployment",
+            "amplify:CreateBackendEnvironment",
+            "codebuild:CreateProject",
+            "glue:CreateJob",
+            "iam:DeleteRole",
+            "iam:DeleteAccessKey",
+            "iam:ListUsers",
+            "lambda:GetEventSourceMapping",
+            "sns:GetSMSAttributes",
+            "mediapackagev2:CreateChannel"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Deny",
+          "Action": [
+            "cloudtrail:LookupEvents",
+            "ec2:RequestSpotInstances",
+            "ec2:RunInstances",
+            "ec2:StartInstances",
+            "ec2:PurchaseReservedInstancesOffering",
+            "ec2:AcceptReservedInstancesExchangeQuote",
+            "ec2:CreateReservedInstancesListing",
+            "iam:AddUserToGroup",
+            "iam:AttachGroupPolicy",
+            "iam:AttachRolePolicy",
+            "iam:AttachUserPolicy",
+            "iam:ChangePassword",
+            "iam:CreateAccessKey",
+            "iam:CreateInstanceProfile",
+            "iam:CreateLoginProfile",
+            "iam:CreatePolicyVersion",
+            "iam:CreateRole",
+            "iam:CreateUser",
+            "iam:DetachUserPolicy",
+            "iam:PassRole",
+            "iam:PutGroupPolicy",
+            "iam:PutRolePolicy",
+            "iam:PutUserPermissionsBoundary",
+            "iam:PutUserPolicy",
+            "iam:SetDefaultPolicyVersion",
+            "iam:UpdateAccessKey",
+            "iam:UpdateAccountPasswordPolicy",
+            "iam:UpdateAssumeRolePolicy",
+            "iam:UpdateLoginProfile",
+            "iam:UpdateUser",
+            "iam:DeleteRole",
+            "iam:DeleteAccessKey",
+            "iam:ListUsers",
+            "lambda:AddLayerVersionPermission",
+            "lambda:AddPermission",
+            "lambda:CreateFunction",
+            "lambda:GetPolicy",
+            "lambda:ListTags",
+            "lambda:PutProvisionedConcurrencyConfig",
+            "lambda:TagResource",
+            "lambda:UntagResource",
+            "lambda:UpdateFunctionCode",
+            "lambda:GetEventSourceMapping",
+            "lightsail:Create*",
+            "lightsail:Delete*",
+            "lightsail:DownloadDefaultKeyPair",
+            "lightsail:GetInstanceAccessDetails",
+            "lightsail:Start*",
+            "lightsail:Update*",
+            "organizations:CreateAccount",
+            "organizations:CreateOrganization",
+            "organizations:InviteAccountToOrganization",
+            "organizations:LeaveOrganization",
+            "organizations:AcceptHandshake",
+            "s3:DeleteBucket",
+            "s3:DeleteObject",
+            "s3:DeleteObjectVersion",
+            "s3:PutLifecycleConfiguration",
+            "s3:PutBucketAcl",
+            "s3:PutBucketOwnershipControls",
+            "s3:DeleteBucketPolicy",
+            "s3:ObjectOwnerOverrideToBucketOwner",
+            "s3:PutAccountPublicAccessBlock",
+            "s3:PutBucketPolicy",
+            "s3:ListAllMyBuckets",
+            "s3:CreateBucket",
+            "s3:PutBucketCors",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "s3:PutEncryptionConfiguration",
+            "savingsplans:CreateSavingsPlan",
+            "ecs:CreateService",
+            "ecs:CreateCluster",
+            "ecs:RegisterTaskDefinition",
+            "ecr:GetAuthorizationToken",
+            "bedrock:CreateModelInvocationJob",
+            "bedrock:InvokeModelWithResponseStream",
+            "bedrock:CreateFoundationModelAgreement",
+            "bedrock:PutFoundationModelEntitlement",
+            "bedrock:InvokeModel",
+            "sagemaker:CreateEndpointConfig",
+            "sagemaker:CreateProcessingJob",
+            "ses:GetSendQuota",
+            "ses:ListIdentities",
+            "sts:GetSessionToken",
+            "sts:GetFederationToken",
+            "amplify:CreateDeployment",
+            "amplify:CreateBackendEnvironment",
+            "codebuild:CreateProject",
+            "glue:CreateJob",
+            "sns:GetSMSAttributes",
+            "mediapackagev2:CreateChannel",
+            "logs:PutLogEvents",
+            "kms:PutKeyPolicy",
+            "kms:RetireGrant",
+            "kms:RevokeGrant",
+            "kms:ScheduleKeyDeletion",
+            "kms:DeleteImportedKeyMaterial"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Deny",
+          "Action": [
+            "kms:CreateGrant"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "Null": {
+              "kms:ViaService": "true"
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Only explicit Deny coverage grows, including KMS destructive operations and direct CreateGrant calls. No Allow is introduced or Deny removed. This is harmless for privilege expansion; quarantine can intentionally disrupt workloads."
+    },
+    "sourceDetail": {
+      "repo": "https://github.com/zoph-io/MAMIP",
+      "before": {
+        "commit": "112c77ac4335dc09943d4aab47bdcd612861a09e",
+        "versionId": "v2",
+        "createDate": "2024-10-02T16:52:27+00:00",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/112c77ac4335dc09943d4aab47bdcd612861a09e/policies/AWSCompromisedKeyQuarantineV3"
+      },
+      "after": {
+        "commit": "9d479f79b4fd32488764788bb84221e1f8791ff6",
+        "versionId": "v3",
+        "createDate": "2026-03-16T16:27:14+00:00",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/9d479f79b4fd32488764788bb84221e1f8791ff6/policies/AWSCompromisedKeyQuarantineV3"
+      },
+      "note": "PolicyVersion.Document copied unchanged from each pinned archive snapshot. Actual VersionId changes, not reformatting commits."
+    }
+  },
+  {
+    "id": "PLH4-A02",
+    "title": "AWSCodeCommitReadOnly v12 -> v13",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/574fe81f0b4eeaf3b7e40adaa1789044375a2783/policies/AWSCodeCommitReadOnly",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "codecommit:BatchGet*",
+            "codecommit:BatchDescribe*",
+            "codecommit:Describe*",
+            "codecommit:EvaluatePullRequestApprovalRules",
+            "codecommit:Get*",
+            "codecommit:List*",
+            "codecommit:GitPull"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "events:DescribeRule",
+            "events:ListTargetsByRule"
+          ],
+          "Resource": "arn:aws:events:*:*:rule/codecommit*",
+          "Effect": "Allow",
+          "Sid": "CloudWatchEventsCodeCommitRulesReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "sns:ListTopics",
+            "sns:ListSubscriptionsByTopic",
+            "sns:GetTopicAttributes"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "SNSSubscriptionAccess"
+        },
+        {
+          "Action": [
+            "lambda:ListFunctions"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "LambdaReadOnlyListAccess"
+        },
+        {
+          "Action": [
+            "iam:ListUsers"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "IAMReadOnlyListAccess"
+        },
+        {
+          "Action": [
+            "iam:ListSSHPublicKeys",
+            "iam:ListServiceSpecificCredentials",
+            "iam:ListAccessKeys",
+            "iam:GetSSHPublicKey"
+          ],
+          "Resource": "arn:aws:iam::*:user/${aws:username}",
+          "Effect": "Allow",
+          "Sid": "IAMReadOnlyConsoleAccess"
+        },
+        {
+          "Action": [
+            "codestar-connections:ListConnections",
+            "codestar-connections:GetConnection"
+          ],
+          "Resource": "arn:aws:codestar-connections:*:*:connection/*",
+          "Effect": "Allow",
+          "Sid": "CodeStarConnectionsReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "codestar-notifications:DescribeNotificationRule"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Condition": {
+            "ArnLike": {
+              "codestar-notifications:NotificationsForResource": "arn:aws:codecommit:*:*:*"
+            }
+          },
+          "Sid": "CodeStarNotificationsReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "codestar-notifications:ListNotificationRules",
+            "codestar-notifications:ListEventTypes",
+            "codestar-notifications:ListTargets"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "CodeStarNotificationsListAccess"
+        },
+        {
+          "Action": [
+            "codeguru-reviewer:DescribeRepositoryAssociation",
+            "codeguru-reviewer:ListRepositoryAssociations",
+            "codeguru-reviewer:DescribeCodeReview",
+            "codeguru-reviewer:ListCodeReviews"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "AmazonCodeGuruReviewerReadOnlyAccess"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "codecommit:BatchGet*",
+            "codecommit:BatchDescribe*",
+            "codecommit:Describe*",
+            "codecommit:EvaluatePullRequestApprovalRules",
+            "codecommit:Get*",
+            "codecommit:List*",
+            "codecommit:GitPull"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "events:DescribeRule",
+            "events:ListTargetsByRule"
+          ],
+          "Resource": "arn:aws:events:*:*:rule/codecommit*",
+          "Effect": "Allow",
+          "Sid": "CloudWatchEventsCodeCommitRulesReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "sns:ListTopics",
+            "sns:ListSubscriptionsByTopic",
+            "sns:GetTopicAttributes"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "SNSSubscriptionAccess"
+        },
+        {
+          "Action": [
+            "lambda:ListFunctions"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "LambdaReadOnlyListAccess"
+        },
+        {
+          "Action": [
+            "iam:ListUsers"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "IAMReadOnlyListAccess"
+        },
+        {
+          "Action": [
+            "iam:ListSSHPublicKeys",
+            "iam:ListServiceSpecificCredentials",
+            "iam:ListAccessKeys",
+            "iam:GetSSHPublicKey"
+          ],
+          "Resource": "arn:aws:iam::*:user/${aws:username}",
+          "Effect": "Allow",
+          "Sid": "IAMReadOnlyConsoleAccess"
+        },
+        {
+          "Action": [
+            "codestar-connections:ListConnections",
+            "codestar-connections:GetConnection"
+          ],
+          "Resource": "arn:aws:codestar-connections:*:*:connection/*",
+          "Effect": "Allow",
+          "Sid": "CodeStarConnectionsReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "codestar-notifications:DescribeNotificationRule"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Condition": {
+            "ArnLike": {
+              "codestar-notifications:NotificationsForResource": "arn:aws:codecommit:*:*:*"
+            }
+          },
+          "Sid": "CodeStarNotificationsReadOnlyAccess"
+        },
+        {
+          "Action": [
+            "codestar-notifications:ListNotificationRules",
+            "codestar-notifications:ListEventTypes",
+            "codestar-notifications:ListTargets"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "CodeStarNotificationsListAccess"
+        },
+        {
+          "Action": [
+            "codeguru-reviewer:DescribeRepositoryAssociation",
+            "codeguru-reviewer:ListRepositoryAssociations",
+            "codeguru-reviewer:DescribeCodeReview",
+            "codeguru-reviewer:ListCodeReviews"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "AmazonCodeGuruReviewerReadOnlyAccess"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "AWS advances the managed-policy version from v12 to v13, but the entire policy Document is identical. No permission changes."
+    },
+    "sourceDetail": {
+      "repo": "https://github.com/zoph-io/MAMIP",
+      "before": {
+        "commit": "51c001c08a091628ef24d503539c806ae0529ced",
+        "versionId": "v12",
+        "createDate": "2025-01-10T20:07:07Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/51c001c08a091628ef24d503539c806ae0529ced/policies/AWSCodeCommitReadOnly"
+      },
+      "after": {
+        "commit": "574fe81f0b4eeaf3b7e40adaa1789044375a2783",
+        "versionId": "v13",
+        "createDate": "2026-02-11T22:20:57Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/574fe81f0b4eeaf3b7e40adaa1789044375a2783/policies/AWSCodeCommitReadOnly"
+      },
+      "note": "PolicyVersion.Document copied unchanged from each pinned archive snapshot. Actual VersionId changes, not reformatting commits."
+    }
+  },
+  {
+    "id": "PLH4-A03",
+    "title": "AmazonEC2ReadOnlyAccess v3 -> v4",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/c6b62c2e77b27e0efa35ac0f5dec14ade89360cd/policies/AmazonEC2ReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "ec2:Describe*",
+            "ec2:GetSecurityGroupsForVpc"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": "elasticloadbalancing:Describe*",
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "cloudwatch:ListMetrics",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:Describe*"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": "autoscaling:Describe*",
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "ec2:Describe*",
+            "ec2:GetSecurityGroupsForVpc"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": "elasticloadbalancing:Describe*",
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "cloudwatch:ListMetrics",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:Describe*"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": "autoscaling:Describe*",
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "AWS advances the managed-policy version from v3 to v4, but the entire policy Document is identical. No permission changes."
+    },
+    "sourceDetail": {
+      "repo": "https://github.com/zoph-io/MAMIP",
+      "before": {
+        "commit": "421c58eb060fec5117481e9a125a2ec859a24f8e",
+        "versionId": "v3",
+        "createDate": "2024-12-27T10:07:06Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/421c58eb060fec5117481e9a125a2ec859a24f8e/policies/AmazonEC2ReadOnlyAccess"
+      },
+      "after": {
+        "commit": "c6b62c2e77b27e0efa35ac0f5dec14ade89360cd",
+        "versionId": "v4",
+        "createDate": "2026-02-11T22:15:47Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/c6b62c2e77b27e0efa35ac0f5dec14ade89360cd/policies/AmazonEC2ReadOnlyAccess"
+      },
+      "note": "PolicyVersion.Document copied unchanged from each pinned archive snapshot. Actual VersionId changes, not reformatting commits."
+    }
+  },
+  {
+    "id": "PLH4-A04",
+    "title": "AmazonDynamoDBReadOnlyAccess v14 -> v15",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/792b24e0b678ad40dd6083557cd72d0d7cdcce27/policies/AmazonDynamoDBReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingActivities",
+            "application-autoscaling:DescribeScalingPolicies",
+            "cloudwatch:DescribeAlarmHistory",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:DescribeAlarmsForMetric",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:ListMetrics",
+            "cloudwatch:GetMetricData",
+            "datapipeline:DescribeObjects",
+            "datapipeline:DescribePipelines",
+            "datapipeline:GetPipelineDefinition",
+            "datapipeline:ListPipelines",
+            "datapipeline:QueryObjects",
+            "dynamodb:BatchGetItem",
+            "dynamodb:Describe*",
+            "dynamodb:List*",
+            "dynamodb:GetItem",
+            "dynamodb:GetResourcePolicy",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:PartiQLSelect",
+            "dax:Describe*",
+            "dax:List*",
+            "dax:GetItem",
+            "dax:BatchGetItem",
+            "dax:Query",
+            "dax:Scan",
+            "ec2:DescribeVpcs",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeSecurityGroups",
+            "iam:GetRole",
+            "iam:ListRoles",
+            "kms:DescribeKey",
+            "kms:ListAliases",
+            "sns:ListSubscriptionsByTopic",
+            "sns:ListTopics",
+            "lambda:ListFunctions",
+            "lambda:ListEventSourceMappings",
+            "lambda:GetFunctionConfiguration",
+            "resource-groups:ListGroups",
+            "resource-groups:ListGroupResources",
+            "resource-groups:GetGroup",
+            "resource-groups:GetGroupQuery",
+            "tag:GetResources",
+            "kinesis:ListStreams",
+            "kinesis:DescribeStream",
+            "kinesis:DescribeStreamSummary"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "GeneralReadOnlyAccess"
+        },
+        {
+          "Action": "cloudwatch:GetInsightRuleReport",
+          "Resource": "arn:aws:cloudwatch:*:*:insight-rule/DynamoDBContributorInsights*",
+          "Effect": "Allow",
+          "Sid": "CCIAccess"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingActivities",
+            "application-autoscaling:DescribeScalingPolicies",
+            "cloudwatch:DescribeAlarmHistory",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:DescribeAlarmsForMetric",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:ListMetrics",
+            "cloudwatch:GetMetricData",
+            "datapipeline:DescribeObjects",
+            "datapipeline:DescribePipelines",
+            "datapipeline:GetPipelineDefinition",
+            "datapipeline:ListPipelines",
+            "datapipeline:QueryObjects",
+            "dynamodb:BatchGetItem",
+            "dynamodb:Describe*",
+            "dynamodb:List*",
+            "dynamodb:GetAbacStatus",
+            "dynamodb:GetItem",
+            "dynamodb:GetResourcePolicy",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:PartiQLSelect",
+            "dax:Describe*",
+            "dax:List*",
+            "dax:GetItem",
+            "dax:BatchGetItem",
+            "dax:Query",
+            "dax:Scan",
+            "ec2:DescribeVpcs",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeSecurityGroups",
+            "iam:GetRole",
+            "iam:ListRoles",
+            "kms:DescribeKey",
+            "kms:ListAliases",
+            "sns:ListSubscriptionsByTopic",
+            "sns:ListTopics",
+            "lambda:ListFunctions",
+            "lambda:ListEventSourceMappings",
+            "lambda:GetFunctionConfiguration",
+            "resource-groups:ListGroups",
+            "resource-groups:ListGroupResources",
+            "resource-groups:GetGroup",
+            "resource-groups:GetGroupQuery",
+            "tag:GetResources",
+            "kinesis:ListStreams",
+            "kinesis:DescribeStream",
+            "kinesis:DescribeStreamSummary"
+          ],
+          "Resource": "*",
+          "Effect": "Allow",
+          "Sid": "GeneralReadOnlyAccess"
+        },
+        {
+          "Action": "cloudwatch:GetInsightRuleReport",
+          "Resource": "arn:aws:cloudwatch:*:*:insight-rule/DynamoDBContributorInsights*",
+          "Effect": "Allow",
+          "Sid": "CCIAccess"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "The only added action is dynamodb:GetAbacStatus, a read of whether attribute-based access control is enabled. No table data access or write permission is added. Existing data-read permissions are unchanged."
+    },
+    "sourceDetail": {
+      "repo": "https://github.com/zoph-io/MAMIP",
+      "before": {
+        "commit": "aafbae9e6087b732577df3a0556f8677e5d4c79b",
+        "versionId": "v14",
+        "createDate": "2024-03-20T15:45:01Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/aafbae9e6087b732577df3a0556f8677e5d4c79b/policies/AmazonDynamoDBReadOnlyAccess"
+      },
+      "after": {
+        "commit": "792b24e0b678ad40dd6083557cd72d0d7cdcce27",
+        "versionId": "v15",
+        "createDate": "2024-11-18T17:38:15Z",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/792b24e0b678ad40dd6083557cd72d0d7cdcce27/policies/AmazonDynamoDBReadOnlyAccess"
+      },
+      "note": "PolicyVersion.Document copied unchanged from each pinned archive snapshot. Actual VersionId changes, not reformatting commits.",
+      "classificationSource": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_dynamodb.html"
+    }
+  },
+  {
+    "id": "PLH4-A05",
+    "title": "AmazonPollyReadOnlyAccess v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/1a1f31327d0e8ae08a72c335ad8f332093640862/policies/AmazonPollyReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "polly:DescribeVoices",
+            "polly:GetLexicon",
+            "polly:GetSpeechSynthesisTask",
+            "polly:ListLexicons",
+            "polly:ListSpeechSynthesisTasks",
+            "polly:SynthesizeSpeech"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "polly:DescribeVoices",
+            "polly:GetLexicon",
+            "polly:GetSpeechSynthesisTask",
+            "polly:ListLexicons",
+            "polly:ListSpeechSynthesisTasks",
+            "polly:SynthesizeSpeech",
+            "polly:StartSpeechSynthesisStream"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "The new StartSpeechSynthesisStream action adds bidirectional speech synthesis. AWS classifies it as Read. It does not add IAM administration, stored customer-data access, or broader resource access than the existing synthesis grant. Treat this incremental read-only service capability as harmless for this benchmark."
+    },
+    "sourceDetail": {
+      "repo": "https://github.com/zoph-io/MAMIP",
+      "before": {
+        "commit": "f86339e42d7d7331bee51d24aff6f8690be5258f",
+        "versionId": "v2",
+        "createDate": "2018-07-17T16:41:07+00:00",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/f86339e42d7d7331bee51d24aff6f8690be5258f/policies/AmazonPollyReadOnlyAccess"
+      },
+      "after": {
+        "commit": "1a1f31327d0e8ae08a72c335ad8f332093640862",
+        "versionId": "v3",
+        "createDate": "2026-04-01T08:12:15+00:00",
+        "url": "https://github.com/zoph-io/IAMTrail/blob/1a1f31327d0e8ae08a72c335ad8f332093640862/policies/AmazonPollyReadOnlyAccess"
+      },
+      "note": "PolicyVersion.Document copied unchanged from each pinned archive snapshot. Actual VersionId changes, not reformatting commits.",
+      "classificationSource": "https://docs.aws.amazon.com/service-authorization/latest/reference/list_polly.html"
+    }
+  },
+  {
+    "id": "PLH4-A06",
+    "title": "S3 object-tag restriction removed for a named role",
+    "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/tagging-and-policies.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Principal": {
+            "AWS": [
+              "arn:aws:iam::111122223333:role/JohnDoe"
+            ]
+          },
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:GetObjectVersion"
+          ],
+          "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+          "Condition": {
+            "StringEquals": {
+              "s3:ExistingObjectTag/environment": "production"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Principal": {
+            "AWS": [
+              "arn:aws:iam::111122223333:role/JohnDoe"
+            ]
+          },
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:GetObjectVersion"
+          ],
+          "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "Removing the production object-tag condition newly permits reading objects of every environment within the example bucket. The named principal and bucket scope do not preserve the removed data boundary."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Before is the first AWS example verbatim. After deletes only its Condition."
+    }
+  },
+  {
+    "id": "PLH4-A07",
+    "title": "SNS topic publishing opened from a named account to everyone",
+    "source": "https://docs.aws.amazon.com/sns/latest/dg/sns-access-policy-use-cases.html",
+    "kind": "modelled",
+    "before": {
+      "Statement": [
+        {
+          "Sid": "grant-1234-publish",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "111122223333"
+          },
+          "Action": [
+            "sns:Publish"
+          ],
+          "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic"
+        }
+      ]
+    },
+    "after": {
+      "Statement": [
+        {
+          "Sid": "grant-1234-publish",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "*"
+          },
+          "Action": [
+            "sns:Publish"
+          ],
+          "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "Changing the account principal to a wildcard grants public publishing to this topic, subject to other applicable controls. A fixed topic ARN does not prevent anonymous or untrusted publishing."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Before is the AWS cross-account publish example verbatim. After changes only Principal.AWS."
+    }
+  },
+  {
+    "id": "PLH4-A08",
+    "title": "SNS named-account subscriptions lose the HTTPS-only condition",
+    "source": "https://docs.aws.amazon.com/sns/latest/dg/sns-access-policy-use-cases.html",
+    "kind": "modelled",
+    "before": {
+      "Statement": [
+        {
+          "Sid": "Statement1",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "111122223333"
+          },
+          "Action": [
+            "sns:Subscribe"
+          ],
+          "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic",
+          "Condition": {
+            "StringEquals": {
+              "sns:Protocol": "https"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Statement": [
+        {
+          "Sid": "Statement1",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "111122223333"
+          },
+          "Action": [
+            "sns:Subscribe"
+          ],
+          "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "The same named external account can newly subscribe using protocols other than HTTPS. Scope remains one topic and one account. Review endpoint transport and permitted subscription protocols."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Before is the AWS HTTPS-subscription example verbatim. After deletes only Condition; it does not add a public principal."
+    }
+  },
+  {
+    "id": "PLH4-A09",
+    "title": "CloudWatch Logs: add log-event reading in one named log group",
+    "source": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:SampleLogGroupName:*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "logs:GetLogEvents"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:SampleLogGroupName:*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "GetLogEvents exposes log contents within the named SampleLogGroupName group. This is new scoped data access requiring owner approval, without a grant across unrelated log groups."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. After is AWS example 4 (zero-based pre block) verbatim. Before removes only logs:GetLogEvents."
+    }
+  },
+  {
+    "id": "PLH4-A10",
+    "title": "CloudWatch Logs: add retention management for one named log group",
+    "source": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/iam-identity-based-access-control-cwl.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "logs:DescribeLogStreams"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:SampleLogGroupName"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "logs:PutRetentionPolicy",
+            "logs:DescribeLogStreams"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:logs:us-west-2:123456789012:log-group:SampleLogGroupName"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "PutRetentionPolicy can change how long this group retains logs. Confirm retention obligations before approving. The fixed log-group ARN limits the change; no wildcard log administration is added."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Both snapshots are subsets of AWS example 3. DeleteLogGroup and PutSubscriptionFilter are absent in both; only PutRetentionPolicy is newly added."
+    }
+  },
+  {
+    "id": "PLH4-A11",
+    "title": "MFA explicit deny hardened to cover an absent MFA context key",
+    "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_iam_mfa-selfmanage.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowListActions",
+          "Effect": "Allow",
+          "Action": [
+            "iam:ListUsers",
+            "iam:ListVirtualMFADevices"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "AllowUserToCreateVirtualMFADevice",
+          "Effect": "Allow",
+          "Action": [
+            "iam:CreateVirtualMFADevice"
+          ],
+          "Resource": "arn:aws:iam::*:mfa/*"
+        },
+        {
+          "Sid": "AllowUserToManageTheirOwnMFA",
+          "Effect": "Allow",
+          "Action": [
+            "iam:EnableMFADevice",
+            "iam:GetMFADevice",
+            "iam:ListMFADevices",
+            "iam:ResyncMFADevice"
+          ],
+          "Resource": "arn:aws:iam::*:user/${aws:username}"
+        },
+        {
+          "Sid": "AllowUserToDeactivateTheirOwnMFAOnlyWhenUsingMFA",
+          "Effect": "Allow",
+          "Action": [
+            "iam:DeactivateMFADevice"
+          ],
+          "Resource": [
+            "arn:aws:iam::*:user/${aws:username}"
+          ],
+          "Condition": {
+            "Bool": {
+              "aws:MultiFactorAuthPresent": "true"
+            }
+          }
+        },
+        {
+          "Sid": "BlockMostAccessUnlessSignedInWithMFA",
+          "Effect": "Deny",
+          "NotAction": [
+            "iam:CreateVirtualMFADevice",
+            "iam:EnableMFADevice",
+            "iam:ListMFADevices",
+            "iam:ListUsers",
+            "iam:ListVirtualMFADevices",
+            "iam:ResyncMFADevice"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "Bool": {
+              "aws:MultiFactorAuthPresent": "false"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowListActions",
+          "Effect": "Allow",
+          "Action": [
+            "iam:ListUsers",
+            "iam:ListVirtualMFADevices"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "AllowUserToCreateVirtualMFADevice",
+          "Effect": "Allow",
+          "Action": [
+            "iam:CreateVirtualMFADevice"
+          ],
+          "Resource": "arn:aws:iam::*:mfa/*"
+        },
+        {
+          "Sid": "AllowUserToManageTheirOwnMFA",
+          "Effect": "Allow",
+          "Action": [
+            "iam:EnableMFADevice",
+            "iam:GetMFADevice",
+            "iam:ListMFADevices",
+            "iam:ResyncMFADevice"
+          ],
+          "Resource": "arn:aws:iam::*:user/${aws:username}"
+        },
+        {
+          "Sid": "AllowUserToDeactivateTheirOwnMFAOnlyWhenUsingMFA",
+          "Effect": "Allow",
+          "Action": [
+            "iam:DeactivateMFADevice"
+          ],
+          "Resource": [
+            "arn:aws:iam::*:user/${aws:username}"
+          ],
+          "Condition": {
+            "Bool": {
+              "aws:MultiFactorAuthPresent": "true"
+            }
+          }
+        },
+        {
+          "Sid": "BlockMostAccessUnlessSignedInWithMFA",
+          "Effect": "Deny",
+          "NotAction": [
+            "iam:CreateVirtualMFADevice",
+            "iam:EnableMFADevice",
+            "iam:ListMFADevices",
+            "iam:ListUsers",
+            "iam:ListVirtualMFADevices",
+            "iam:ResyncMFADevice"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "BoolIfExists": {
+              "aws:MultiFactorAuthPresent": "false"
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Restoring BoolIfExists in a Deny makes the MFA restriction also apply when the MFA context key is absent. It cannot newly allow an action. Existing MFA-enrolment exceptions remain unchanged."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. After is the AWS MFA self-management policy verbatim. Before replaces only BoolIfExists with Bool in the final Deny. This reverses the unsafe relaxation rather than modelling an incident."
+    }
+  },
+  {
+    "id": "PLH4-A12",
+    "title": "Rhino method 9: attach an administrator policy to an assumable role",
+    "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "iam:AttachRolePolicy",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The caller already has AssumeRole on this role. The new permission can give that role administrator permissions, then expose them through a fresh assumed-role session. Actual escalation depends on trust, boundaries and organisation controls."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Rhino describes this permission combination, not these JSON documents. Model uses its role_i_can_assume placeholder, AWS documentation example account 123456789012 and ordinary IAM syntax. Assume the role trusts the caller; no boundary or SCP prevents the grant."
+    }
+  },
+  {
+    "id": "PLH4-A13",
+    "title": "Rhino method 12: write an arbitrary inline policy on an assumable role",
+    "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "sts:AssumeRole",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "iam:PutRolePolicy",
+          "Resource": "arn:aws:iam::123456789012:role/role_i_can_assume"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The caller already has AssumeRole on this role. The new permission can give that role administrator permissions, then expose them through a fresh assumed-role session. Actual escalation depends on trust, boundaries and organisation controls."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Rhino describes this permission combination, not these JSON documents. Model uses its role_i_can_assume placeholder, AWS documentation example account 123456789012 and ordinary IAM syntax. Assume the role trusts the caller; no boundary or SCP prevents the grant."
+    }
+  },
+  {
+    "id": "PLH4-A14",
+    "title": "Rhino method 19: add Glue development-endpoint updates",
+    "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "glue:GetDevEndpoints",
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "glue:GetDevEndpoints",
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "glue:UpdateDevEndpoint",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "UpdateDevEndpoint can replace SSH keys on an existing development endpoint and expose its attached role credentials. This is a potential execution and privilege-escalation path, not a guarantee that a vulnerable endpoint exists."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Documents are reconstructed from method 19. Assume a reachable legacy development endpoint with an attached role. Endpoint existence, network reachability and role permissions must be checked."
+    }
+  },
+  {
+    "id": "PLH4-A15",
+    "title": "Rhino method 21: add unrestricted role passing to a pipeline operator",
+    "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "datapipeline:CreatePipeline",
+            "datapipeline:PutPipelineDefinition",
+            "datapipeline:ActivatePipeline"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "datapipeline:CreatePipeline",
+            "datapipeline:PutPipelineDefinition",
+            "datapipeline:ActivatePipeline"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "iam:PassRole",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "Existing pipeline creation, definition and activation permissions combine with newly unrestricted PassRole. A runnable pipeline can execute under a more privileged role. Requires a usable service role and a legacy Data Pipeline environment."
+    },
+    "sourceDetail": {
+      "note": "Modelled counterfactual, not a deployed policy or incident. Rhino method 21 supplies the CreatePipeline/PutPipelineDefinition/PassRole chain. ActivatePipeline is explicitly held in both states so execution is not silently assumed. Wildcard resources are model choices, not a historical policy. Data Pipeline availability and role trust are external prerequisites."
+    }
+  }
+]

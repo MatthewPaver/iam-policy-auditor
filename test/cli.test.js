@@ -1,6 +1,6 @@
 'use strict';
 
-// CLI contract: exit codes, JSON verdict, SARIF shape, and plain input errors.
+// CLI contract: exit codes, JSON verdict, removed-format rejection, and plain input errors.
 
 const assert = require('assert');
 const fs = require('fs');
@@ -48,13 +48,12 @@ function run(args, opts = {}) {
   assert.match(errLine[0], /Expected an IAM policy|could not|not/i);
 }
 
-// SARIF 2.1.0.
+// Removed formats fail with an input error rather than silently changing output.
 {
   const result = run(['review', '--before', v19, '--after', v20, '--format', 'sarif']);
-  assert.ok(result.status === 1 || result.status === 0 || result.status === 2);
-  const sarif = JSON.parse(result.stdout);
-  assert.equal(sarif.version, '2.1.0');
-  assert.ok(Array.isArray(sarif.runs));
+  assert.equal(result.status, 3);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Unknown format/);
 }
 
 // R3: newly allowed privilege-escalation action exits stop without a request.

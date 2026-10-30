@@ -517,4 +517,5 @@ module.exports = {
   stmtAllows,
   stmtExplicitlyAllows,
   denyGuardrailRemovedFinding,
+  AWS_ESCALATION_ACTIONS, AWS_SENSITIVE_ACTIONS, AWS_SENSITIVE_READ, AWS_SENSITIVE_READ_RESOURCES,
 };

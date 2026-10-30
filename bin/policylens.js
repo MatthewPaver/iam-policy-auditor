@@ -5,15 +5,14 @@
 // local machine. Exit codes: 0 pass, 1 stop, 2 review, 3 input error.
 
 const fs = require('fs');
-const path = require('path');
 const { reviewChange } = require('../src/change_review');
 const { fromTerraformPlan, normalizePolicyInput } = require('../src/adapters');
 
 function usage() {
   return [
     'Usage:',
-    '  policylens review --before <file> --after <file> [--request <json|file>] [--require <file>]... [--principal <p>] [--format text|json|sarif]',
-    '  policylens review --terraform-plan <file> [--format text|json|sarif]',
+    '  policylens review --before <file> --after <file> [--request <json|file>] [--require <file>]... [--principal <p>] [--format text|json]',
+    '  policylens review --terraform-plan <file> [--format text|json]',
   ].join('\n');
 }
 
@@ -81,75 +80,6 @@ function exitCodeForResults(results) {
   return 0;
 }
 
-function toSarif(results, afterPath) {
-  const sarifResults = [];
-  for (const review of results) {
-    if (!review.verdict || review.verdict.status !== 'stop') continue;
-    const findings = [
-      ...(review.findings && review.findings.introduced ? review.findings.introduced : []),
-      ...(review.findings && review.findings.widened ? review.findings.widened : []),
-    ].filter((f) => ['high', 'critical'].includes(f.severity));
-    const newly = (review.newlyAllowed && review.newlyAllowed.items) || [];
-    const riskyNew = newly.filter((i) => ['privesc', 'destructive', 'sensitive-read'].includes(i.sensitivity));
-
-    if (!findings.length && !riskyNew.length) {
-      sarifResults.push({
-        ruleId: 'policylens/stop',
-        level: 'error',
-        message: { text: review.verdict.reason || 'Stop and review' },
-        locations: afterPath ? [{
-          physicalLocation: {
-            artifactLocation: { uri: afterPath },
-            region: { startLine: 1 },
-          },
-        }] : [],
-      });
-      continue;
-    }
-    for (const finding of findings) {
-      const evidence = (finding.evidence && finding.evidence[0]) || {};
-      sarifResults.push({
-        ruleId: finding.ruleId || 'policylens/finding',
-        level: 'error',
-        message: { text: finding.title || finding.description || 'Stop finding' },
-        locations: [{
-          physicalLocation: {
-            artifactLocation: { uri: afterPath || evidence.doc || 'after.json' },
-            region: { startLine: evidence.line || 1 },
-          },
-        }],
-      });
-    }
-    for (const item of riskyNew) {
-      sarifResults.push({
-        ruleId: `newly-allowed/${item.sensitivity}`,
-        level: 'error',
-        message: { text: `Newly allowed ${item.action} on ${item.resource}` },
-        locations: [{
-          physicalLocation: {
-            artifactLocation: { uri: afterPath || item.doc || 'after.json' },
-            region: { startLine: item.line || 1 },
-          },
-        }],
-      });
-    }
-  }
-  return {
-    version: '2.1.0',
-    $schema: 'https://json.schemastore.org/sarif-2.1.0.json',
-    runs: [{
-      tool: {
-        driver: {
-          name: 'policylens',
-          informationUri: 'https://github.com/MatthewPaver/iam-policy-auditor',
-          rules: [],
-        },
-      },
-      results: sarifResults,
-    }],
-  };
-}
-
 function formatText(results) {
   const lines = [];
   for (const review of results) {
@@ -186,13 +116,12 @@ function main(argv) {
     process.stdout.write(`${usage()}\n`);
     process.exit(args.help ? 0 : 3);
   }
-  if (!['text', 'json', 'sarif'].includes(args.format)) {
+  if (!['text', 'json'].includes(args.format)) {
     failInput(`Unknown format: ${args.format}`);
   }
 
   const request = loadRequest(args.request, args.principal);
   const results = [];
-  let afterPath = args.after || args.terraformPlan || 'after.json';
 
   if (args.terraformPlan) {
     const planText = readFile(args.terraformPlan);
@@ -224,7 +153,6 @@ function main(argv) {
     }
   } else {
     if (!args.before || !args.after) failInput(`--before and --after are required.\n${usage()}`);
-    afterPath = path.resolve(args.after);
     results.push(reviewPair(readFile(args.before), readFile(args.after), request));
   }
 
@@ -262,8 +190,6 @@ function main(argv) {
     });
     const body = results.length === 1 ? compact(results[0]) : { results: results.map(compact) };
     process.stdout.write(`${JSON.stringify(body, null, 2)}\n`);
-  } else if (args.format === 'sarif') {
-    process.stdout.write(`${JSON.stringify(toSarif(results, afterPath), null, 2)}\n`);
   } else {
     process.stdout.write(formatText(results));
   }

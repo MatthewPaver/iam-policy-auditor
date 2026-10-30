@@ -1,6 +1,6 @@
 # Use PolicyLens on your own policies
 
-Three ways to run the same deterministic engine. Nothing is uploaded; policies stay on your machine or in your browser.
+Two ways to run the same deterministic engine. Nothing is uploaded; policies stay on your machine or in your browser.
 
 ## 1. Browser
 
@@ -16,7 +16,7 @@ Three ways to run the same deterministic engine. Nothing is uploaded; policies s
 npm install
 node bin/policylens.js review --before before.json --after after.json --format text
 node bin/policylens.js review --before before.json --after after.json --format json
-node bin/policylens.js review --before before.json --after after.json --request '{"action":"s3:GetObject","resource":"arn:aws:s3:::bucket/obj","principal":"anonymous"}' --format sarif
+node bin/policylens.js review --before before.json --after after.json --request '{"action":"s3:GetObject","resource":"arn:aws:s3:::bucket/obj","principal":"anonymous"}' --format json
 node bin/policylens.js review --terraform-plan plan.json --format text
 ```
 
@@ -28,19 +28,6 @@ node bin/policylens.js review --terraform-plan plan.json --format text
 | 1 | Any result is `stop` |
 | 2 | Any result is `review` and none is `stop` |
 | 3 | Input error (one plain sentence on stderr) |
-
-## 3. GitHub Action
-
-Copy `examples/github-actions/policylens.yml` into `.github/workflows/`. The composite action at the repository root reviews files changed between the pull request base SHA and `HEAD`. It fails the step on exit code 1 (`stop`).
-
-```yaml
-- uses: MatthewPaver/iam-policy-auditor@main
-  with:
-    paths: '**/*.json'
-    format: sarif
-```
-
-Optional: pass `terraform-plan` to a `terraform show -json` file instead of a path glob.
 
 ## How to export from AWS and IaC
 

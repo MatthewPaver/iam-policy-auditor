@@ -4,7 +4,8 @@
 // guess the right request. Catalogue expansion must never be capped silently.
 
 const actions = require('./actions');
-const { denyGuardrailRemovedFinding } = require('./rules');
+const { denyGuardrailRemovedFinding, AWS_ESCALATION_ACTIONS, AWS_SENSITIVE_ACTIONS,
+  AWS_SENSITIVE_READ, AWS_SENSITIVE_READ_RESOURCES } = require('./rules');
 const { globMatch } = require('./util');
 
 // Sensitivity buckets used by the request-free verdict. Keep them in one place
@@ -13,15 +14,7 @@ const { globMatch } = require('./util');
 // https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 const SENSITIVITY = {
   privesc: [
-    'iam:CreatePolicyVersion', 'iam:SetDefaultPolicyVersion',
-    'iam:CreateAccessKey',
-    'iam:CreateLoginProfile', 'iam:UpdateLoginProfile',
-    'iam:AttachUserPolicy', 'iam:AttachGroupPolicy', 'iam:AttachRolePolicy',
-    'iam:PutUserPolicy', 'iam:PutGroupPolicy', 'iam:PutRolePolicy',
-    'iam:AddUserToGroup', 'iam:UpdateAssumeRolePolicy',
-    'iam:PassRole',
-    'lambda:UpdateFunctionCode', 'lambda:UpdateFunctionConfiguration',
-    'glue:UpdateDevEndpoint',
+    ...AWS_ESCALATION_ACTIONS, 'iam:PassRole',
     'sts:AssumeRole',
     'sagemaker:CreatePresignedNotebookInstanceUrl', 'sagemaker:CreatePresignedDomainUrl',
   ],
@@ -33,22 +26,14 @@ const SENSITIVITY = {
     'ecs:ExecuteCommand',
     'ec2:ModifyInstanceAttribute',
   ],
-  destructive: [
-    's3:DeleteBucket', 's3:PutBucketPolicy', 'rds:DeleteDBInstance', 'rds:DeleteDBCluster',
-    'dynamodb:DeleteTable', 'kms:ScheduleKeyDeletion', 'kms:DisableKey',
-    'cloudtrail:DeleteTrail', 'cloudtrail:StopLogging', 'ec2:TerminateInstances',
-    'iam:DeleteUser', 'lambda:DeleteFunction', 'logs:DeleteLogGroup',
-    'redshift:DeleteCluster',
-  ],
+  destructive: AWS_SENSITIVE_ACTIONS,
   'sensitive-read': [
-    's3:GetObject', 'kms:Decrypt', 'secretsmanager:GetSecretValue',
-    'ssm:GetParameter', 'ssm:GetParameters', 'ssm:GetParameter*', 'ssm:GetParametersByPath',
+    ...AWS_SENSITIVE_READ, 'ssm:GetParameter*',
     'sqs:ReceiveMessage', 'sns:Subscribe',
     'dynamodb:GetItem', 'dynamodb:BatchGetItem', 'dynamodb:Query', 'dynamodb:Scan',
     'rds-data:ExecuteStatement',
     'logs:GetLogEvents', 'logs:FilterLogEvents',
   ],
-  write: [], // filled from catalogue Write / Tagging when classifying
   read: ['account:GetAccountInformation'],
 };
 
@@ -61,13 +46,8 @@ const ALWAYS_SENSITIVE_READ = new Set([
   'ssm:getparameter', 'ssm:getparameters', 'ssm:getparametersbypath',
 ]);
 
-const SENSITIVE_READ_RESOURCES = new Set(['*', 'arn:aws:s3:::*', 'arn:aws:s3:::*/*']);
-
 function matchesSensitivityList(list, action, lower) {
-  for (const name of list) {
-    if (globMatch(name, action) || name.toLowerCase() === lower) return true;
-  }
-  return false;
+  return list.some((name) => globMatch(name, action) || name.toLowerCase() === lower);
 }
 
 function broadResource(resource) {
@@ -89,15 +69,10 @@ function classifySensitivity(action, resource, conditional = false) {
     // Queue/table/log/parameter reads are sensitive on any resource ARN.
     if (ALWAYS_SENSITIVE_READ.has(lower)) return 'sensitive-read';
     // Classic secrets/object reads only escalate when scoped to everything.
-    if (SENSITIVE_READ_RESOURCES.has(String(resource)) || resource === '*') {
+    if (AWS_SENSITIVE_READ_RESOURCES.includes(String(resource))) {
       return 'sensitive-read';
     }
     if (/^arn:aws:s3:::\*/i.test(String(resource))) return 'sensitive-read';
-    if (String(resource) === '*') return 'sensitive-read';
-  }
-  // kms:Decrypt on * is sensitive-read even if the list check above used glob.
-  if (/^kms:decrypt$/i.test(action) && (resource === '*' || SENSITIVE_READ_RESOURCES.has(String(resource)))) {
-    return 'sensitive-read';
   }
   const level = actions.accessLevel(action);
   const name = String(action).split(':')[1] || '';
@@ -136,12 +111,9 @@ function actionLine(model, stmt, action) {
     let matchIdx = -1;
     for (let i = 0; i < patterns.length; i++) {
       const pat = String(patterns[i]);
-      if (!/[*?]/.test(pat)) {
-        if (pat.toLowerCase() === String(action).toLowerCase()) {
-          matchIdx = i;
-          break;
-        }
-      } else if (globMatch(pat, action)) {
+      const matches = /[*?]/.test(pat)
+        ? globMatch(pat, action) : pat.toLowerCase() === String(action).toLowerCase();
+      if (matches) {
         // Wildcard matches cite the wildcard's own line, not an expanded name.
         matchIdx = i;
         break;
@@ -178,20 +150,6 @@ function stmtMatchesResource(stmt, resource) {
   return resources.some((p) => globMatch(p, resource));
 }
 
-// Snapshot every Deny that can still block an (action, resource) pair.
-function collectDenies(model) {
-  const denies = [];
-  for (const stmt of model.statements) {
-    if (stmt.provider !== 'aws' || stmt.effect !== 'Deny') continue;
-    denies.push(stmt);
-  }
-  return denies;
-}
-
-function denyCovers(stmt, action, resource) {
-  return stmtMatchesAction(stmt, action) && stmtMatchesResource(stmt, resource);
-}
-
 function denySnippet(model, stmt) {
   const doc = model.documents.find((d) => d.name === stmt.doc);
   if (!doc || !doc.lines) {
@@ -206,9 +164,7 @@ function denySnippet(model, stmt) {
 // Returns { grants: Map key→item, capped: boolean }.
 function collectGrants(model) {
   const grants = new Map();
-  let capped = false;
-  // Cap high enough for the full catalogue; if we still truncate, say so.
-  const CAP = Number.MAX_SAFE_INTEGER;
+  const state = { capped: false };
 
   for (const stmt of model.statements) {
     if (stmt.provider !== 'aws' || stmt.effect !== 'Allow') continue;
@@ -217,34 +173,7 @@ function collectGrants(model) {
       : (stmt.kind === 'identity' ? ['*'] : []);
     if (!resources.length) continue;
 
-    let granted;
-    if (stmt.notActions && stmt.notActions.length) {
-      const all = actions.allActions();
-      granted = all.filter((a) => !stmt.notActions.some((p) => globMatch(p, a)));
-      // NotAction always walks the full catalogue; never silently shorter.
-      if (!actions.isLoaded()) capped = true;
-    } else {
-      const set = new Set();
-      for (const pattern of stmt.actions || []) {
-        const raw = String(pattern);
-        // Concrete actions need no catalogue walk.
-        if (!/[*?]/.test(raw)) {
-          set.add(raw);
-          continue;
-        }
-        const result = actions.expand(raw, { cap: CAP });
-        if (result.capped) capped = true;
-        if (result.unavailable) {
-          set.add(raw);
-          capped = true;
-        } else if (result.actions.length) {
-          for (const a of result.actions) set.add(a);
-        } else {
-          set.add(raw);
-        }
-      }
-      granted = [...set];
-    }
+    const granted = expandStmtActions(stmt, state);
 
     const conditions = stmt.conditions || null;
     const conditional = Boolean(conditions);
@@ -267,18 +196,20 @@ function collectGrants(model) {
       }
     }
   }
-  return { grants, capped };
+  return { grants, capped: state.capped };
 }
 
 function grantPairKey(item) {
   return `${String(item.action).toLowerCase()}|${item.resource}`;
 }
 
+// Before covers after when before has no condition, the same condition, or a weaker one.
 // True when every constraint in `weaker` also appears in `stronger` (same op/key/value).
 // An empty / missing condition is the weakest grant and covers any after-side condition.
 function conditionIsSubset(weaker, stronger) {
   if (!weaker) return true;
   if (!stronger) return false;
+  if (JSON.stringify(weaker) === JSON.stringify(stronger)) return true;
   for (const [op, keys] of Object.entries(weaker)) {
     if (!stronger[op] || typeof stronger[op] !== 'object') return false;
     for (const [key, val] of Object.entries(keys || {})) {
@@ -336,19 +267,11 @@ function securityConditionWeakened(before, after) {
   return false;
 }
 
-// Before covers after when before has no condition, the same condition, or a weaker one.
-function beforeCoversAfter(beforeCond, afterCond) {
-  if (!beforeCond) return true;
-  if (!afterCond) return false;
-  if (JSON.stringify(beforeCond) === JSON.stringify(afterCond)) return true;
-  return conditionIsSubset(beforeCond, afterCond);
-}
-
 // action|resource pairs that appear as Allow grants, ignoring the conditional bit.
 function allowPairs(grants) {
   const pairs = new Map();
   for (const item of grants.values()) {
-    const key = `${String(item.action).toLowerCase()}|${item.resource}`;
+    const key = grantPairKey(item);
     if (!pairs.has(key)) pairs.set(key, item);
   }
   return pairs;
@@ -370,10 +293,6 @@ function principalAccountId(principalId) {
   if (/^\d{12}$/.test(id)) return id;
   const m = id.match(/^arn:aws:iam::(\d{12}):/);
   return m ? m[1] : null;
-}
-
-function isPublicPrincipal(entry) {
-  return entry.type === 'any' || entry.id === '*';
 }
 
 function expandStmtActions(stmt, state) {
@@ -403,13 +322,6 @@ function expandStmtActions(stmt, state) {
   return [...set];
 }
 
-function stmtResourcesForPrincipal(stmt) {
-  if (stmt.resources && stmt.resources.length) return stmt.resources;
-  // Trust policies rarely name a Resource; treat as *.
-  if (stmt.kind === 'trust' || stmt.kind === 'identity') return ['*'];
-  return ['*'];
-}
-
 // Collect Allow grants that name Principal / NotPrincipal (resource + trust).
 function collectPrincipalGrants(model) {
   const grants = new Map();
@@ -428,49 +340,31 @@ function collectPrincipalGrants(model) {
     }
 
     const granted = expandStmtActions(stmt, state);
-    const resources = stmtResourcesForPrincipal(stmt);
+    // Trust policies rarely name a Resource; treat as *.
+    const resources = stmt.resources?.length ? stmt.resources : ['*'];
     const scoped = hasPrincipalScope(stmt.conditions);
 
-    for (const entry of stmt.principals || []) {
-      for (const action of granted) {
-        const line = actionLine(model, stmt, action);
-        for (const resource of resources) {
-          const key = `${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
-          if (grants.has(key)) continue;
-          grants.set(key, {
-            action,
-            resource,
-            principal: entry.id,
-            principalType: entry.type,
-            doc: stmt.doc,
-            line,
-            sid: stmt.sid || null,
-            conditional: Boolean(stmt.conditions),
-            scoped,
-          });
-        }
-      }
-    }
-
     // NotPrincipal: remember exclusions so a removed exclusion counts as widening.
-    for (const entry of stmt.notPrincipals || []) {
-      for (const action of granted) {
-        const line = actionLine(model, stmt, action);
-        for (const resource of resources) {
-          const key = `not|${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
-          if (grants.has(key)) continue;
-          grants.set(key, {
-            action,
-            resource,
-            principal: entry.id,
-            principalType: entry.type,
-            notPrincipal: true,
-            doc: stmt.doc,
-            line,
-            sid: stmt.sid || null,
-            conditional: Boolean(stmt.conditions),
-            scoped,
-          });
+    for (const [entries, notPrincipal] of [[stmt.principals, false], [stmt.notPrincipals, true]]) {
+      for (const entry of entries || []) {
+        for (const action of granted) {
+          const line = actionLine(model, stmt, action);
+          for (const resource of resources) {
+            const key = `${notPrincipal ? 'not|' : ''}${entry.type}|${entry.id}|${String(action).toLowerCase()}|${resource}|${scoped ? 's' : 'u'}`;
+            if (grants.has(key)) continue;
+            grants.set(key, {
+              action,
+              resource,
+              principal: entry.id,
+              principalType: entry.type,
+              ...(notPrincipal ? { notPrincipal: true } : {}),
+              doc: stmt.doc,
+              line,
+              sid: stmt.sid || null,
+              conditional: Boolean(stmt.conditions),
+              scoped,
+            });
+          }
         }
       }
     }
@@ -479,14 +373,10 @@ function collectPrincipalGrants(model) {
 }
 
 function classifyPrincipalSensitivity(entry, beforeAccounts, scoped) {
-  if (isPublicPrincipal(entry) && !scoped) return 'public';
+  if ((entry.type === 'any' || entry.id === '*') && !scoped) return 'public';
   const account = principalAccountId(entry.id);
   if (account && !beforeAccounts.has(account)) return 'cross-account';
   return null;
-}
-
-function principalActionIsStopWorthy(action) {
-  return actions.accessLevel(action) !== 'List';
 }
 
 function listNewlyAllowed({ beforeModel, afterModel }) {
@@ -511,7 +401,7 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     afterSeen.add(dedupe);
 
     const befores = beforeByPair.get(pair) || [];
-    const covering = befores.find((b) => beforeCoversAfter(b.conditions, item.conditions));
+    const covering = befores.find((b) => conditionIsSubset(b.conditions, item.conditions));
     if (covering) {
       // Unconditional before + conditional after is a narrowing, not new access.
       if (!covering.conditions && item.conditions && !narrowedSeen.has(pair)) {
@@ -537,8 +427,8 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   }
 
   // Same Allow on both sides, but a Deny that used to cover it is gone / narrower.
-  const beforeDenies = collectDenies(beforeModel);
-  const afterDenies = collectDenies(afterModel);
+  const beforeDenies = beforeModel.statements.filter((stmt) => stmt.provider === 'aws' && stmt.effect === 'Deny');
+  const afterDenies = afterModel.statements.filter((stmt) => stmt.provider === 'aws' && stmt.effect === 'Deny');
   const beforePairs = allowPairs(before.grants);
   const afterPairs = allowPairs(after.grants);
   const findings = [];
@@ -546,9 +436,9 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
 
   for (const [key, afterItem] of afterPairs) {
     if (!beforePairs.has(key)) continue;
-    const coveringBefore = beforeDenies.filter((d) => denyCovers(d, afterItem.action, afterItem.resource));
+    const coveringBefore = beforeDenies.filter((d) => stmtMatchesAction(d, afterItem.action) && stmtMatchesResource(d, afterItem.resource));
     if (!coveringBefore.length) continue;
-    const stillCovered = afterDenies.some((d) => denyCovers(d, afterItem.action, afterItem.resource));
+    const stillCovered = afterDenies.some((d) => stmtMatchesAction(d, afterItem.action) && stmtMatchesResource(d, afterItem.resource));
     if (stillCovered) continue;
 
     // Prefer the first covering Deny for evidence (stable statement order).
@@ -725,7 +615,7 @@ function verdictFromNewlyAllowed(newlyAllowed) {
   }
   if (items.some((item) => item.reason === 'principal-widened'
     && ['public', 'cross-account'].includes(item.sensitivity)
-    && principalActionIsStopWorthy(item.action, item.resource))) {
+    && actions.accessLevel(item.action) !== 'List')) {
     return {
       status: 'stop',
       label: 'Stop and review',
