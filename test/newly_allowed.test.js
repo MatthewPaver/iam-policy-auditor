@@ -445,4 +445,102 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   ));
 }
 
+
+// Round 4 modelled from public AWS service authorisation action descriptions.
+// Sources: https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonelasticcontainerregistry.html
+// https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssecretsmanager.html
+// https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonsns.html
+{
+  const grant = (Action, Principal) => ({ Effect: 'Allow', Action, Principal, Resource: '*' });
+  const external = { AWS: 'arn:aws:iam::222233334444:role/Reader' };
+  assert.equal(reviewChange({ before: doc(), after: doc(grant(['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'], '*')) }).verdict.status, 'stop');
+  assert.equal(reviewChange({ before: doc(grant('secretsmanager:DescribeSecret', external)), after: doc(grant(['secretsmanager:DescribeSecret', 'secretsmanager:GetSecretValue'], external)) }).verdict.status, 'stop');
+  assert.equal(reviewChange({ before: doc(), after: doc(grant('sns:ListSubscriptionsByTopic', { AWS: 'arn:aws:iam::222233334444:root' })) }).verdict.status, 'pass');
+}
+
+// Modelled from AWS service authorisation access levels, not recorded incidents.
+// https://docs.aws.amazon.com/service-authorization/latest/reference/reference_policies_actions-resources-contextkeys.html
+// https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation-part-2/
+for (const [Action, Resource, expected] of [
+  ['codebuild:StartBuild', '*', 'stop'],
+  ['s3:PutObject', 'arn:aws:s3:::team-artifacts/*', 'review'],
+  ['athena:GetQueryResults', '*', 'stop'],
+  ['cloudwatch:DescribeAlarms', '*', 'pass'],
+  ['sagemaker:CreatePresignedDomainUrl', '*', 'stop'],
+]) {
+  assert.equal(reviewChange({ before: doc(), after: doc({ Effect: 'Allow', Action, Resource }) }).verdict.status, expected, Action);
+}
+
+// Modelled from IAM condition operator semantics:
+// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html
+{
+  const change = (beforeCondition, afterCondition) => reviewChange({
+    before: doc({ Effect: 'Allow', Action: 's3:PutObject', Resource: '*', Condition: beforeCondition }),
+    after: doc({ Effect: 'Allow', Action: 's3:PutObject', Resource: '*', Condition: afterCondition }),
+  });
+  for (const [beforeCondition, afterCondition] of [
+    [{ Bool: { 'aws:MultiFactorAuthPresent': 'true' } }, { BoolIfExists: { 'aws:MultiFactorAuthPresent': 'true' } }],
+    [{ IpAddress: { 'aws:SourceIp': '192.0.2.0/24' } }, { IpAddress: { 'aws:SourceIp': '0.0.0.0/0' } }],
+    [{ StringEquals: { 'aws:RequestedRegion': 'eu-west-2' } }, { StringEquals: { 'aws:RequestedRegion': ['eu-west-2', 'eu-west-1'] } }],
+    [{ StringEquals: { 'aws:PrincipalOrgID': 'o-example' } }, { StringLike: { 'aws:PrincipalOrgID': 'o-*' } }],
+    [{ Bool: { 'aws:SecureTransport': 'true' } }, undefined],
+  ]) {
+    const result = change(beforeCondition, afterCondition);
+    assert.equal(result.verdict.status, 'stop');
+    const item = result.newlyAllowed.items.find((i) => i.reason === 'condition-weakened');
+    assert.ok(item);
+    assert.deepEqual(item.beforeCondition, beforeCondition);
+    assert.deepEqual(item.afterCondition, afterCondition || null);
+  }
+  assert.equal(change({ StringEquals: { 'aws:ResourceTag/team': 'platform' } }, { StringEquals: { 'aws:ResourceTag/team': ['platform', 'delivery'] } }).verdict.status, 'review');
+}
+
+// Modelled from AWS Systems Manager tag-based access and EC2 resource permissions:
+// https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-tagged-resources.html
+// https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonec2.html
+for (const [Action, Resource, Condition, expected] of [
+  ['ssm:SendCommand', '*', { StringEquals: { 'ssm:resourceTag/Environment': 'dev' } }, 'review'],
+  ['ssm:SendCommand', '*', undefined, 'stop'],
+  ['ec2:TerminateInstances', 'arn:aws:ec2:eu-west-2:111122223333:instance/i-0abc', undefined, 'review'],
+  ['iam:PassRole', 'arn:aws:iam::111122223333:role/Deployment', undefined, 'review'],
+  ['ssm:SendCommand', '*', { StringEquals: { 'aws:ResourceTag/team': 'platform' } }, 'review'],
+  ['ssm:SendCommand', '*', { StringEquals: { 'ec2:ResourceTag/team': '*' } }, 'review'],
+]) {
+  assert.equal(reviewChange({ before: doc(), after: doc({ Effect: 'Allow', Action, Resource, Condition }) }).verdict.status, expected, Action);
+}
+
+// Modelled from KMS's account-limited key policy condition:
+// https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html#conditions-kms-caller-account
+{
+  const result = reviewChange({ before: doc(), after: doc({
+    Effect: 'Allow', Principal: '*', Action: 'kms:Decrypt', Resource: '*',
+    Condition: { StringEquals: { 'kms:CallerAccount': '111122223333' } },
+  }) });
+  assert.equal(result.verdict.status, 'review');
+}
+
+// Modelled from IAM NotPrincipal semantics:
+// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_notprincipal.html
+{
+  const statement = { Effect: 'Allow', NotPrincipal: { AWS: 'arn:aws:iam::111122223333:role/Excluded' }, Action: 'ecr:BatchGetImage', Resource: 'arn:aws:ecr:eu-west-2:111122223333:repository/releases' };
+  assert.equal(reviewChange({ before: doc(), after: doc(statement) }).verdict.status, 'stop');
+  assert.equal(reviewChange({ before: doc(statement), after: doc() }).verdict.status, 'pass');
+}
+
+// A narrower CIDR must not be described as a weakened security condition.
+{
+  const statement = (cidr) => ({ Effect: 'Allow', Action: 's3:PutObject', Resource: '*', Condition: { IpAddress: { 'aws:SourceIp': cidr } } });
+  const result = reviewChange({ before: doc(statement('192.0.2.0/24')), after: doc(statement('192.0.2.0/25')) });
+  assert.equal(result.verdict.status, 'review');
+  assert.ok(!result.newlyAllowed.items.some((item) => item.reason === 'condition-weakened'));
+}
+
+// Excluding one account does not constrain a public key grant to an account.
+{
+  assert.equal(reviewChange({ before: doc(), after: doc({
+    Effect: 'Allow', Principal: '*', Action: 'kms:Decrypt', Resource: '*',
+    Condition: { StringNotEquals: { 'kms:CallerAccount': '111122223333' } },
+  }) }).verdict.status, 'stop');
+}
+
 console.log('newly-allowed — passed');

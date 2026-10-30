@@ -23,6 +23,7 @@ const SENSITIVITY = {
     'lambda:UpdateFunctionCode', 'lambda:UpdateFunctionConfiguration',
     'glue:UpdateDevEndpoint',
     'sts:AssumeRole',
+    'sagemaker:CreatePresignedNotebookInstanceUrl', 'sagemaker:CreatePresignedDomainUrl',
   ],
   // Shell / serial / SSM / ECS exec paths — stop like privilege escalation.
   'remote-exec': [
@@ -48,7 +49,7 @@ const SENSITIVITY = {
     'logs:GetLogEvents', 'logs:FilterLogEvents',
   ],
   write: [], // filled from catalogue Write / Tagging when classifying
-  read: [],
+  read: ['account:GetAccountInformation'],
 };
 
 // Message / data-service reads are sensitive even when scoped to one queue/table.
@@ -69,8 +70,18 @@ function matchesSensitivityList(list, action, lower) {
   return false;
 }
 
-function classifySensitivity(action, resource) {
+function broadResource(resource) {
+  if (resource === '*') return true;
+  const parts = String(resource).split(':');
+  if (parts[0] !== 'arn') return false;
+  if (/[*?]/.test(parts[4] || '')) return true;
+  const name = parts.slice(5).join(':');
+  return /^[*?]/.test(name) || /(?:^|[:/])[*?]$/.test(name) && !/^s3$/.test(parts[2]);
+}
+
+function classifySensitivity(action, resource, conditional = false) {
   const lower = String(action).toLowerCase();
+  if (matchesSensitivityList(SENSITIVITY.read, action, lower)) return 'read';
   if (matchesSensitivityList(SENSITIVITY.privesc, action, lower)) return 'privesc';
   if (matchesSensitivityList(SENSITIVITY['remote-exec'], action, lower)) return 'remote-exec';
   if (matchesSensitivityList(SENSITIVITY.destructive, action, lower)) return 'destructive';
@@ -89,7 +100,13 @@ function classifySensitivity(action, resource) {
     return 'sensitive-read';
   }
   const level = actions.accessLevel(action);
-  if (level === 'Write' || level === 'Tagging' || level === 'Permissions management') return 'write';
+  const name = String(action).split(':')[1] || '';
+  if (level === 'Permissions management') return broadResource(resource) ? 'privesc' : 'write';
+  if (level === 'Write' && broadResource(resource)
+    && /^(Delete|Terminate|Destroy|Remove|Purge|Disable|Stop|Reset|Modify|Update|Put|Create|Run|Start|Invoke|Execute)/i.test(name)) return 'destructive';
+  if (!conditional && level === 'Read' && broadResource(resource)
+    && /^(Get|BatchGet|Query|Scan|Receive|Download|Export|Decrypt|Retrieve|Select|CreatePresigned)/i.test(name)) return 'sensitive-read';
+  if (level === 'Write' || level === 'Tagging') return 'write';
   return 'read';
 }
 
@@ -245,7 +262,7 @@ function collectGrants(model) {
           sid: stmt.sid || null,
           conditional,
           conditions,
-          sensitivity: classifySensitivity(action, resource),
+          sensitivity: classifySensitivity(action, resource, conditional),
         });
       }
     }
@@ -272,6 +289,53 @@ function conditionIsSubset(weaker, stronger) {
   return true;
 }
 
+const SECURITY_KEYS = new Set([
+  'aws:multifactorauthpresent', 'aws:sourceip', 'aws:principalorgid',
+  'aws:securetransport', 'aws:sourcearn', 'aws:sourceaccount',
+  'sts:externalid', 'aws:requestedregion',
+]);
+
+function ipv4Range(cidr) {
+  const [address, width = '32'] = String(cidr).split('/');
+  const octets = address.split('.');
+  const bits = Number(width);
+  if (octets.length !== 4 || !/^\d+$/.test(width) || bits < 0 || bits > 32
+    || octets.some((n) => !/^\d+$/.test(n) || Number(n) > 255)) return null;
+  const ip = octets.reduce((value, n) => value * 256 + Number(n), 0);
+  const size = 2 ** (32 - bits);
+  const start = Math.floor(ip / size) * size;
+  return { start, end: start + size - 1 };
+}
+
+function securityConditionWeakened(before, after) {
+  for (const [op, keys] of Object.entries(before || {})) {
+    for (const [key, value] of Object.entries(keys || {})) {
+      if (!SECURITY_KEYS.has(key.toLowerCase())) continue;
+      const entries = Object.entries(after || {}).flatMap(([nextOp, nextKeys]) =>
+        Object.entries(nextKeys || {}).filter(([k]) => k.toLowerCase() === key.toLowerCase())
+          .map(([, v]) => ({ op: nextOp, values: [].concat(v).map(String) })));
+      if (!entries.length) return true;
+      const oldValues = [].concat(value).map(String);
+      for (const entry of entries) {
+        if (entry.op === `${op}IfExists`) return true;
+        if (op === 'StringEquals' && entry.op === 'StringLike'
+          && entry.values.some((v) => /[*?]/.test(v))) return true;
+        if (entry.op !== op) continue;
+        if (entry.values.length > oldValues.length && oldValues.every((v) => entry.values.includes(v))) return true;
+        if (op === 'IpAddress' && entry.values.some((v) => {
+          const next = ipv4Range(v);
+          return next && oldValues.some((old) => {
+            const previous = ipv4Range(old);
+            return previous && next.start <= previous.start && next.end >= previous.end
+              && (next.start < previous.start || next.end > previous.end);
+          });
+        })) return true;
+      }
+    }
+  }
+  return false;
+}
+
 // Before covers after when before has no condition, the same condition, or a weaker one.
 function beforeCoversAfter(beforeCond, afterCond) {
   if (!beforeCond) return true;
@@ -295,7 +359,10 @@ const PRINCIPAL_SCOPE_KEYS = /sts:ExternalId|aws:SourceArn|aws:SourceAccount|aws
 
 function hasPrincipalScope(conditions) {
   if (!conditions) return false;
-  return PRINCIPAL_SCOPE_KEYS.test(JSON.stringify(conditions));
+  if (PRINCIPAL_SCOPE_KEYS.test(JSON.stringify(conditions))) return true;
+  return Object.entries(conditions.StringEquals || {}).some(([key, value]) =>
+    key.toLowerCase() === 'kms:calleraccount' && [].concat(value).length > 0
+    && [].concat(value).every((account) => /^\d{12}$/.test(String(account))));
 }
 
 function principalAccountId(principalId) {
@@ -418,10 +485,8 @@ function classifyPrincipalSensitivity(entry, beforeAccounts, scoped) {
   return null;
 }
 
-function principalActionIsStopWorthy(action, resource) {
-  if (/^sts:AssumeRole$/i.test(action)) return true;
-  const sens = classifyDenyRemovedSensitivity(action, resource);
-  return ['write', 'sensitive-read', 'destructive', 'privesc', 'remote-exec'].includes(sens);
+function principalActionIsStopWorthy(action) {
+  return actions.accessLevel(action) !== 'List';
 }
 
 function listNewlyAllowed({ beforeModel, afterModel }) {
@@ -460,7 +525,15 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
       }
       continue;
     }
-    items.push(item);
+    const weakened = befores.find((b) => securityConditionWeakened(b.conditions, item.conditions));
+    items.push(weakened ? {
+      ...item,
+      reason: 'condition-weakened',
+      beforeCondition: weakened.conditions,
+      afterCondition: item.conditions,
+      beforeConditionText: JSON.stringify(weakened.conditions),
+      afterConditionText: JSON.stringify(item.conditions),
+    } : item);
   }
 
   // Same Allow on both sides, but a Deny that used to cover it is gone / narrower.
@@ -514,7 +587,15 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   const afterPrinc = collectPrincipalGrants(afterModel);
 
   for (const [key, afterItem] of afterPrinc.grants) {
-    if (afterItem.notPrincipal) continue; // exclusions are handled below
+    if (afterItem.notPrincipal) {
+      const existed = [...beforePrinc.grants.values()].some((entry) => entry.notPrincipal
+        && String(entry.action).toLowerCase() === String(afterItem.action).toLowerCase()
+        && entry.resource === afterItem.resource);
+      if (!existed) {
+        items.push({ ...afterItem, principal: '*', sensitivity: 'public', reason: 'principal-widened' });
+      }
+      continue;
+    } // exclusions removed from existing grants are handled below
     if (beforePrinc.grants.has(key)) continue;
 
     // Same principal+action+resource already present with a scope pin → dropping
@@ -543,7 +624,10 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
     }
 
     const entry = { type: afterItem.principalType, id: afterItem.principal };
-    const principalSens = classifyPrincipalSensitivity(entry, beforePrinc.accounts, afterItem.scoped);
+    const existingPrincipal = [...beforePrinc.grants.values()].some((b) =>
+      b.principal === afterItem.principal && !b.notPrincipal);
+    const principalSens = classifyPrincipalSensitivity(entry,
+      existingPrincipal ? new Set() : beforePrinc.accounts, afterItem.scoped);
     const sensitivity = principalSens || classifySensitivity(afterItem.action, afterItem.resource);
     items.push({
       action: afterItem.action,
@@ -562,6 +646,9 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   for (const [key, beforeItem] of beforePrinc.grants) {
     if (!beforeItem.notPrincipal) continue;
     if (afterPrinc.grants.has(key)) continue;
+    if (![...afterPrinc.grants.values()].some((entry) =>
+      String(entry.action).toLowerCase() === String(beforeItem.action).toLowerCase()
+      && entry.resource === beforeItem.resource)) continue;
     const entry = { type: beforeItem.principalType, id: beforeItem.principal };
     const principalSens = classifyPrincipalSensitivity(entry, beforePrinc.accounts, false);
     const sensitivity = principalSens || classifySensitivity(beforeItem.action, beforeItem.resource);
@@ -600,10 +687,25 @@ function listNewlyAllowed({ beforeModel, afterModel }) {
   };
 }
 
+function scopedSensitive(item) {
+  if (!['remote-exec', 'destructive', 'privesc'].includes(item.sensitivity)) return false;
+  const parts = String(item.resource).split(':');
+  // Attaching an arbitrary policy can escalate even a single named identity.
+  if (/^iam:Attach(?:User|Group|Role)Policy$/i.test(item.action)) return false;
+  const named = parts[0] === 'arn' && !/[*?]/.test(parts[4] || '')
+    && !item.resource.includes('${') && !broadResource(item.resource);
+  const tagged = Object.entries(item.conditions?.StringEquals || {}).some(([key]) =>
+    /^(aws|ec2|ssm):resourcetag\//i.test(key));
+  return named || tagged;
+}
+
 function verdictFromNewlyAllowed(newlyAllowed) {
   const items = newlyAllowed.items || [];
+  if (items.some((item) => item.reason === 'condition-weakened')) {
+    return { status: 'stop', label: 'Stop and review', reason: 'The change weakens a security condition.' };
+  }
   // Unconditional sensitive grants still stop; conditional ones are handled below.
-  if (items.some((item) => !item.conditional
+  if (items.some((item) => !item.conditional && !scopedSensitive(item)
     && ['privesc', 'remote-exec', 'destructive', 'sensitive-read'].includes(item.sensitivity))) {
     return {
       status: 'stop',
@@ -629,6 +731,13 @@ function verdictFromNewlyAllowed(newlyAllowed) {
       label: 'Stop and review',
       reason: 'The change newly allows a public or cross-account principal on sensitive access.',
     };
+  }
+  if (items.some(scopedSensitive)) {
+    return { status: 'review', label: 'Needs context', reason: 'The change adds scoped or tag-conditioned sensitive access.' };
+  }
+  if (items.some((item) => !item.conditional && item.sensitivity === 'write'
+    && !broadResource(item.resource))) {
+    return { status: 'review', label: 'Needs context', reason: 'The change adds scoped write or permissions-management access.' };
   }
   // Conditional non-read access still needs a human (Review Focus 3).
   if (items.some((item) => item.conditional && item.sensitivity !== 'read')) {
