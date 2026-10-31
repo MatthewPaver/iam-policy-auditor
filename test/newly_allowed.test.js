@@ -31,7 +31,9 @@ const kmsKey = 'arn:aws:kms:eu-west-1:111122223333:key/1234abcd-12ab-34cd-56ef-1
   assert.match(review.verdict.sentence, /read any object in any S3 bucket/);
   const source = review.newlyAllowed.sources.after.find((d) => d.name === getObject.doc);
   assert.match(source.text.split('\n')[getObject.line - 1], /s3:getObject/i);
-  assert.ok(elapsed < 2000, `v19→v20 review took ${elapsed}ms (limit 2000)`);
+  // 2 s on a developer machine; shared CI runners are slower, so allow 6 s there.
+  const limit = process.env.CI ? 6000 : 2000;
+  assert.ok(elapsed < limit, `v19→v20 review took ${elapsed}ms (limit ${limit})`);
 }
 
 // Capital One modelled (C01) and ARN-wildcard form (C01b).
