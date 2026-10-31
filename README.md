@@ -1,16 +1,21 @@
 # PolicyLens
 
-Review an AWS permission change. Check that a correction removes declared risky access while preserving required access.
+Give PolicyLens the current and proposed versions of an AWS IAM policy. It lists what the change newly allows, who gains access and the source lines, with a **Stop**, **Check** or **Pass** verdict. Explanations use fixed rules, with no AI or AWS account needed for the review itself.
 
-**For:** engineers and security reviewers, with source-linked evidence that service owners can inspect.
+Try your own policy in 60 seconds from a cloned repository with Node.js 18 or later. Run `npm ci` once. Use your policy ARN and two retained version IDs in place of the examples below. The AWS export commands need credentials with `iam:GetPolicyVersion`; the local review needs none.
 
-**Start here:** [Try PolicyLens](https://matthewpaver.github.io/iam-policy-auditor/). No install, account or policy upload needed.
+```bash
+POLICYLENS_POLICY_ARN='arn:aws:iam::123456789012:policy/YourPolicy'
+aws iam get-policy-version --policy-arn "$POLICYLENS_POLICY_ARN" --version-id v1 > before.json
+aws iam get-policy-version --policy-arn "$POLICYLENS_POLICY_ARN" --version-id v2 > after.json
+node bin/policylens.js review --before before.json --after after.json --format text
+```
 
-1. Follow the synthetic example: a proposed change adds permission to delete a production database.
-2. Check the correction. Inspect the removed deletion statement and retained report access, then verify the declared requests.
-3. Export the review JSON with its source evidence, input identities and limits.
+**Measured accuracy:** set 4: **15/15, seen**; set 5: **pending, not supplied or scored**. Sets 1-4 shaped these rules and are regression evidence. A separate set 5 must supply the next unseen headline score. See the [real-case benchmark](bench/real-cases/), including public sources and unchanged floors. A pass is not production approval.
 
-The browser demo checks supplied policies and declared requests. It does not establish whole-account safety or production approval. Account-analysis tools and optional AI explanations require the local server.
+Prefer the browser? [Review your own policies](https://matthewpaver.github.io/iam-policy-auditor/?view=review), or select **Try a real AWS incident**. Read the sentences first, then inspect actions and line links. **Copy review for a pull request** copies the verdict and stop items. The example uses the public AWS Support policy change described in [AWS-2021-007](https://aws.amazon.com/security/security-bulletins/AWS-2021-007/); AWS says its support systems could not use the inadvertently added permission.
+
+The [own-policy guide](docs/USE_ON_YOUR_OWN_POLICIES.md) covers accepted formats, browser use, exit codes and limits. Optional correction checks test the risky request and the access you declare as required.
 
 **Case study:** [The problem, review journey and before-and-after design](https://matthewpaver.github.io/work/policylens/).
 
@@ -45,15 +50,16 @@ PolicyLens turns "this diff looks risky" into a reproducible **stop**, **needs c
 
 ## Quickstart
 
-Node.js 18 or later (CI uses Node 22). No `npm install`, AWS account or API key is needed to run it.
+Node.js 18 or later (CI uses Node 22). Install the existing dependencies once; the review needs no AWS account or API key.
 
 ```bash
 git clone https://github.com/MatthewPaver/iam-policy-auditor.git
 cd iam-policy-auditor
+npm ci
 npm run demo        # serves http://127.0.0.1:4177, this machine only
 ```
 
-The terminal prints `Mode: local` and `AI layer: disabled — set ANTHROPIC_API_KEY to enable`. Then, in the browser:
+The terminal reports local mode and whether optional AI is configured. Then, in the browser:
 
 1. The **Change review** workbench opens by default. Select **Load the example**.
 2. Expected result: **Stop and review**, `ImplicitDeny → Allow`, with evidence `S2 after.json:10 (DeleteProductionDatabase)`.
@@ -69,7 +75,7 @@ The same check is available over HTTP (`POST /api/change/review`, `POST /api/cha
 
 The default page is a product landing with a real-engine synthetic example. Its three chapters explain introduced access, verify a correction against required report access, and export the evidence. The cited statement stays inspectable and copyable. A user-triggered source trace supports reduced motion; chapter controls work by keyboard. The example never shares state with a visitor’s own review.
 
-Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two JSON files or paste their policies, name the action and resource to check, and select **Check my policies**. The fields start empty; **Load the example** fills and checks the made-up example. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
+Choose **Use your own policies**, or open `/?view=review`, for the workbench. Open two files or paste their policies and select **Check my policies**. Leave the action and resource blank to list newly allowed access, or fill both to check one request. The fields start empty; **Load the example** fills and checks the made-up example. The original proposal keeps its stopped result beside the corrected candidate. **Export review JSON** saves exact inputs, SHA-256 identities, engine/schema version and source identity, citations, limits and any correction result. Editing original inputs invalidates both results; editing correction inputs invalidates that correction. Product-home navigation preserves in-tab work; the app does not add persistent policy storage.
 
 The correction view compares the exact proposed and candidate statements: removed, retained and added, with inspectable JSON and source pointers. It appears in the guided example and completed own-policy verification. This is a document comparison, not an access verdict: an added deny can close the request while leaving its original allow statement in place. Editing a candidate refreshes the comparison and invalidates verification; only the existing engine can establish the declared access outcome.
 
@@ -107,11 +113,11 @@ flowchart LR
 
 ## Results
 
-All three checks run offline in CI on every push.
+These checks run offline in CI. The sandbox run on 30 October 2026 passed the engine and contract suites, but `npm test` could not finish its HTTP demo test because localhost binding was denied.
 
 | Check | Command | Result | What it does not show |
 |---|---|---|---|
-| Unit and contract tests | `npm test` | All unit and contract suites pass | Behaviour on real account data; the fixtures are synthetic. |
+| Unit and contract tests | `npm test` | Engine and contract checks pass; HTTP demo test blocked in the sandbox | Behaviour on real account data; the fixtures are synthetic. |
 | AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
 | Authored regression corpus | `npm run benchmark` | Engine agrees with 86/86 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
 
@@ -120,9 +126,9 @@ The independent check is `npm run benchmark:aws`, which compares the engine with
 ## Design decisions and trade-offs
 
 - **The engine decides; the LLM only explains.** Rejected: asking an LLM whether the diff is risky. A permission verdict has to be reproducible and point at a statement, and a model answer varies between runs and can invent statements. The explanation is withheld when it fails the gate, not repaired. Cost: questions outside the engine's model get "not evaluated" rather than an answer.
-- **Check a declared request, not the whole policy.** Rejected: a full semantic diff or a single risk score. A reviewer can act on "this request went from denied to allowed"; a diff across 21,656 actions is noise. Cost: the reviewer must name the sensitive action and resource. The rules still flag any new high or critical finding outside that request.
+- **Start with newly allowed access.** Without a request, compare grants using the local action catalogue and rules, then group findings by risk. A declared action, resource and context checks one specific path. These local rules do not provide AWS formal reasoning or complete policy implication checks.
 - **Verify the fix against the risk and the access that must survive.** Rejected: suggesting a rewrite and stopping there. Least-privilege fixes often break the legitimate reader, so the correction is tested both ways. Cost: required-access cases have to be declared.
-- **Zero runtime dependencies.** Rejected: Express and TypeScript. A tool that reads policy data benefits from a small supply-chain surface, and clone-and-run needs no install. Cost: hand-written routing, a 5 MB body cap and a per-IP throttle instead of middleware. ESLint is a dev-only dependency.
+- **One runtime dependency.** The existing `yaml` parser accepts CloudFormation YAML. Routing uses Node directly, with a 5 MB body cap and a per-IP throttle. ESLint and Playwright are development dependencies.
 - **AWS depth before multi-cloud breadth.** Rejected: equal support for AWS, GCP, Azure and IBM. Evaluation semantics matter more to a security reviewer than coverage, so change review and condition-aware evaluation are AWS-only. Other clouds get parsing and rules.
 
 ## Limits and non-goals

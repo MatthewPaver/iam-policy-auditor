@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Evidence-first AWS IAM change review with deterministic correction checks and evaluated AI explanations.",
   "main": "server.js",
+  "bin": {
+    "policylens": "bin/policylens.js"
+  },
   "scripts": {
     "start": "node server.js",
-    "test": "node test/run.js && node test/evaluate.test.js && node test/condition-verification.test.js && node test/actions.test.js && node test/graph.test.js && node test/resource_policy.test.js && node test/lint.test.js && node test/change_review.test.js && node test/ai_eval.test.js && node test/provenance.test.js && node test/benchmark-contract.test.js && node test/demo-api.test.js && node test/correction_view.test.js",
+    "test": "node test/run.js && node test/evaluate.test.js && node test/condition-verification.test.js && node test/actions.test.js && node test/graph.test.js && node test/resource_policy.test.js && node test/lint.test.js && node test/change_review.test.js && node test/adapters.test.js && node test/principal.test.js && node test/newly_allowed.test.js && node test/cli.test.js && node test/real-cases/run.test.js && node test/ai_eval.test.js && node test/provenance.test.js && node test/benchmark-contract.test.js && node test/demo-api.test.js && node test/correction_view.test.js",
     "lint": "eslint .",
     "eval": "node evals/run.js",
     "eval:live": "node evals/live-run.js",
@@ -15,7 +18,8 @@
     "ingest": "node scripts/ingest-aws-actions.js",
     "test:browser": "playwright test",
     "build:demo": "node scripts/build-browser-demo.js",
-    "test:simulation": "npm run build:demo && node test/simulation/verify-impact.cjs"
+    "test:simulation": "npm run build:demo && node test/simulation/verify-impact.cjs",
+    "bench:real": "node bench/real-cases/run.js"
   },
   "engines": {
     "node": ">=18"
@@ -27,5 +31,8 @@
     "@playwright/test": "^1.64.1",
     "eslint": "^9.39.5",
     "globals": "^17.13.0"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
   }
 }

@@ -1,0 +1,1556 @@
+[
+ {
+  "id": "PLH3-A01",
+  "title": "AWSDataExchangeSubscriberFullAccess v2 -> v3 (Jan 2021): aws:CalledVia condition added to the s3:GetObject statement",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/c7ab41623ba03bb742a33ac786b286987bd74226/policies/AWSDataExchangeSubscriberFullAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSDataExchangeSubscriberFullAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2020-04-27T14:28:00Z",
+    "commit": "221b65e466b16c053592ec4e418e2521b0ee6977",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/221b65e466b16c053592ec4e418e2521b0ee6977/policies/AWSDataExchangeSubscriberFullAccess"
+   },
+   "after": {
+    "versionId": "v3",
+    "createDate": "2021-01-14T17:06:28Z",
+    "commit": "c7ab41623ba03bb742a33ac786b286987bd74226",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/c7ab41623ba03bb742a33ac786b286987bd74226/policies/AWSDataExchangeSubscriberFullAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dataexchange:Get*",
+      "dataexchange:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dataexchange:CreateJob",
+      "dataexchange:StartJob",
+      "dataexchange:CancelJob"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "StringEquals": {
+       "dataexchange:JobType": [
+        "EXPORT_ASSETS_TO_S3",
+        "EXPORT_ASSET_TO_SIGNED_URL"
+       ]
+      }
+     }
+    },
+    {
+     "Action": "s3:GetObject",
+     "Effect": "Allow",
+     "Resource": "arn:aws:s3:::*aws-data-exchange*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetBucketLocation",
+      "s3:ListBucket",
+      "s3:ListAllMyBuckets"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "aws-marketplace:Subscribe",
+      "aws-marketplace:Unsubscribe",
+      "aws-marketplace:ViewSubscriptions",
+      "aws-marketplace:GetAgreementRequest",
+      "aws-marketplace:ListAgreementRequests",
+      "aws-marketplace:CancelAgreementRequest"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "kms:DescribeKey",
+      "kms:ListAliases",
+      "kms:ListKeys"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dataexchange:Get*",
+      "dataexchange:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dataexchange:CreateJob",
+      "dataexchange:StartJob",
+      "dataexchange:CancelJob"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "StringEquals": {
+       "dataexchange:JobType": [
+        "EXPORT_ASSETS_TO_S3",
+        "EXPORT_ASSET_TO_SIGNED_URL"
+       ]
+      }
+     }
+    },
+    {
+     "Action": "s3:GetObject",
+     "Effect": "Allow",
+     "Resource": "arn:aws:s3:::*aws-data-exchange*",
+     "Condition": {
+      "ForAnyValue:StringEquals": {
+       "aws:CalledVia": [
+        "dataexchange.amazonaws.com"
+       ]
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:GetBucketLocation",
+      "s3:ListBucket",
+      "s3:ListAllMyBuckets"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "aws-marketplace:Subscribe",
+      "aws-marketplace:Unsubscribe",
+      "aws-marketplace:ViewSubscriptions",
+      "aws-marketplace:GetAgreementRequest",
+      "aws-marketplace:ListAgreementRequests",
+      "aws-marketplace:CancelAgreementRequest"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "kms:DescribeKey",
+      "kms:ListAliases",
+      "kms:ListKeys"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "The only edit adds Condition ForAnyValue:StringEquals aws:CalledVia = dataexchange.amazonaws.com to the existing s3:GetObject on arn:aws:s3:::*aws-data-exchange* statement. A new condition on an Allow can only remove matches. Direct GetObject calls are now implicitly denied, and calls made through Data Exchange are unchanged. Nothing is newly allowed."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-calledvia",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "False-positive test: the diff touches an s3:GetObject statement."
+ },
+ {
+  "id": "PLH3-A02",
+  "title": "AWSCodePipelineFullAccess v5 -> v6 (Jun 2019): s3:CreateBucket and s3:PutBucketPolicy moved from Resource * to codepipeline-* buckets",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/c714415804a7630f61a269253c07dc0b1d162ca1/policies/AWSCodePipelineFullAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSCodePipelineFullAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v5",
+    "createDate": "2016-11-01T19:59:46Z",
+    "commit": "ad4c2e8fdf77143515c3ca9f6efc0f4181ec6955",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/ad4c2e8fdf77143515c3ca9f6efc0f4181ec6955/policies/AWSCodePipelineFullAccess"
+   },
+   "after": {
+    "versionId": "v6",
+    "createDate": "2019-06-10T23:43:50Z",
+    "commit": "c714415804a7630f61a269253c07dc0b1d162ca1",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/c714415804a7630f61a269253c07dc0b1d162ca1/policies/AWSCodePipelineFullAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "codepipeline:*",
+      "iam:ListRoles",
+      "iam:PassRole",
+      "s3:CreateBucket",
+      "s3:GetBucketPolicy",
+      "s3:GetObject",
+      "s3:ListAllMyBuckets",
+      "s3:ListBucket",
+      "s3:PutBucketPolicy",
+      "codecommit:ListBranches",
+      "codecommit:ListRepositories",
+      "codedeploy:GetApplication",
+      "codedeploy:GetDeploymentGroup",
+      "codedeploy:ListApplications",
+      "codedeploy:ListDeploymentGroups",
+      "elasticbeanstalk:DescribeApplications",
+      "elasticbeanstalk:DescribeEnvironments",
+      "lambda:GetFunctionConfiguration",
+      "lambda:ListFunctions",
+      "opsworks:DescribeApps",
+      "opsworks:DescribeLayers",
+      "opsworks:DescribeStacks",
+      "cloudformation:DescribeStacks",
+      "cloudformation:ListChangeSets"
+     ],
+     "Resource": "*",
+     "Effect": "Allow"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "codepipeline:*",
+      "iam:ListRoles",
+      "iam:PassRole",
+      "s3:GetBucketPolicy",
+      "s3:GetObject",
+      "s3:ListAllMyBuckets",
+      "s3:ListBucket",
+      "codecommit:ListBranches",
+      "codecommit:ListRepositories",
+      "codedeploy:GetApplication",
+      "codedeploy:GetDeploymentGroup",
+      "codedeploy:ListApplications",
+      "codedeploy:ListDeploymentGroups",
+      "elasticbeanstalk:DescribeApplications",
+      "elasticbeanstalk:DescribeEnvironments",
+      "lambda:GetFunctionConfiguration",
+      "lambda:ListFunctions",
+      "opsworks:DescribeApps",
+      "opsworks:DescribeLayers",
+      "opsworks:DescribeStacks",
+      "cloudformation:DescribeStacks",
+      "cloudformation:ListChangeSets"
+     ],
+     "Resource": "*",
+     "Effect": "Allow"
+    },
+    {
+     "Action": [
+      "s3:CreateBucket",
+      "s3:PutBucketPolicy"
+     ],
+     "Resource": "arn:aws:s3:::codepipeline-*",
+     "Effect": "Allow"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "In v5, s3:CreateBucket and s3:PutBucketPolicy are in the main statement on Resource \"*\". v6 removes them there and adds a new statement allowing only those two actions on arn:aws:s3:::codepipeline-*. Every request v6 allows, v5 already allowed, and PutBucketPolicy on any other bucket is now denied by default. Strictly narrower."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "False-positive test: a new statement containing s3:PutBucketPolicy appears in the diff."
+ },
+ {
+  "id": "PLH3-A03",
+  "title": "AWSCloudTrail_FullAccess v2 -> v1 (Oct 2020): default version rolled back, removing a DynamoDB list statement",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/6200b07e415c6a2560d9255d4bcd261b70980455/policies/AWSCloudTrail_FullAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSCloudTrail_FullAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2020-10-21T19:40:46Z",
+    "commit": "7ca1fdf1a3a4a6b872a403d9cf6f3c95344edb61",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/7ca1fdf1a3a4a6b872a403d9cf6f3c95344edb61/policies/AWSCloudTrail_FullAccess"
+   },
+   "after": {
+    "versionId": "v1",
+    "createDate": "2020-10-08T23:41:15Z",
+    "commit": "6200b07e415c6a2560d9255d4bcd261b70980455",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/6200b07e415c6a2560d9255d4bcd261b70980455/policies/AWSCloudTrail_FullAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "sns:AddPermission",
+      "sns:CreateTopic",
+      "sns:SetTopicAttributes",
+      "sns:GetTopicAttributes"
+     ],
+     "Resource": [
+      "arn:aws:sns:*:*:aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "sns:ListTopics"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:CreateBucket",
+      "s3:PutBucketPolicy"
+     ],
+     "Resource": [
+      "arn:aws:s3:::aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation",
+      "s3:GetBucketPolicy"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "cloudtrail:*",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "logs:CreateLogGroup"
+     ],
+     "Resource": [
+      "arn:aws:logs:*:*:log-group:aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRolePolicy",
+      "iam:GetUser"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "iam:PassRole"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "StringEquals": {
+       "iam:PassedToService": "cloudtrail.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "kms:CreateKey",
+      "kms:CreateAlias",
+      "kms:ListKeys",
+      "kms:ListAliases"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dynamodb:ListGlobalTables",
+      "dynamodb:ListTables"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "sns:AddPermission",
+      "sns:CreateTopic",
+      "sns:SetTopicAttributes",
+      "sns:GetTopicAttributes"
+     ],
+     "Resource": [
+      "arn:aws:sns:*:*:aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "sns:ListTopics"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:CreateBucket",
+      "s3:PutBucketPolicy"
+     ],
+     "Resource": [
+      "arn:aws:s3:::aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "s3:ListAllMyBuckets",
+      "s3:GetBucketLocation",
+      "s3:GetBucketPolicy"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "cloudtrail:*",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "logs:CreateLogGroup"
+     ],
+     "Resource": [
+      "arn:aws:logs:*:*:log-group:aws-cloudtrail-logs*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRolePolicy",
+      "iam:GetUser"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "iam:PassRole"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "StringEquals": {
+       "iam:PassedToService": "cloudtrail.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "kms:CreateKey",
+      "kms:CreateAlias",
+      "kms:ListKeys",
+      "kms:ListAliases"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "v1 is v2 without the statement allowing dynamodb:ListGlobalTables and dynamodb:ListTables on \"*\". The other statements are identical. Removing an Allow cannot allow anything new."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "AWS moved the default version back from v2 to v1 the day after publishing v2."
+ },
+ {
+  "id": "PLH3-A04",
+  "title": "AWSBackupOperatorAccess v4 -> v5 (Sep 2020): ssm:SendCommand added, but only with the AWSEC2-CreateVssSnapshot document",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/e8d0ab1242c807d14a02c2567f85919978822fed/policies/AWSBackupOperatorAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSBackupOperatorAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v4",
+    "createDate": "2020-06-24T16:24:21Z",
+    "commit": "94c502a51d2fe6810b043bfd84f7e929e08f53bd",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/94c502a51d2fe6810b043bfd84f7e929e08f53bd/policies/AWSBackupOperatorAccess"
+   },
+   "after": {
+    "versionId": "v5",
+    "createDate": "2020-09-14T22:35:03Z",
+    "commit": "e8d0ab1242c807d14a02c2567f85919978822fed",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/e8d0ab1242c807d14a02c2567f85919978822fed/policies/AWSBackupOperatorAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "backup:Get*",
+      "backup:List*",
+      "backup:Describe*",
+      "backup:CreateBackupSelection",
+      "backup:DeleteBackupSelection",
+      "backup:GetRecoveryPointRestoreMetadata",
+      "backup:StartBackupJob",
+      "backup:StartRestoreJob",
+      "backup:StartCopyJob"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "rds:DescribeDBSnapshots",
+      "rds:ListTagsForResource",
+      "rds:DescribeDBInstances",
+      "rds:describeDBSnapshots",
+      "rds:describeDBEngineVersions",
+      "rds:describeOptionGroups",
+      "rds:describeOrderableDBInstanceOptions",
+      "rds:describeDBSubnetGroups",
+      "rds:DescribeDBClusterSnapshots",
+      "rds:DescribeDBClusters",
+      "rds:DescribeDBParameterGroups",
+      "rds:DescribeDBClusterParameterGroups"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "dynamodb:ListBackups",
+      "dynamodb:ListTables"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "elasticfilesystem:DescribeFilesystems"
+     ],
+     "Resource": "arn:aws:elasticfilesystem:*:*:file-system/*",
+     "Effect": "Allow"
+    },
+    {
+     "Action": [
+      "ec2:DescribeSnapshots",
+      "ec2:DescribeVolumes",
+      "ec2:describeAvailabilityZones",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeImages",
+      "ec2:DescribeSubnets",
+      "ec2:DescribePlacementGroups",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceTypes"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "tag:GetTagKeys",
+      "tag:GetTagValues",
+      "tag:GetResources"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:DescribeCachediSCSIVolumes",
+      "storagegateway:DescribeStorediSCSIVolumes"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:gateway/*/volume/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:ListGateways"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:DescribeGatewayInformation",
+      "storagegateway:ListVolumes",
+      "storagegateway:ListLocalDisks"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:gateway/*"
+    },
+    {
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRole"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": [
+      "arn:aws:iam::*:role/*AwsBackup*",
+      "arn:aws:iam::*:role/*AWSBackup*"
+     ],
+     "Condition": {
+      "StringLike": {
+       "iam:PassedToService": "backup.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": "organizations:DescribeOrganization",
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "backup:Get*",
+      "backup:List*",
+      "backup:Describe*",
+      "backup:CreateBackupSelection",
+      "backup:DeleteBackupSelection",
+      "backup:GetRecoveryPointRestoreMetadata",
+      "backup:StartBackupJob",
+      "backup:StartRestoreJob",
+      "backup:StartCopyJob"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "rds:DescribeDBSnapshots",
+      "rds:ListTagsForResource",
+      "rds:DescribeDBInstances",
+      "rds:describeDBSnapshots",
+      "rds:describeDBEngineVersions",
+      "rds:describeOptionGroups",
+      "rds:describeOrderableDBInstanceOptions",
+      "rds:describeDBSubnetGroups",
+      "rds:DescribeDBClusterSnapshots",
+      "rds:DescribeDBClusters",
+      "rds:DescribeDBParameterGroups",
+      "rds:DescribeDBClusterParameterGroups"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "dynamodb:ListBackups",
+      "dynamodb:ListTables"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "elasticfilesystem:DescribeFilesystems"
+     ],
+     "Resource": "arn:aws:elasticfilesystem:*:*:file-system/*",
+     "Effect": "Allow"
+    },
+    {
+     "Action": [
+      "ec2:DescribeSnapshots",
+      "ec2:DescribeVolumes",
+      "ec2:describeAvailabilityZones",
+      "ec2:DescribeVpcs",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeImages",
+      "ec2:DescribeSubnets",
+      "ec2:DescribePlacementGroups",
+      "ec2:DescribeInstances",
+      "ec2:DescribeInstanceTypes"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Action": [
+      "tag:GetTagKeys",
+      "tag:GetTagValues",
+      "tag:GetResources"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:DescribeCachediSCSIVolumes",
+      "storagegateway:DescribeStorediSCSIVolumes"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:gateway/*/volume/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:ListGateways"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "storagegateway:DescribeGatewayInformation",
+      "storagegateway:ListVolumes",
+      "storagegateway:ListLocalDisks"
+     ],
+     "Resource": "arn:aws:storagegateway:*:*:gateway/*"
+    },
+    {
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRole"
+     ],
+     "Effect": "Allow",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": [
+      "arn:aws:iam::*:role/*AwsBackup*",
+      "arn:aws:iam::*:role/*AWSBackup*"
+     ],
+     "Condition": {
+      "StringLike": {
+       "iam:PassedToService": "backup.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": "organizations:DescribeOrganization",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:CancelCommand",
+      "ssm:GetCommandInvocation"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "ssm:SendCommand",
+     "Resource": [
+      "arn:aws:ssm:*:*:document/AWSEC2-CreateVssSnapshot",
+      "arn:aws:ec2:*:*:instance/*"
+     ]
+    }
+   ]
+  },
+  "expect": {
+   "status": "review",
+   "why": "v5 adds ssm:SendCommand on arn:aws:ssm:*:*:document/AWSEC2-CreateVssSnapshot and arn:aws:ec2:*:*:instance/*, plus ssm:CancelCommand and ssm:GetCommandInvocation on \"*\". SendCommand is authorised against both the document and the instance, so the holder can run only that one AWS-owned VSS snapshot document, though on any managed instance. Remote execution is newly allowed but limited to one fixed, AWS-authored command. That is a conditional/scoped grant of a sensitive action: needs review, not an automatic stop."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssystemsmanager.html",
+   "https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command-setting-up.html"
+  ],
+  "doubt": "A reviewer could call it pass (an AWS-owned document with a fixed purpose) or stop (SendCommand on every instance)."
+ },
+ {
+  "id": "PLH3-A05",
+  "title": "AWSIAMIdentityCenterAllowListForIdentityContext v1 -> v2 (Nov 2023): two S3 data-access actions removed from a Deny-NotAction allow-list's scope",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/3be8f3a588528a84b1018e2013d048179f8e3750/policies/AWSIAMIdentityCenterAllowListForIdentityContext",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSIAMIdentityCenterAllowListForIdentityContext",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v1",
+    "createDate": "2023-11-08T15:21:33Z",
+    "commit": "ea6b5575c2e99f6ca282f49560d2c7fbb7004f2c",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/ea6b5575c2e99f6ca282f49560d2c7fbb7004f2c/policies/AWSIAMIdentityCenterAllowListForIdentityContext"
+   },
+   "after": {
+    "versionId": "v2",
+    "createDate": "2023-11-25T19:27:00Z",
+    "commit": "3be8f3a588528a84b1018e2013d048179f8e3750",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/3be8f3a588528a84b1018e2013d048179f8e3750/policies/AWSIAMIdentityCenterAllowListForIdentityContext"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "TrustedIdentityPropagation",
+     "Effect": "Deny",
+     "NotAction": [
+      "athena:BatchGetNamedQuery",
+      "athena:BatchGetPreparedStatement",
+      "athena:BatchGetQueryExecution",
+      "athena:CreateNamedQuery",
+      "athena:CreatePreparedStatement",
+      "athena:DeleteNamedQuery",
+      "athena:DeletePreparedStatement",
+      "athena:GetNamedQuery",
+      "athena:GetPreparedStatement",
+      "athena:GetQueryExecution",
+      "athena:GetQueryResults",
+      "athena:GetQueryResultsStream",
+      "athena:GetQueryRuntimeStatistics",
+      "athena:GetWorkGroup",
+      "athena:ListNamedQueries",
+      "athena:ListPreparedStatements",
+      "athena:ListQueryExecutions",
+      "athena:StartQueryExecution",
+      "athena:StopQueryExecution",
+      "athena:UpdateNamedQuery",
+      "athena:UpdatePreparedStatement",
+      "athena:GetDatabase",
+      "athena:GetDataCatalog",
+      "athena:GetTableMetadata",
+      "athena:ListDatabases",
+      "athena:ListDataCatalogs",
+      "athena:ListTableMetadata",
+      "athena:ListWorkGroups",
+      "elasticmapreduce:GetClusterSessionCredentials",
+      "glue:GetDatabase",
+      "glue:GetDatabases",
+      "glue:GetTable",
+      "glue:GetTables",
+      "glue:GetTableVersions",
+      "glue:GetPartition",
+      "glue:GetPartitions",
+      "glue:BatchGetPartition",
+      "glue:GetColumnStatisticsForPartition",
+      "glue:GetColumnStatisticsForTable",
+      "glue:SearchTables",
+      "glue:CreateDatabase",
+      "glue:UpdateDatabase",
+      "glue:DeleteDatabase",
+      "glue:CreateTable",
+      "glue:DeleteTable",
+      "glue:BatchDeleteTable",
+      "glue:UpdateTable",
+      "glue:BatchCreatePartition",
+      "glue:CreatePartition",
+      "glue:DeletePartition",
+      "glue:BatchDeletePartition",
+      "glue:UpdatePartition",
+      "glue:BatchUpdatePartition",
+      "glue:DeleteColumnStatisticsForPartition",
+      "glue:DeleteColumnStatisticsForTable",
+      "glue:UpdateColumnStatisticsForPartition",
+      "glue:UpdateColumnStatisticsForTable",
+      "lakeformation:GetDataAccess"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "TrustedIdentityPropagation",
+     "Effect": "Deny",
+     "NotAction": [
+      "athena:BatchGetNamedQuery",
+      "athena:BatchGetPreparedStatement",
+      "athena:BatchGetQueryExecution",
+      "athena:CreateNamedQuery",
+      "athena:CreatePreparedStatement",
+      "athena:DeleteNamedQuery",
+      "athena:DeletePreparedStatement",
+      "athena:GetNamedQuery",
+      "athena:GetPreparedStatement",
+      "athena:GetQueryExecution",
+      "athena:GetQueryResults",
+      "athena:GetQueryResultsStream",
+      "athena:GetQueryRuntimeStatistics",
+      "athena:GetWorkGroup",
+      "athena:ListNamedQueries",
+      "athena:ListPreparedStatements",
+      "athena:ListQueryExecutions",
+      "athena:StartQueryExecution",
+      "athena:StopQueryExecution",
+      "athena:UpdateNamedQuery",
+      "athena:UpdatePreparedStatement",
+      "athena:GetDatabase",
+      "athena:GetDataCatalog",
+      "athena:GetTableMetadata",
+      "athena:ListDatabases",
+      "athena:ListDataCatalogs",
+      "athena:ListTableMetadata",
+      "athena:ListWorkGroups",
+      "elasticmapreduce:GetClusterSessionCredentials",
+      "glue:GetDatabase",
+      "glue:GetDatabases",
+      "glue:GetTable",
+      "glue:GetTables",
+      "glue:GetTableVersions",
+      "glue:GetPartition",
+      "glue:GetPartitions",
+      "glue:BatchGetPartition",
+      "glue:GetColumnStatisticsForPartition",
+      "glue:GetColumnStatisticsForTable",
+      "glue:SearchTables",
+      "glue:CreateDatabase",
+      "glue:UpdateDatabase",
+      "glue:DeleteDatabase",
+      "glue:CreateTable",
+      "glue:DeleteTable",
+      "glue:BatchDeleteTable",
+      "glue:UpdateTable",
+      "glue:BatchCreatePartition",
+      "glue:CreatePartition",
+      "glue:DeletePartition",
+      "glue:BatchDeletePartition",
+      "glue:UpdatePartition",
+      "glue:BatchUpdatePartition",
+      "glue:DeleteColumnStatisticsForPartition",
+      "glue:DeleteColumnStatisticsForTable",
+      "glue:UpdateColumnStatisticsForPartition",
+      "glue:UpdateColumnStatisticsForTable",
+      "lakeformation:GetDataAccess",
+      "s3:GetAccessGrantsInstanceForPrefix",
+      "s3:GetDataAccess"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "expect": {
+   "status": "review",
+   "why": "The policy is a single Deny statement with NotAction (58 -> 60 actions) on Resource \"*\". Everything not listed is explicitly denied. v2 adds s3:GetAccessGrantsInstanceForPrefix and s3:GetDataAccess to NotAction, so those two actions are no longer explicitly denied. Nothing in this document allows anything; the actions now fall through to whatever the role's other policies allow. s3:GetDataAccess vends S3 Access Grants credentials, i.e. data access. Effective access depends on other policies (context), so: review."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_notaction.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html",
+   "https://docs.aws.amazon.com/AmazonS3/latest/API/API_control_GetDataAccess.html"
+  ],
+  "doubt": "Judged on this document alone, no request reaches Allow, so a reviewer could call it pass. Labelled review because a deny guardrail is narrowed for a data-access action."
+ },
+ {
+  "id": "PLH3-A06",
+  "title": "ECR repository policy: image pull opened from two named users to Principal \"*\"",
+  "source": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policy-examples.html",
+  "kind": "modelled",
+  "policyType": "ECR repository policy",
+  "sources": [
+   "https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policy-examples.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html#principal-anonymous",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/ecr-controls.html"
+  ],
+  "note": "Before is the ECR doc example with AllowPull + AllowAll (placeholders resolved). After changes only AllowPull's Principal to \"*\".",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "AllowPull",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": [
+       "arn:aws:iam::111122223333:user/pull-user-1",
+       "arn:aws:iam::111122223333:user/pull-user-2"
+      ]
+     },
+     "Action": [
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "AllowAll",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:user/admin-user"
+     },
+     "Action": [
+      "ecr:*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "AllowPull",
+     "Effect": "Allow",
+     "Principal": "*",
+     "Action": [
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "AllowAll",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:user/admin-user"
+     },
+     "Action": [
+      "ecr:*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::999999999999:user/anyone",
+  "expect": {
+   "status": "stop",
+   "why": "Principal \"*\" with no condition lets any principal in any AWS account call ecr:BatchGetImage and ecr:GetDownloadUrlForLayer. They need only ecr:GetAuthorizationToken in their own account. Pulling the private images (which often contain code and embedded configuration) goes ImplicitDeny -> Allow for every other account."
+  }
+ },
+ {
+  "id": "PLH3-A07",
+  "title": "Lambda function resource policy: invoke widened from two named principals to Principal \"*\"",
+  "source": "https://docs.aws.amazon.com/lambda/latest/dg/permissions-function-cross-account.html",
+  "kind": "modelled",
+  "policyType": "Lambda resource-based policy",
+  "sources": [
+   "https://docs.aws.amazon.com/lambda/latest/dg/permissions-function-cross-account.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html#principal-anonymous",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/lambda-controls.html"
+  ],
+  "note": "Before is the Lambda doc's cross-account example verbatim. After replaces the principal list with \"*\".",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "allow-account-invoke",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": [
+       "arn:aws:iam::111122223333:root",
+       "arn:aws:iam::444455556666:role/cross-account-role"
+      ]
+     },
+     "Action": "lambda:InvokeFunction",
+     "Resource": "arn:aws:lambda:us-east-2:123456789012:function:my-function"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "allow-account-invoke",
+     "Effect": "Allow",
+     "Principal": "*",
+     "Action": "lambda:InvokeFunction",
+     "Resource": "arn:aws:lambda:us-east-2:123456789012:function:my-function"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::999999999999:role/anyone",
+  "expect": {
+   "status": "stop",
+   "why": "Before, only account 111122223333 and one named role in 444455556666 can invoke my-function. After, Principal \"*\" with no condition makes the function publicly invocable by any AWS principal. Invoke from any other account goes ImplicitDeny -> Allow, and the function runs with its own execution role. Security Hub Lambda.1 flags exactly this."
+  }
+ },
+ {
+  "id": "PLH3-A08",
+  "title": "Secrets Manager resource policy: cross-account role also granted secretsmanager:PutResourcePolicy",
+  "source": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html",
+  "kind": "modelled",
+  "policyType": "Secrets Manager resource policy",
+  "sources": [
+   "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html",
+   "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-policies.html"
+  ],
+  "note": "Before is the Secrets Manager doc's Step 1 policy verbatim (the secret is in another account; ApplicationRole is in 111122223333). After adds PutResourcePolicy.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/ApplicationRole"
+     },
+     "Action": "secretsmanager:GetSecretValue",
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:role/ApplicationRole"
+     },
+     "Action": [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutResourcePolicy"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/ApplicationRole",
+  "expect": {
+   "status": "stop",
+   "why": "The external role can already read the secret value. After, it can also rewrite the secret's resource policy: PutResourcePolicy is in the cross-account-effective list and goes ImplicitDeny -> Allow. The Secrets Manager doc warns that granting PutResourcePolicy 'lets principals escalate existing permissions like obtaining full administrative access to secrets'. A cross-account principal can now grant itself, or anyone, any secret operation."
+  }
+ },
+ {
+  "id": "PLH3-A09",
+  "title": "ssm:SendCommand added with any document, but only on instances tagged Finance=WebServers",
+  "source": "https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command-setting-up.html#tag-based-access",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command-setting-up.html#tag-based-access",
+   "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssystemsmanager.html"
+  ],
+  "note": "After adds the two SendCommand statements from the Run Command doc's tag-based example verbatim.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "RunCommandRead",
+     "Effect": "Allow",
+     "Action": [
+      "ssm:ListCommands",
+      "ssm:ListCommandInvocations",
+      "ssm:GetDocument"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "RunCommandRead",
+     "Effect": "Allow",
+     "Action": [
+      "ssm:ListCommands",
+      "ssm:ListCommandInvocations",
+      "ssm:GetDocument"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:SendCommand"
+     ],
+     "Resource": [
+      "arn:aws:ssm:*:*:document/*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:SendCommand"
+     ],
+     "Resource": [
+      "arn:aws:ec2:*:*:instance/*"
+     ],
+     "Condition": {
+      "StringLike": {
+       "ssm:resourceTag/Finance": [
+        "WebServers"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/finance-ops",
+  "expect": {
+   "status": "review",
+   "why": "SendCommand is newly allowed with any document, including AWS-RunShellScript, so commands are arbitrary. But the instance side applies only where ssm:resourceTag/Finance matches WebServers, so for other nodes the doc says 'the execution results show AccessDenied'. This is remote execution conditional on resource tags: whether a request is allowed depends on tag values outside the policy, and on who can set those tags."
+  },
+  "doubt": "Arbitrary commands on the tagged fleet could be judged 'stop', especially if the principal can tag instances."
+ },
+ {
+  "id": "PLH3-A10",
+  "title": "ECS Exec: ecs:ExecuteCommand widened from development-tagged tasks in one cluster to every task",
+  "source": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html#ecs-exec-best-practices-limit-access-execute-command",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html#ecs-exec-best-practices-limit-access-execute-command"
+  ],
+  "note": "Before is the ECS doc's limiting example verbatim (placeholders resolved). After drops the condition and the resource scope.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ecs:ExecuteCommand",
+      "ecs:DescribeTasks"
+     ],
+     "Resource": [
+      "arn:aws:ecs:us-east-1:111122223333:task/cluster-name/*",
+      "arn:aws:ecs:us-east-1:111122223333:cluster/cluster-name"
+     ],
+     "Condition": {
+      "StringEquals": {
+       "ecs:ResourceTag/environment": "development"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ecs:ExecuteCommand",
+      "ecs:DescribeTasks"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/developer",
+  "expect": {
+   "status": "stop",
+   "why": "Before, ExecuteCommand works only on tasks in cluster-name tagged environment=development. After, it works on every task in every cluster and Region, including production. ECS Exec gives a shell in the container, and the doc notes commands 'are run as the root user'. The holder can read secrets and environment and use the task role's credentials. ExecuteCommand on a production task goes ImplicitDeny -> Allow."
+  }
+ },
+ {
+  "id": "PLH3-A11",
+  "title": "DynamoDB item-level access: dynamodb:LeadingKeys condition removed",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_dynamodb_items.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_dynamodb_items.html",
+   "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/specifying-conditions.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html"
+  ],
+  "note": "Before is the IAM doc example verbatim (MyTable). After removes only the Condition block.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:UpdateItem"
+     ],
+     "Resource": [
+      "arn:aws:dynamodb:*:*:table/MyTable"
+     ],
+     "Condition": {
+      "ForAllValues:StringEquals": {
+       "dynamodb:LeadingKeys": [
+        "${cognito-identity.amazonaws.com:sub}"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:UpdateItem"
+     ],
+     "Resource": [
+      "arn:aws:dynamodb:*:*:table/MyTable"
+     ]
+    }
+   ]
+  },
+  "principal": "Cognito identity-pool user (role session)",
+  "expect": {
+   "status": "stop",
+   "why": "Before, each Cognito user can read and write only items whose partition key equals their own identity ID (dynamodb:LeadingKeys). After, GetItem/Query/PutItem/UpdateItem/DeleteItem apply to every item in MyTable. Reading or deleting another user's items goes ImplicitDeny -> Allow, a cross-tenant data read and write in an end-user-facing role."
+  }
+ },
+ {
+  "id": "PLH3-A12",
+  "title": "SQS: identity policy gains ReceiveMessage/DeleteMessage on every queue in the account",
+  "source": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-api-permissions-reference.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-api-permissions-reference.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "note": "Modelled: a producer service's policy picks up consumer permissions on queue *.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "SendOrders",
+     "Effect": "Allow",
+     "Action": "sqs:SendMessage",
+     "Resource": "arn:aws:sqs:us-east-2:111122223333:orders"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "SendOrders",
+     "Effect": "Allow",
+     "Action": "sqs:SendMessage",
+     "Resource": "arn:aws:sqs:us-east-2:111122223333:orders"
+    },
+    {
+     "Sid": "ConsumeQueues",
+     "Effect": "Allow",
+     "Action": [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes"
+     ],
+     "Resource": "arn:aws:sqs:*:111122223333:*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/order-producer",
+  "expect": {
+   "status": "stop",
+   "why": "ReceiveMessage and DeleteMessage go ImplicitDeny -> Allow on every queue in every Region of the account. The role can read any queue's message bodies and delete them, so data is exposed and consumers silently lose messages. Before, it could only send to one queue."
+  }
+ },
+ {
+  "id": "PLH3-A13",
+  "title": "KMS key policy: Principal \"*\" statement added, limited by kms:CallerAccount + kms:ViaService (EBS only)",
+  "source": "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html",
+  "kind": "modelled",
+  "policyType": "KMS key policy",
+  "sources": [
+   "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html#conditions-kms-caller-account",
+   "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html#conditions-kms-via-service",
+   "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html"
+  ],
+  "note": "Before is the default key policy statement. The added statement is the KMS doc's kms:CallerAccount example verbatim.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "Enable IAM User Permissions",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:root"
+     },
+     "Action": "kms:*",
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "Enable IAM User Permissions",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:root"
+     },
+     "Action": "kms:*",
+     "Resource": "*"
+    },
+    {
+     "Sid": "Allow access through EBS for all principals in the account that are authorized to use EBS",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "*"
+     },
+     "Condition": {
+      "StringEquals": {
+       "kms:CallerAccount": "111122223333",
+       "kms:ViaService": "ec2.us-west-2.amazonaws.com"
+      }
+     },
+     "Action": [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:CreateGrant",
+      "kms:DescribeKey"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/any-role-without-kms-iam-permission",
+  "expect": {
+   "status": "review",
+   "why": "Before, a principal in 111122223333 needs an IAM policy allowing kms:Decrypt. After, the key policy itself allows Decrypt, GenerateDataKey* and CreateGrant to any principal in 111122223333, but only when the request comes through EBS in us-west-2 (kms:ViaService). Decrypt via EBS goes ImplicitDeny -> Allow for principals with no KMS permissions. Direct Decrypt calls and other accounts stay denied. Conditional access to a sensitive action, whose reach depends on who can use EBS volumes: review."
+  },
+  "doubt": "This is the pattern of AWS-managed aws/ebs key policies. A reviewer could call it pass; one worried about EBS-mediated access could call it stop."
+ },
+ {
+  "id": "PLH3-A14",
+  "title": "Condition operator change: Bool -> BoolIfExists on aws:MultiFactorAuthPresent for iam:*",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html#Conditions_IfExists",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html#Conditions_IfExists",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-multifactorauthpresent",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_configure-api-require.html"
+  ],
+  "note": "Modelled admin policy; the only change is the operator.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamAdminWithMfa",
+     "Effect": "Allow",
+     "Action": "iam:*",
+     "Resource": "*",
+     "Condition": {
+      "Bool": {
+       "aws:MultiFactorAuthPresent": "true"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamAdminWithMfa",
+     "Effect": "Allow",
+     "Action": "iam:*",
+     "Resource": "*",
+     "Condition": {
+      "BoolIfExists": {
+       "aws:MultiFactorAuthPresent": "true"
+      }
+     }
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/iam-admin (long-term access key, no MFA)",
+  "expect": {
+   "status": "stop",
+   "why": "With Bool, a missing key makes the condition false (operators doc), so requests signed with long-term access keys, where aws:MultiFactorAuthPresent is absent, are denied. With BoolIfExists, 'If the key is not present, evaluate the condition element as true'. Every access-key call to iam:* now goes ImplicitDeny -> Allow without MFA. Only console/STS sessions that report false are still blocked. The MFA guard on full IAM admin is effectively bypassed for programmatic use."
+  },
+  "doubt": "Some teams use BoolIfExists on purpose to allow CLI keys; by IAM semantics it still removes the MFA requirement for those calls."
+ },
+ {
+  "id": "PLH3-A15",
+  "title": "Rhino part 2: sagemaker:CreatePresignedNotebookInstanceUrl added on every notebook instance (no PassRole needed)",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation-part-2/",
+  "kind": "modelled",
+  "rhinoMethod": "part2-existing-sagemaker-notebooks",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation-part-2/",
+   "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreatePresignedNotebookInstanceUrl.html"
+  ],
+  "note": "Modelled: Rhino publishes permissions, not policies.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "NotebookRead",
+     "Effect": "Allow",
+     "Action": [
+      "sagemaker:ListNotebookInstances",
+      "sagemaker:DescribeNotebookInstance"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "NotebookRead",
+     "Effect": "Allow",
+     "Action": [
+      "sagemaker:ListNotebookInstances",
+      "sagemaker:DescribeNotebookInstance"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "OpenNotebooks",
+     "Effect": "Allow",
+     "Action": "sagemaker:CreatePresignedNotebookInstanceUrl",
+     "Resource": "arn:aws:sagemaker:eu-west-1:111122223333:notebook-instance/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/analyst",
+  "expect": {
+   "status": "stop",
+   "why": "CreatePresignedNotebookInstanceUrl on notebook-instance/* goes ImplicitDeny -> Allow. The holder can open any existing Jupyter notebook, including its terminal, and act with that notebook's execution role. Rhino part 2 lists this as an escalation that needs no iam:PassRole, with impact up to the most privileged notebook role."
+  }
+ }
+]
