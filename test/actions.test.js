@@ -85,5 +85,11 @@ t('read-only actions on Resource:* do NOT trip the mutating rule', () => {
   assert(!f, 'read-only actions should not fire the state-changing rule');
 });
 
+// IAM action names are case-insensitive, including the public AWS example.
+t('mixed-case actions retain catalogue levels and service names', () => {
+  assert(actions.accessLevel('S3:getobject') === 'Read', 'mixed-case action must be Read');
+  assert(actions.serviceName('s3:GetObject') === 'Amazon S3', 'catalogue service name');
+});
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

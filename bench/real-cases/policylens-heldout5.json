@@ -1,0 +1,2254 @@
+[
+  {
+    "id": "PLH5-A01",
+    "title": "AWSConfigRole v25 -> v26",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/c714415804a7630f61a269253c07dc0b1d162ca1/policies/AWSConfigRole",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "cloudtrail:DescribeTrails",
+            "ec2:Describe*",
+            "config:Put*",
+            "config:Get*",
+            "config:List*",
+            "config:Describe*",
+            "config:BatchGet*",
+            "config:Select*",
+            "cloudtrail:GetEventSelectors",
+            "cloudtrail:GetTrailStatus",
+            "cloudtrail:ListTags",
+            "s3:GetObject",
+            "iam:GetAccountAuthorizationDetails",
+            "iam:GetAccountPasswordPolicy",
+            "iam:GetAccountSummary",
+            "iam:GetGroup",
+            "iam:GetGroupPolicy",
+            "iam:GetPolicy",
+            "iam:GetPolicyVersion",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:GetUser",
+            "iam:GetUserPolicy",
+            "iam:GenerateCredentialReport",
+            "iam:GetCredentialReport",
+            "iam:ListAttachedGroupPolicies",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListAttachedUserPolicies",
+            "iam:ListEntitiesForPolicy",
+            "iam:ListGroupPolicies",
+            "iam:ListGroupsForUser",
+            "iam:ListInstanceProfilesForRole",
+            "iam:ListPolicyVersions",
+            "iam:ListRolePolicies",
+            "iam:ListUserPolicies",
+            "iam:ListVirtualMFADevices",
+            "elasticloadbalancing:DescribeLoadBalancers",
+            "elasticloadbalancing:DescribeLoadBalancerAttributes",
+            "elasticloadbalancing:DescribeLoadBalancerPolicies",
+            "elasticloadbalancing:DescribeTags",
+            "acm:DescribeCertificate",
+            "acm:ListCertificates",
+            "acm:ListTagsForCertificate",
+            "rds:DescribeDBInstances",
+            "rds:DescribeDBSecurityGroups",
+            "rds:DescribeDBSnapshotAttributes",
+            "rds:DescribeDBSnapshots",
+            "rds:DescribeDBSubnetGroups",
+            "rds:DescribeEventSubscriptions",
+            "rds:ListTagsForResource",
+            "rds:DescribeDBClusters",
+            "s3:GetAccelerateConfiguration",
+            "s3:GetBucketAcl",
+            "s3:GetBucketCORS",
+            "s3:GetBucketLocation",
+            "s3:GetBucketLogging",
+            "s3:GetBucketNotification",
+            "s3:GetBucketPolicy",
+            "s3:GetBucketRequestPayment",
+            "s3:GetBucketTagging",
+            "s3:GetBucketVersioning",
+            "s3:GetBucketWebsite",
+            "s3:GetLifecycleConfiguration",
+            "s3:GetReplicationConfiguration",
+            "s3:ListAllMyBuckets",
+            "s3:ListBucket",
+            "s3:GetEncryptionConfiguration",
+            "s3:GetBucketPublicAccessBlock",
+            "s3:GetAccountPublicAccessBlock",
+            "redshift:DescribeClusterParameterGroups",
+            "redshift:DescribeClusterParameters",
+            "redshift:DescribeClusterSecurityGroups",
+            "redshift:DescribeClusterSnapshots",
+            "redshift:DescribeClusterSubnetGroups",
+            "redshift:DescribeClusters",
+            "redshift:DescribeEventSubscriptions",
+            "redshift:DescribeLoggingStatus",
+            "dynamodb:DescribeLimits",
+            "dynamodb:DescribeTable",
+            "dynamodb:ListTables",
+            "dynamodb:ListTagsOfResource",
+            "cloudwatch:DescribeAlarms",
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingPolicies",
+            "autoscaling:DescribeAutoScalingGroups",
+            "autoscaling:DescribeLaunchConfigurations",
+            "autoscaling:DescribeLifecycleHooks",
+            "autoscaling:DescribePolicies",
+            "autoscaling:DescribeScheduledActions",
+            "autoscaling:DescribeTags",
+            "lambda:GetFunction",
+            "lambda:GetPolicy",
+            "lambda:ListFunctions",
+            "lambda:GetAlias",
+            "lambda:ListAliases",
+            "waf-regional:GetWebACLForResource",
+            "waf-regional:GetWebACL",
+            "cloudfront:ListTagsForResource",
+            "guardduty:ListDetectors",
+            "guardduty:GetMasterAccount",
+            "guardduty:GetDetector",
+            "codepipeline:ListPipelines",
+            "codepipeline:GetPipeline",
+            "codepipeline:GetPipelineState",
+            "kms:ListKeys",
+            "kms:GetKeyRotationStatus",
+            "kms:DescribeKey",
+            "ssm:DescribeDocument",
+            "ssm:GetDocument",
+            "ssm:DescribeAutomationExecutions",
+            "ssm:GetAutomationExecution",
+            "shield:DescribeProtection"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "cloudtrail:DescribeTrails",
+            "ec2:Describe*",
+            "config:Put*",
+            "config:Get*",
+            "config:List*",
+            "config:Describe*",
+            "config:BatchGet*",
+            "config:Select*",
+            "cloudtrail:GetEventSelectors",
+            "cloudtrail:GetTrailStatus",
+            "cloudtrail:ListTags",
+            "s3:GetObject",
+            "iam:GetAccountAuthorizationDetails",
+            "iam:GetAccountPasswordPolicy",
+            "iam:GetAccountSummary",
+            "iam:GetGroup",
+            "iam:GetGroupPolicy",
+            "iam:GetPolicy",
+            "iam:GetPolicyVersion",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:GetUser",
+            "iam:GetUserPolicy",
+            "iam:GenerateCredentialReport",
+            "iam:GetCredentialReport",
+            "iam:ListAttachedGroupPolicies",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListAttachedUserPolicies",
+            "iam:ListEntitiesForPolicy",
+            "iam:ListGroupPolicies",
+            "iam:ListGroupsForUser",
+            "iam:ListInstanceProfilesForRole",
+            "iam:ListPolicyVersions",
+            "iam:ListRolePolicies",
+            "iam:ListUserPolicies",
+            "iam:ListVirtualMFADevices",
+            "elasticloadbalancing:DescribeLoadBalancers",
+            "elasticloadbalancing:DescribeLoadBalancerAttributes",
+            "elasticloadbalancing:DescribeLoadBalancerPolicies",
+            "elasticloadbalancing:DescribeTags",
+            "acm:DescribeCertificate",
+            "acm:ListCertificates",
+            "acm:ListTagsForCertificate",
+            "rds:DescribeDBInstances",
+            "rds:DescribeDBSecurityGroups",
+            "rds:DescribeDBSnapshotAttributes",
+            "rds:DescribeDBSnapshots",
+            "rds:DescribeDBSubnetGroups",
+            "rds:DescribeEventSubscriptions",
+            "rds:ListTagsForResource",
+            "rds:DescribeDBClusters",
+            "s3:GetAccelerateConfiguration",
+            "s3:GetBucketAcl",
+            "s3:GetBucketCORS",
+            "s3:GetBucketLocation",
+            "s3:GetBucketLogging",
+            "s3:GetBucketNotification",
+            "s3:GetBucketPolicy",
+            "s3:GetBucketRequestPayment",
+            "s3:GetBucketTagging",
+            "s3:GetBucketVersioning",
+            "s3:GetBucketWebsite",
+            "s3:GetLifecycleConfiguration",
+            "s3:GetReplicationConfiguration",
+            "s3:ListAllMyBuckets",
+            "s3:ListBucket",
+            "s3:GetEncryptionConfiguration",
+            "s3:GetBucketPublicAccessBlock",
+            "s3:GetAccountPublicAccessBlock",
+            "s3:GetBucketObjectLockConfiguration",
+            "redshift:DescribeClusterParameterGroups",
+            "redshift:DescribeClusterParameters",
+            "redshift:DescribeClusterSecurityGroups",
+            "redshift:DescribeClusterSnapshots",
+            "redshift:DescribeClusterSubnetGroups",
+            "redshift:DescribeClusters",
+            "redshift:DescribeEventSubscriptions",
+            "redshift:DescribeLoggingStatus",
+            "dynamodb:DescribeLimits",
+            "dynamodb:DescribeTable",
+            "dynamodb:ListTables",
+            "dynamodb:ListTagsOfResource",
+            "cloudwatch:DescribeAlarms",
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingPolicies",
+            "autoscaling:DescribeAutoScalingGroups",
+            "autoscaling:DescribeLaunchConfigurations",
+            "autoscaling:DescribeLifecycleHooks",
+            "autoscaling:DescribePolicies",
+            "autoscaling:DescribeScheduledActions",
+            "autoscaling:DescribeTags",
+            "lambda:GetFunction",
+            "lambda:GetPolicy",
+            "lambda:ListFunctions",
+            "lambda:GetAlias",
+            "lambda:ListAliases",
+            "waf-regional:GetWebACLForResource",
+            "waf-regional:GetWebACL",
+            "cloudfront:ListTagsForResource",
+            "guardduty:ListDetectors",
+            "guardduty:GetMasterAccount",
+            "guardduty:GetDetector",
+            "codepipeline:ListPipelines",
+            "codepipeline:GetPipeline",
+            "codepipeline:GetPipelineState",
+            "kms:ListKeys",
+            "kms:GetKeyRotationStatus",
+            "kms:DescribeKey",
+            "ssm:DescribeDocument",
+            "ssm:GetDocument",
+            "ssm:DescribeAutomationExecutions",
+            "ssm:GetAutomationExecution",
+            "shield:DescribeProtection"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "The only new permission reads S3 Object Lock configuration. It adds metadata inspection, not object access, mutation or delegation."
+    }
+  },
+  {
+    "id": "PLH5-A02",
+    "title": "AWSGlueConsoleFullAccess v12 -> v13",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/08e36925dc6ef827eca182ec67061974c7aaa402/policies/AWSGlueConsoleFullAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "glue:*",
+            "redshift:DescribeClusters",
+            "redshift:DescribeClusterSubnetGroups",
+            "iam:ListRoles",
+            "iam:ListUsers",
+            "iam:ListGroups",
+            "iam:ListRolePolicies",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:ListAttachedRolePolicies",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",
+            "ec2:DescribeVpcEndpoints",
+            "ec2:DescribeRouteTables",
+            "ec2:DescribeVpcAttribute",
+            "ec2:DescribeKeyPairs",
+            "ec2:DescribeInstances",
+            "ec2:DescribeImages",
+            "rds:DescribeDBInstances",
+            "rds:DescribeDBClusters",
+            "rds:DescribeDBSubnetGroups",
+            "s3:ListAllMyBuckets",
+            "s3:ListBucket",
+            "s3:GetBucketAcl",
+            "s3:GetBucketLocation",
+            "cloudformation:DescribeStacks",
+            "cloudformation:GetTemplateSummary",
+            "dynamodb:ListTables",
+            "kms:ListAliases",
+            "kms:DescribeKey",
+            "cloudwatch:GetMetricData",
+            "cloudwatch:ListDashboards"
+          ],
+          "Resource": [
+            "*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-glue-*/*",
+            "arn:aws:s3:::*/*aws-glue-*/*",
+            "arn:aws:s3:::aws-glue-*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "tag:GetResources"
+          ],
+          "Resource": [
+            "*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "s3:CreateBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-glue-*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "logs:GetLogEvents"
+          ],
+          "Resource": [
+            "arn:aws:logs:*:*:/aws-glue/*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "cloudformation:CreateStack",
+            "cloudformation:DeleteStack"
+          ],
+          "Resource": "arn:aws:cloudformation:*:*:stack/aws-glue*/*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ec2:RunInstances"
+          ],
+          "Resource": [
+            "arn:aws:ec2:*:*:instance/*",
+            "arn:aws:ec2:*:*:key-pair/*",
+            "arn:aws:ec2:*:*:image/*",
+            "arn:aws:ec2:*:*:security-group/*",
+            "arn:aws:ec2:*:*:network-interface/*",
+            "arn:aws:ec2:*:*:subnet/*",
+            "arn:aws:ec2:*:*:volume/*"
+          ],
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ec2:TerminateInstances",
+            "ec2:CreateTags",
+            "ec2:DeleteTags"
+          ],
+          "Resource": [
+            "arn:aws:ec2:*:*:instance/*"
+          ],
+          "Effect": "Allow",
+          "Condition": {
+            "StringEquals": {
+              "ec2:ResourceTag/aws:cloudformation:logical-id": "ZeppelinInstance"
+            },
+            "StringLike": {
+              "ec2:ResourceTag/aws:cloudformation:stack-id": "arn:aws:cloudformation:*:*:stack/aws-glue-*/*"
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Resource": "arn:aws:iam::*:role/AWSGlueServiceRole*",
+          "Effect": "Allow",
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "glue.amazonaws.com"
+              ]
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Resource": "arn:aws:iam::*:role/AWSGlueServiceNotebookRole*",
+          "Effect": "Allow",
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "ec2.amazonaws.com"
+              ]
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Resource": [
+            "arn:aws:iam::*:role/service-role/AWSGlueServiceRole*"
+          ],
+          "Effect": "Allow",
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "glue.amazonaws.com"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "glue:*",
+            "redshift:DescribeClusters",
+            "redshift:DescribeClusterSubnetGroups",
+            "iam:ListRoles",
+            "iam:ListUsers",
+            "iam:ListGroups",
+            "iam:ListRolePolicies",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:ListAttachedRolePolicies",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",
+            "ec2:DescribeVpcEndpoints",
+            "ec2:DescribeRouteTables",
+            "ec2:DescribeVpcAttribute",
+            "ec2:DescribeKeyPairs",
+            "ec2:DescribeInstances",
+            "ec2:DescribeImages",
+            "rds:DescribeDBInstances",
+            "rds:DescribeDBClusters",
+            "rds:DescribeDBSubnetGroups",
+            "s3:ListAllMyBuckets",
+            "s3:ListBucket",
+            "s3:GetBucketAcl",
+            "s3:GetBucketLocation",
+            "cloudformation:ListStacks",
+            "cloudformation:DescribeStacks",
+            "cloudformation:GetTemplateSummary",
+            "dynamodb:ListTables",
+            "kms:ListAliases",
+            "kms:DescribeKey",
+            "cloudwatch:GetMetricData",
+            "cloudwatch:ListDashboards"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-glue-*/*",
+            "arn:aws:s3:::*/*aws-glue-*/*",
+            "arn:aws:s3:::aws-glue-*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "tag:GetResources"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:CreateBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-glue-*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:GetLogEvents"
+          ],
+          "Resource": [
+            "arn:aws:logs:*:*:/aws-glue/*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "cloudformation:CreateStack",
+            "cloudformation:DeleteStack"
+          ],
+          "Resource": "arn:aws:cloudformation:*:*:stack/aws-glue*/*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ec2:RunInstances"
+          ],
+          "Resource": [
+            "arn:aws:ec2:*:*:instance/*",
+            "arn:aws:ec2:*:*:key-pair/*",
+            "arn:aws:ec2:*:*:image/*",
+            "arn:aws:ec2:*:*:security-group/*",
+            "arn:aws:ec2:*:*:network-interface/*",
+            "arn:aws:ec2:*:*:subnet/*",
+            "arn:aws:ec2:*:*:volume/*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ec2:TerminateInstances",
+            "ec2:CreateTags",
+            "ec2:DeleteTags"
+          ],
+          "Resource": [
+            "arn:aws:ec2:*:*:instance/*"
+          ],
+          "Condition": {
+            "StringLike": {
+              "ec2:ResourceTag/aws:cloudformation:stack-id": "arn:aws:cloudformation:*:*:stack/aws-glue-*/*"
+            },
+            "StringEquals": {
+              "ec2:ResourceTag/aws:cloudformation:logical-id": "ZeppelinInstance"
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:iam::*:role/AWSGlueServiceRole*",
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "glue.amazonaws.com"
+              ]
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Effect": "Allow",
+          "Resource": "arn:aws:iam::*:role/AWSGlueServiceNotebookRole*",
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "ec2.amazonaws.com"
+              ]
+            }
+          }
+        },
+        {
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Effect": "Allow",
+          "Resource": [
+            "arn:aws:iam::*:role/service-role/AWSGlueServiceRole*"
+          ],
+          "Condition": {
+            "StringLike": {
+              "iam:PassedToService": [
+                "glue.amazonaws.com"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "The only addition is cloudformation:ListStacks. Stack listing adds no data-plane, write or IAM authority."
+    }
+  },
+  {
+    "id": "PLH5-A03",
+    "title": "AWSLambdaVPCAccessExecutionRole v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/56bc2e692e1f8d4b62c6d089f55b39230cc437f3/policies/AWSLambdaVPCAccessExecutionRole",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "ec2:CreateNetworkInterface",
+            "ec2:DescribeNetworkInterfaces",
+            "ec2:DeleteNetworkInterface",
+            "ec2:AssignPrivateIpAddresses",
+            "ec2:UnassignPrivateIpAddresses"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AWSLambdaVPCAccessExecutionPermissions",
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "ec2:CreateNetworkInterface",
+            "ec2:DescribeNetworkInterfaces",
+            "ec2:DescribeSubnets",
+            "ec2:DeleteNetworkInterface",
+            "ec2:AssignPrivateIpAddresses",
+            "ec2:UnassignPrivateIpAddresses"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds ec2:DescribeSubnets and a Sid. Existing network-interface writes are unchanged; the new action only describes subnet metadata."
+    }
+  },
+  {
+    "id": "PLH5-A04",
+    "title": "AWSLambda_ReadOnlyAccess v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/2aba338d8f83d36cb6613929dac76de09d575ced/policies/AWSLambda_ReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "cloudformation:DescribeStacks",
+            "cloudformation:ListStacks",
+            "cloudformation:ListStackResources",
+            "cloudwatch:GetMetricData",
+            "cloudwatch:ListMetrics",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",
+            "kms:ListAliases",
+            "iam:GetPolicy",
+            "iam:GetPolicyVersion",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListRolePolicies",
+            "iam:ListRoles",
+            "logs:DescribeLogGroups",
+            "lambda:Get*",
+            "lambda:List*",
+            "states:DescribeStateMachine",
+            "states:ListStateMachines",
+            "tag:GetResources",
+            "xray:GetTraceSummaries",
+            "xray:BatchGetTraces"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:DescribeLogStreams",
+            "logs:GetLogEvents",
+            "logs:FilterLogEvents",
+            "logs:StartQuery",
+            "logs:StopQuery",
+            "logs:DescribeQueries",
+            "logs:GetLogGroupFields",
+            "logs:GetLogRecord",
+            "logs:GetQueryResults"
+          ],
+          "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "cloudformation:DescribeStacks",
+            "cloudformation:ListStacks",
+            "cloudformation:ListStackResources",
+            "cloudwatch:GetMetricData",
+            "cloudwatch:ListMetrics",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",
+            "kms:ListAliases",
+            "iam:GetPolicy",
+            "iam:GetPolicyVersion",
+            "iam:GetRole",
+            "iam:GetRolePolicy",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListRolePolicies",
+            "iam:ListRoles",
+            "logs:DescribeLogGroups",
+            "lambda:Get*",
+            "lambda:List*",
+            "states:DescribeStateMachine",
+            "states:ListStateMachines",
+            "tag:GetResources",
+            "xray:GetTraceSummaries",
+            "xray:BatchGetTraces"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "logs:DescribeLogStreams",
+            "logs:GetLogEvents",
+            "logs:FilterLogEvents",
+            "logs:StartQuery",
+            "logs:StopQuery",
+            "logs:DescribeQueries",
+            "logs:GetLogGroupFields",
+            "logs:GetLogRecord",
+            "logs:GetQueryResults",
+            "logs:StartLiveTail",
+            "logs:StopLiveTail"
+          ],
+          "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Adds logs:StartLiveTail and logs:StopLiveTail only for /aws/lambda/* log groups. These logs were already readable; review the new live-stream access within that scope."
+    }
+  },
+  {
+    "id": "PLH5-A05",
+    "title": "AmazonAthenaFullAccess v8 -> v9",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/3de991771fa90e8f2f9dcfab9ed6fda27372cd42/policies/AmazonAthenaFullAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "athena:*"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "glue:CreateDatabase",
+            "glue:DeleteDatabase",
+            "glue:GetDatabase",
+            "glue:GetDatabases",
+            "glue:UpdateDatabase",
+            "glue:CreateTable",
+            "glue:DeleteTable",
+            "glue:BatchDeleteTable",
+            "glue:UpdateTable",
+            "glue:GetTable",
+            "glue:GetTables",
+            "glue:BatchCreatePartition",
+            "glue:CreatePartition",
+            "glue:DeletePartition",
+            "glue:BatchDeletePartition",
+            "glue:UpdatePartition",
+            "glue:GetPartition",
+            "glue:GetPartitions",
+            "glue:BatchGetPartition"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListMultipartUploadParts",
+            "s3:AbortMultipartUpload",
+            "s3:CreateBucket",
+            "s3:PutObject",
+            "s3:PutBucketPublicAccessBlock"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-athena-query-results-*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::athena-examples*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:GetBucketLocation",
+            "s3:ListAllMyBuckets"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "sns:ListTopics",
+            "sns:GetTopicAttributes"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "cloudwatch:PutMetricAlarm",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:DeleteAlarms",
+            "cloudwatch:GetMetricData"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "lakeformation:GetDataAccess"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "athena:*"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "glue:CreateDatabase",
+            "glue:DeleteDatabase",
+            "glue:GetDatabase",
+            "glue:GetDatabases",
+            "glue:UpdateDatabase",
+            "glue:CreateTable",
+            "glue:DeleteTable",
+            "glue:BatchDeleteTable",
+            "glue:UpdateTable",
+            "glue:GetTable",
+            "glue:GetTables",
+            "glue:BatchCreatePartition",
+            "glue:CreatePartition",
+            "glue:DeletePartition",
+            "glue:BatchDeletePartition",
+            "glue:UpdatePartition",
+            "glue:GetPartition",
+            "glue:GetPartitions",
+            "glue:BatchGetPartition"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListMultipartUploadParts",
+            "s3:AbortMultipartUpload",
+            "s3:CreateBucket",
+            "s3:PutObject",
+            "s3:PutBucketPublicAccessBlock"
+          ],
+          "Resource": [
+            "arn:aws:s3:::aws-athena-query-results-*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::athena-examples*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:GetBucketLocation",
+            "s3:ListAllMyBuckets"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "sns:ListTopics",
+            "sns:GetTopicAttributes"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "cloudwatch:PutMetricAlarm",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:DeleteAlarms",
+            "cloudwatch:GetMetricData"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "lakeformation:GetDataAccess"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "pricing:GetProducts"
+          ],
+          "Resource": [
+            "*"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds pricing:GetProducts for the AWS price catalogue. This exposes public product/pricing metadata, not account data or write access."
+    }
+  },
+  {
+    "id": "PLH5-A06",
+    "title": "AmazonEC2ContainerRegistryReadOnly v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/5d68ecfa21232031b8dea097737e4d3fb1808e4d/policies/AmazonEC2ContainerRegistryReadOnly",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:GetRepositoryPolicy",
+            "ecr:DescribeRepositories",
+            "ecr:ListImages",
+            "ecr:DescribeImages",
+            "ecr:BatchGetImage"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:GetRepositoryPolicy",
+            "ecr:DescribeRepositories",
+            "ecr:ListImages",
+            "ecr:DescribeImages",
+            "ecr:BatchGetImage",
+            "ecr:GetLifecyclePolicy",
+            "ecr:GetLifecyclePolicyPreview",
+            "ecr:ListTagsForResource",
+            "ecr:DescribeImageScanFindings"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds lifecycle-policy, lifecycle-preview, tag and scan-finding reads. Existing image pulls are unchanged and no repository write or new principal is added."
+    }
+  },
+  {
+    "id": "PLH5-A07",
+    "title": "AmazonRDSFullAccess v10 -> v11",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/45d10de95790add7451389df3a4481c257521879/policies/AmazonRDSFullAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "rds:*",
+            "application-autoscaling:DeleteScalingPolicy",
+            "application-autoscaling:DeregisterScalableTarget",
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingActivities",
+            "application-autoscaling:DescribeScalingPolicies",
+            "application-autoscaling:PutScalingPolicy",
+            "application-autoscaling:RegisterScalableTarget",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:PutMetricAlarm",
+            "cloudwatch:DeleteAlarms",
+            "ec2:DescribeAccountAttributes",
+            "ec2:DescribeAvailabilityZones",
+            "ec2:DescribeCoipPools",
+            "ec2:DescribeInternetGateways",
+            "ec2:DescribeLocalGatewayRouteTablePermissions",
+            "ec2:DescribeLocalGatewayRouteTables",
+            "ec2:DescribeLocalGatewayRouteTableVpcAssociations",
+            "ec2:DescribeLocalGateways",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcAttribute",
+            "ec2:DescribeVpcs",
+            "ec2:GetCoipPoolUsage",
+            "sns:ListSubscriptions",
+            "sns:ListTopics",
+            "sns:Publish",
+            "logs:DescribeLogStreams",
+            "logs:GetLogEvents",
+            "outposts:GetOutpostInstanceTypes",
+            "devops-guru:GetResourceCollection"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "pi:*",
+          "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "iam:CreateServiceLinkedRole",
+          "Resource": "*",
+          "Condition": {
+            "StringLike": {
+              "iam:AWSServiceName": [
+                "rds.amazonaws.com",
+                "rds.application-autoscaling.amazonaws.com"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "rds:*",
+            "application-autoscaling:DeleteScalingPolicy",
+            "application-autoscaling:DeregisterScalableTarget",
+            "application-autoscaling:DescribeScalableTargets",
+            "application-autoscaling:DescribeScalingActivities",
+            "application-autoscaling:DescribeScalingPolicies",
+            "application-autoscaling:PutScalingPolicy",
+            "application-autoscaling:RegisterScalableTarget",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:PutMetricAlarm",
+            "cloudwatch:DeleteAlarms",
+            "cloudwatch:ListMetrics",
+            "ec2:DescribeAccountAttributes",
+            "ec2:DescribeAvailabilityZones",
+            "ec2:DescribeCoipPools",
+            "ec2:DescribeInternetGateways",
+            "ec2:DescribeLocalGatewayRouteTablePermissions",
+            "ec2:DescribeLocalGatewayRouteTables",
+            "ec2:DescribeLocalGatewayRouteTableVpcAssociations",
+            "ec2:DescribeLocalGateways",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcAttribute",
+            "ec2:DescribeVpcs",
+            "ec2:GetCoipPoolUsage",
+            "sns:ListSubscriptions",
+            "sns:ListTopics",
+            "sns:Publish",
+            "logs:DescribeLogStreams",
+            "logs:GetLogEvents",
+            "outposts:GetOutpostInstanceTypes",
+            "devops-guru:GetResourceCollection"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "pi:*",
+          "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "iam:CreateServiceLinkedRole",
+          "Resource": "*",
+          "Condition": {
+            "StringLike": {
+              "iam:AWSServiceName": [
+                "rds.amazonaws.com",
+                "rds.application-autoscaling.amazonaws.com"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds cloudwatch:ListMetrics only. Metric discovery does not add metric-value reads, database access or writes."
+    }
+  },
+  {
+    "id": "PLH5-A08",
+    "title": "AmazonS3ReadOnlyAccess v2 -> v3",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/cf1e4413c77fc0810114b72e35162510bce97756/policies/AmazonS3ReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:Get*",
+            "s3:List*",
+            "s3-object-lambda:Get*",
+            "s3-object-lambda:List*"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:Get*",
+            "s3:List*",
+            "s3:Describe*",
+            "s3-object-lambda:Get*",
+            "s3-object-lambda:List*"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds s3:Describe* metadata actions. Existing s3:Get* and s3:List* data access is unchanged; no new principal or write permission is added."
+    }
+  },
+  {
+    "id": "PLH5-A09",
+    "title": "AmazonSSMManagedInstanceCore v1 -> v2",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/caf80dacdf9b79240b96a614d40c85a9cd3c9c3b/policies/AmazonSSMManagedInstanceCore",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "ssm:DescribeAssociation",
+            "ssm:GetDeployablePatchSnapshotForInstance",
+            "ssm:GetDocument",
+            "ssm:DescribeDocument",
+            "ssm:GetManifest",
+            "ssm:GetParameters",
+            "ssm:ListAssociations",
+            "ssm:ListInstanceAssociations",
+            "ssm:PutInventory",
+            "ssm:PutComplianceItems",
+            "ssm:PutConfigurePackageResult",
+            "ssm:UpdateAssociationStatus",
+            "ssm:UpdateInstanceAssociationStatus",
+            "ssm:UpdateInstanceInformation"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ssmmessages:CreateControlChannel",
+            "ssmmessages:CreateDataChannel",
+            "ssmmessages:OpenControlChannel",
+            "ssmmessages:OpenDataChannel"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ec2messages:AcknowledgeMessage",
+            "ec2messages:DeleteMessage",
+            "ec2messages:FailMessage",
+            "ec2messages:GetEndpoint",
+            "ec2messages:GetMessages",
+            "ec2messages:SendReply"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "ssm:DescribeAssociation",
+            "ssm:GetDeployablePatchSnapshotForInstance",
+            "ssm:GetDocument",
+            "ssm:DescribeDocument",
+            "ssm:GetManifest",
+            "ssm:GetParameter",
+            "ssm:GetParameters",
+            "ssm:ListAssociations",
+            "ssm:ListInstanceAssociations",
+            "ssm:PutInventory",
+            "ssm:PutComplianceItems",
+            "ssm:PutConfigurePackageResult",
+            "ssm:UpdateAssociationStatus",
+            "ssm:UpdateInstanceAssociationStatus",
+            "ssm:UpdateInstanceInformation"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ssmmessages:CreateControlChannel",
+            "ssmmessages:CreateDataChannel",
+            "ssmmessages:OpenControlChannel",
+            "ssmmessages:OpenDataChannel"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        },
+        {
+          "Action": [
+            "ec2messages:AcknowledgeMessage",
+            "ec2messages:DeleteMessage",
+            "ec2messages:FailMessage",
+            "ec2messages:GetEndpoint",
+            "ec2messages:GetMessages",
+            "ec2messages:SendReply"
+          ],
+          "Resource": "*",
+          "Effect": "Allow"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Adds ssm:GetParameter on *. Parameter values are sensitive, but ssm:GetParameters already covered the same resources. Review the additional API without claiming a newly reachable secret set or a proven escalation."
+    }
+  },
+  {
+    "id": "PLH5-A10",
+    "title": "CloudWatchReadOnlyAccess v4 -> v5",
+    "source": "https://github.com/zoph-io/IAMTrail/blob/33e468411837ccfc29feffb32b6ea8cb49b748f3/policies/CloudWatchReadOnlyAccess",
+    "kind": "real",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Action": [
+            "autoscaling:Describe*",
+            "cloudwatch:Describe*",
+            "cloudwatch:Get*",
+            "cloudwatch:List*",
+            "logs:Get*",
+            "logs:List*",
+            "logs:StartQuery",
+            "logs:StopQuery",
+            "logs:Describe*",
+            "logs:TestMetricFilter",
+            "logs:FilterLogEvents",
+            "sns:Get*",
+            "sns:List*"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "autoscaling:Describe*",
+            "cloudwatch:Describe*",
+            "cloudwatch:Get*",
+            "cloudwatch:List*",
+            "logs:Get*",
+            "logs:List*",
+            "logs:StartQuery",
+            "logs:StopQuery",
+            "logs:Describe*",
+            "logs:TestMetricFilter",
+            "logs:FilterLogEvents",
+            "oam:ListSinks",
+            "sns:Get*",
+            "sns:List*"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "oam:ListAttachedLinks"
+          ],
+          "Resource": "arn:aws:oam:*:*:sink/*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adds oam:ListSinks and oam:ListAttachedLinks, with the latter limited to sink ARNs. These are observability configuration listings, not telemetry reads or writes."
+    }
+  },
+  {
+    "id": "PLH5-A11",
+    "title": "S3: remove the required KMS-key upload guardrail",
+    "source": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Id": "PutObjPolicy",
+      "Statement": [
+        {
+          "Sid": "DenyObjectsThatAreNotSSEKMSWithSpecificKey",
+          "Principal": "*",
+          "Effect": "Deny",
+          "Action": "s3:PutObject",
+          "Resource": "arn:aws:s3:::amzn-s3-demo-bucket/*",
+          "Condition": {
+            "ArnNotEqualsIfExists": {
+              "s3:x-amz-server-side-encryption-aws-kms-key-id": "arn:aws:kms:us-east-1:111122223333:key/01234567-89ab-cdef-0123-456789abcdef"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Id": "PutObjPolicy",
+      "Statement": []
+    },
+    "expect": {
+      "status": "stop",
+      "why": "Deleting the explicit deny permits otherwise-authorised uploads to use a different KMS key. This weakens the encryption-key requirement; it does not itself grant PutObject."
+    }
+  },
+  {
+    "id": "PLH5-A12",
+    "title": "KMS key policy: service-only grant creation becomes unrestricted",
+    "source": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "Allow attachment of persistent resources",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/ExampleKeyUserRole"
+          },
+          "Action": [
+            "kms:CreateGrant",
+            "kms:ListGrants",
+            "kms:RevokeGrant"
+          ],
+          "Resource": "*",
+          "Condition": {
+            "Bool": {
+              "kms:GrantIsForAWSResource": true
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "Allow attachment of persistent resources",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/ExampleKeyUserRole"
+          },
+          "Action": [
+            "kms:CreateGrant",
+            "kms:ListGrants",
+            "kms:RevokeGrant"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "Removing kms:GrantIsForAWSResource permits the named key user to create grants directly. The key remains the policy attachment scope, but grant delegation is no longer restricted to integrated AWS services."
+    }
+  },
+  {
+    "id": "PLH5-A13",
+    "title": "Secrets Manager: grant one named role read access to the attached secret",
+    "source": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-policies.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/EC2RoleToAccessSecrets"
+          },
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "A named role gains GetSecretValue on the secret carrying this resource policy. Resource * denotes that attached secret; confirm the role and business need rather than infer public access."
+    }
+  },
+  {
+    "id": "PLH5-A14",
+    "title": "SQS: SNS publisher loses the exact source-topic restriction",
+    "source": "https://docs.aws.amazon.com/sns/latest/dg/sns-access-policy-use-cases.html",
+    "kind": "modelled",
+    "before": {
+      "Statement": [
+        {
+          "Sid": "Allow-SNS-SendMessage",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "sns.amazonaws.com"
+          },
+          "Action": [
+            "sqs:SendMessage"
+          ],
+          "Resource": "arn:aws:sqs:us-east-2:444455556666:MyQueue",
+          "Condition": {
+            "ArnEquals": {
+              "aws:SourceArn": "arn:aws:sns:us-east-2:444455556666:MyTopic"
+            }
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "after": {
+      "Statement": [
+        {
+          "Sid": "Allow-SNS-SendMessage",
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "sns.amazonaws.com"
+          },
+          "Action": [
+            "sqs:SendMessage"
+          ],
+          "Resource": "arn:aws:sqs:us-east-2:444455556666:MyQueue"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The queue now accepts SendMessage from the SNS service without checking the source topic. The service principal remains fixed, but any eligible SNS topic can use the grant."
+    }
+  },
+  {
+    "id": "PLH5-A15",
+    "title": "SNS identity policy: add Publish on one topic",
+    "source": "https://docs.aws.amazon.com/sns/latest/dg/sns-access-policy-use-cases.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Statement": [
+        {
+          "Sid": "grant-1234-publish",
+          "Effect": "Allow",
+          "Action": [
+            "sns:Publish"
+          ],
+          "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "expect": {
+      "status": "review",
+      "why": "Adds publishing to one named topic. This is scoped message injection authority requiring review; it does not change the topic policy or open access to everyone."
+    }
+  },
+  {
+    "id": "PLH5-A16",
+    "title": "Lambda identity policy: invoke one function only through its authenticated URL",
+    "source": "https://docs.aws.amazon.com/lambda/latest/dg/urls-auth.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "lambda:InvokeFunctionUrl",
+          "Resource": "arn:aws:lambda:us-east-1:123456789012:function:my-function",
+          "Condition": {
+            "StringEquals": {
+              "lambda:FunctionUrlAuthType": "AWS_IAM"
+            }
+          }
+        },
+        {
+          "Effect": "Allow",
+          "Action": "lambda:InvokeFunction",
+          "Resource": "arn:aws:lambda:us-east-1:123456789012:function:my-function",
+          "Condition": {
+            "Bool": {
+              "lambda:InvokedViaFunctionUrl": "true"
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Both InvokeFunctionUrl and InvokeFunction are limited to one function. AWS_IAM and InvokedViaFunctionUrl conditions constrain the new invocation route; review this scoped capability."
+    }
+  },
+  {
+    "id": "PLH5-A17",
+    "title": "ECR repository policy: existing named pull users gain image push",
+    "source": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policy-examples.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowPushPull",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": [
+              "arn:aws:iam::111122223333:user/push-pull-user-1",
+              "arn:aws:iam::111122223333:user/push-pull-user-2"
+            ]
+          },
+          "Action": [
+            "ecr:BatchGetImage",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AllowPushPull",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": [
+              "arn:aws:iam::111122223333:user/push-pull-user-1",
+              "arn:aws:iam::111122223333:user/push-pull-user-2"
+            ]
+          },
+          "Action": [
+            "ecr:BatchGetImage",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:InitiateLayerUpload",
+            "ecr:PutImage",
+            "ecr:UploadLayerPart"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "The same two named users gain image upload and PutImage on the repository carrying this policy. Review the new deployment capability; Resource * is local to the attached repository, not all repositories."
+    }
+  },
+  {
+    "id": "PLH5-A18",
+    "title": "EC2: remove the IMDSv2 requirement from an instance launch policy",
+    "source": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:RunInstances",
+          "Resource": [
+            "arn:aws:ec2:us-east-1::image/ami-9e1670f7",
+            "arn:aws:ec2:us-east-1::image/ami-45cf5c3c",
+            "arn:aws:ec2:us-east-1:111122223333:instance/*",
+            "arn:aws:ec2:us-east-1:111122223333:volume/*",
+            "arn:aws:ec2:us-east-1:111122223333:key-pair/*",
+            "arn:aws:ec2:us-east-1:111122223333:security-group/*",
+            "arn:aws:ec2:us-east-1:111122223333:subnet/*",
+            "arn:aws:ec2:us-east-1:111122223333:network-interface/*"
+          ]
+        },
+        {
+          "Sid": "RequireImdsV2",
+          "Effect": "Deny",
+          "Action": "ec2:RunInstances",
+          "Resource": "arn:aws:ec2:*:*:instance/*",
+          "Condition": {
+            "StringNotEquals": {
+              "ec2:MetadataHttpTokens": "required"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "ec2:RunInstances",
+          "Resource": [
+            "arn:aws:ec2:us-east-1::image/ami-9e1670f7",
+            "arn:aws:ec2:us-east-1::image/ami-45cf5c3c",
+            "arn:aws:ec2:us-east-1:111122223333:instance/*",
+            "arn:aws:ec2:us-east-1:111122223333:volume/*",
+            "arn:aws:ec2:us-east-1:111122223333:key-pair/*",
+            "arn:aws:ec2:us-east-1:111122223333:security-group/*",
+            "arn:aws:ec2:us-east-1:111122223333:subnet/*",
+            "arn:aws:ec2:us-east-1:111122223333:network-interface/*"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "RunInstances remains authorised on the listed resources, but its explicit deny for missing required metadata tokens is removed. Launches using IMDSv1 become possible where service defaults permit them."
+    }
+  },
+  {
+    "id": "PLH5-A19",
+    "title": "SSM Parameter Store: protected parameter overwrites become permitted",
+    "source": "https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-policy-conditions.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ssm:PutParameter"
+          ],
+          "Resource": "arn:aws:ssm:us-east-1:111122223333:parameter/*"
+        },
+        {
+          "Effect": "Deny",
+          "Action": [
+            "ssm:PutParameter"
+          ],
+          "Condition": {
+            "StringEquals": {
+              "ssm:Overwrite": [
+                "true"
+              ]
+            }
+          },
+          "Resource": "arn:aws:ssm:us-east-1:111122223333:parameter/*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "ssm:PutParameter"
+          ],
+          "Resource": "arn:aws:ssm:us-east-1:111122223333:parameter/*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The PutParameter allow already covers every parameter in the example account and region. Removing the ssm:Overwrite deny permits overwriting existing values, including sensitive configuration."
+    }
+  },
+  {
+    "id": "PLH5-A20",
+    "title": "Rhino method 7: user-policy attachment loses its managed-policy allowlist",
+    "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_iam_limit-managed.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": {
+        "Effect": "Allow",
+        "Action": [
+          "iam:AttachUserPolicy",
+          "iam:DetachUserPolicy"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "ArnEquals": {
+            "iam:PolicyARN": [
+              "arn:aws:iam::*:policy/policy-name-1",
+              "arn:aws:iam::*:policy/policy-name-2"
+            ]
+          }
+        }
+      }
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": {
+        "Effect": "Allow",
+        "Action": [
+          "iam:AttachUserPolicy",
+          "iam:DetachUserPolicy"
+        ],
+        "Resource": "*"
+      }
+    },
+    "expect": {
+      "status": "stop",
+      "why": "AttachUserPolicy can now attach any managed policy to any user, including AdministratorAccess. This opens the policy-attachment escalation described by Rhino; the prior iam:PolicyARN allowlist blocked it."
+    }
+  },
+  {
+    "id": "PLH5-A21",
+    "title": "STS role trust: the named user can assume the role without MFA",
+    "source": "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/anika"
+          },
+          "Action": "sts:AssumeRole",
+          "Condition": {
+            "Bool": {
+              "aws:multifactorAuthPresent": true
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::123456789012:user/anika"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The trusted user stays fixed, but removing aws:multifactorAuthPresent eliminates the MFA requirement for AssumeRole. No new principal is needed for this security regression."
+    }
+  },
+  {
+    "id": "PLH5-A22",
+    "title": "DynamoDB identity policy: add Query on Books and its indexes",
+    "source": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/iam-policy-specific-table-indexes.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "AccessTableAllIndexesOnBooks",
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:Query"
+          ],
+          "Resource": [
+            "arn:aws:dynamodb:us-west-2:123456789012:table/Books",
+            "arn:aws:dynamodb:us-west-2:123456789012:table/Books/index/*"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Query can now return data from one named table and its indexes. This is new scoped data access; review its need without treating the index suffix as every table."
+    }
+  },
+  {
+    "id": "PLH5-A23",
+    "title": "RDS IAM authentication: add one database-user login",
+    "source": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "rds-db:connect"
+          ],
+          "Resource": [
+            "arn:aws:rds-db:us-east-2:111122223333:dbuser:db-ABCDEFGHIJKL01234/db_user"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Adds rds-db:connect for db_user on one DB resource ID. Successful login still requires database-side IAM authentication and user configuration; the IAM grant warrants review."
+    }
+  },
+  {
+    "id": "PLH5-A24",
+    "title": "EventBridge event bus: add one named external account publisher",
+    "source": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-bus-example-policy-cross-account.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": []
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "sid1",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111112222333:root"
+          },
+          "Action": "events:PutEvents",
+          "Resource": "arn:aws:events:us-east-1:123456789012:event-bus/default"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The event bus gains a cross-account PutEvents grant to the named account root principal. External event injection crosses the account boundary; a narrow bus ARN does not remove that risk."
+    }
+  },
+  {
+    "id": "PLH5-A25",
+    "title": "Glue Data Catalog: add table creation in one named database",
+    "source": "https://docs.aws.amazon.com/glue/latest/dg/security_iam_id-based-policy-examples.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "GetTablesActionOnBooks",
+          "Effect": "Allow",
+          "Action": [
+            "glue:GetTables",
+            "glue:GetTable"
+          ],
+          "Resource": [
+            "arn:aws:glue:us-east-1:111122223333:catalog",
+            "arn:aws:glue:us-east-1:111122223333:database/db1",
+            "arn:aws:glue:us-east-1:111122223333:table/db1/books"
+          ]
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "GetTablesActionOnBooks",
+          "Effect": "Allow",
+          "Action": [
+            "glue:GetTables",
+            "glue:GetTable"
+          ],
+          "Resource": [
+            "arn:aws:glue:us-east-1:111122223333:catalog",
+            "arn:aws:glue:us-east-1:111122223333:database/db1",
+            "arn:aws:glue:us-east-1:111122223333:table/db1/books"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "glue:CreateTable"
+          ],
+          "Resource": [
+            "arn:aws:glue:us-east-1:111122223333:table/db1/tbl1",
+            "arn:aws:glue:us-east-1:111122223333:database/db1",
+            "arn:aws:glue:us-east-1:111122223333:catalog"
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "status": "review",
+      "why": "Adds CreateTable for db1/tbl1 with the required database and catalogue ancestors. This is scoped metadata creation, not DevEndpoint creation, PassRole or access to every database."
+    }
+  },
+  {
+    "id": "PLH5-A26",
+    "title": "KMS key policy: remove both required encryption-context values",
+    "source": "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/RoleForExampleApp"
+          },
+          "Action": "kms:Decrypt",
+          "Resource": "*",
+          "Condition": {
+            "StringEquals": {
+              "kms:EncryptionContext:Department": "IT",
+              "kms:EncryptionContext:Project": "Alpha"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/RoleForExampleApp"
+          },
+          "Action": "kms:Decrypt",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The named application role can decrypt without the Department=IT and Project=Alpha encryption-context checks. The policy no longer isolates this key use by that context."
+    }
+  },
+  {
+    "id": "PLH5-A27",
+    "title": "Secrets Manager: remove the VPC-endpoint retrieval guardrail",
+    "source": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_resource-policies.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/EC2RoleToAccessSecrets"
+          },
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": "*"
+        },
+        {
+          "Sid": "RestrictGetSecretValueoperation",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": "*",
+          "Condition": {
+            "StringNotEquals": {
+              "aws:sourceVpce": "vpce-12345678"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111122223333:role/EC2RoleToAccessSecrets"
+          },
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "The named role retains GetSecretValue, but its attached secret no longer denies requests outside vpce-12345678. Otherwise-authorised off-endpoint reads are now possible."
+    }
+  },
+  {
+    "id": "PLH5-A28",
+    "title": "SQS: restrict an IP-based all-actions grant to send-only and block one address",
+    "source": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Id": "Queue1_Policy_UUID",
+      "Statement": [
+        {
+          "Sid": "Queue1_AnonymousAccess_AllActions_AllowlistIP",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "sqs:*",
+          "Resource": "arn:aws:sqs:*:111122223333:queue1",
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": "192.0.2.0/24"
+            }
+          }
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Id": "Queue1_Policy_UUID",
+      "Statement": [
+        {
+          "Sid": "Queue1_AnonymousAccess_SendMessage_IPLimit",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "sqs:SendMessage",
+          "Resource": "arn:aws:sqs:*:111122223333:queue1",
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": "192.0.2.0/24"
+            },
+            "NotIpAddress": {
+              "aws:SourceIp": "192.0.2.188/32"
+            }
+          }
+        },
+        {
+          "Sid": "Queue1_AnonymousAccess_AllActions_IPLimit_Deny",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "sqs:*",
+          "Resource": "arn:aws:sqs:*:111122223333:queue1",
+          "Condition": {
+            "IpAddress": {
+              "aws:SourceIp": "12.148.72.0/23"
+            }
+          }
+        }
+      ]
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Within the same queue and /24 network, Allow narrows from sqs:* to SendMessage, excludes one address and adds an explicit deny for that address. No permission is broadened."
+    }
+  },
+  {
+    "id": "PLH5-A29",
+    "title": "SNS resource policy: bind S3 publishing to its source account",
+    "source": "https://docs.aws.amazon.com/sns/latest/dg/sns-access-policy-use-cases.html",
+    "kind": "modelled",
+    "before": {
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "s3.amazonaws.com"
+          },
+          "Action": "sns:Publish",
+          "Resource": "arn:aws:sns:us-east-2:111122223333:MyTopic"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "after": {
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "s3.amazonaws.com"
+          },
+          "Action": "sns:Publish",
+          "Resource": "arn:aws:sns:us-east-2:111122223333:MyTopic",
+          "Condition": {
+            "StringEquals": {
+              "AWS:SourceAccount": "444455556666"
+            }
+          }
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "expect": {
+      "status": "pass",
+      "why": "Adding AWS:SourceAccount confines the existing S3 service grant to one source account. Topic, action and service principal remain unchanged."
+    }
+  },
+  {
+    "id": "PLH5-A30",
+    "title": "Rhino method 16: add a DynamoDB-stream trigger route for new Lambda code",
+    "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+    "kind": "modelled",
+    "before": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "iam:PassRole",
+            "lambda:CreateFunction"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
+    "after": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "iam:PassRole",
+            "lambda:CreateFunction"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": "lambda:CreateEventSourceMapping",
+          "Resource": "*"
+        }
+      ]
+    },
+    "expect": {
+      "status": "stop",
+      "why": "CreateEventSourceMapping completes a documented execution route for an actor already able to pass roles and create Lambda functions. Exploitation still requires a usable stream and suitable execution-role permissions; direct InvokeFunction is not required."
+    }
+  }
+]

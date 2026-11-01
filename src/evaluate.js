@@ -206,16 +206,94 @@ function matchesAction(stmt, action) {
   return stmt.actions.some((p) => globMatch(p, action));
 }
 
-function matchesResource(stmt, resource) {
+// Pull the 12-digit account id out of an ARN / bare account / :root form.
+function principalAccountId(principal) {
+  if (!principal || typeof principal !== 'string') return null;
+  if (/^\d{12}$/.test(principal)) return principal;
+  const m = principal.match(/^arn:aws:iam::(\d{12}):/);
+  return m ? m[1] : null;
+}
+
+function principalIsRoot(principal) {
+  return typeof principal === 'string'
+    && (/^\d{12}$/.test(principal) || /^arn:aws:iam::\d{12}:root$/.test(principal));
+}
+
+// Does one Principal/NotPrincipal entry cover the request principal?
+function entryMatchesPrincipal(entry, principal) {
+  if (!entry) return false;
+  const id = String(entry.id || '');
+  // "*" and {"AWS":"*"} match anyone, including anonymous.
+  if (entry.type === 'any' || id === '*') return true;
+  if (principal == null) return false;
+  if (id === principal) return true;
+  // Account root (or bare account id) matches every principal in that account.
+  if (principalIsRoot(id)) {
+    const account = principalAccountId(id);
+    return account != null && principalAccountId(principal) === account;
+  }
+  // Wildcard ARN patterns (rare but documented).
+  if (id.includes('*') || id.includes('?')) return globMatch(id, principal, true);
+  return false;
+}
+
+// true | false | 'unknown' — unknown when the statement names a principal but
+// the request did not, so we cannot say who it applies to yet.
+function matchesPrincipal(stmt, principal) {
+  const hasPrincipal = (stmt.principals && stmt.principals.length)
+    || (stmt.notPrincipals && stmt.notPrincipals.length);
+  if (!hasPrincipal) return true; // identity policies apply to the bearer
+
+  if (principal == null || principal === '') return 'unknown';
+
+  if (stmt.notPrincipals && stmt.notPrincipals.length) {
+    if (stmt.notPrincipals.some((entry) => entryMatchesPrincipal(entry, principal))) {
+      return false;
+    }
+  }
+  if (stmt.principals && stmt.principals.length) {
+    return stmt.principals.some((entry) => entryMatchesPrincipal(entry, principal));
+  }
+  // NotPrincipal-only statement: applies to everyone except the listed set.
+  return true;
+}
+
+// Only the variables Task 2 models. Anything else stays as ${...} so
+// matchesResource can return 'unknown' instead of a silent miss.
+function isModelledPolicyVariable(key) {
+  const lower = String(key).toLowerCase();
+  return lower === 'aws:username'
+    || lower === 'aws:userid'
+    || lower === 'aws:principalaccount'
+    || lower.startsWith('aws:principaltag/');
+}
+
+function substitutePolicyVariables(pattern, context = {}) {
+  if (typeof pattern !== 'string' || !pattern.includes('${')) return pattern;
+  return pattern.replace(/\$\{([^}]+)\}/g, (full, rawKey) => {
+    const key = String(rawKey);
+    if (!isModelledPolicyVariable(key)) return full;
+    // aws:PrincipalTag/foo → look up that exact context key (case-insensitive).
+    const found = Object.keys(context).find((k) => k.toLowerCase() === key.toLowerCase());
+    if (found == null) return full;
+    const value = context[found];
+    if (value == null || Array.isArray(value)) return full;
+    return String(value);
+  });
+}
+
+function matchesResource(stmt, resource, context = {}) {
   if (!resource) return true; // caller didn't scope to a resource
-  if ([...stmt.resources, ...stmt.notResources].some(pattern => pattern.includes('${'))) return 'unknown';
-  if (stmt.notResources.length) return !stmt.notResources.some((p) => globMatch(p, resource, true));
-  if (!stmt.resources.length) return stmt.kind === 'identity'; // identity stmt w/o Resource is unusual; treat as none
-  return stmt.resources.some((p) => globMatch(p, resource, true));
+  const resources = (stmt.resources || []).map((p) => substitutePolicyVariables(p, context));
+  const notResources = (stmt.notResources || []).map((p) => substitutePolicyVariables(p, context));
+  if ([...resources, ...notResources].some((pattern) => pattern.includes('${'))) return 'unknown';
+  if (notResources.length) return !notResources.some((p) => globMatch(p, resource, true));
+  if (!resources.length) return stmt.kind === 'identity'; // identity stmt w/o Resource is unusual; treat as none
+  return resources.some((p) => globMatch(p, resource, true));
 }
 
 // Evaluate whether `request` is allowed by the AWS statements in `model`.
-// request = { action, resource?, context?: {conditionKey: value|[values]}, contextComplete?: boolean }
+// request = { action, resource?, principal?, context?, contextComplete? }
 function evaluateRequest(model, request) {
   const context = request.context || {};
   const stmts = model.statements.filter((s) => s.provider === 'aws');
@@ -226,20 +304,42 @@ function evaluateRequest(model, request) {
 
   for (const s of stmts) {
     if (!matchesAction(s, request.action)) continue;
-    const resourceMatch = matchesResource(s, request.resource);
+    const principalMatch = matchesPrincipal(s, request.principal);
+    if (principalMatch === false) continue;
+    const resourceMatch = matchesResource(s, request.resource, context);
     if (!resourceMatch) continue;
     let cond = evaluateCondition(s.conditions, context, request.contextComplete === true);
-    if (resourceMatch === 'unknown' && cond.result !== false) cond = { ...cond, result: 'unknown', invalidValues: [...(cond.invalidValues || []), 'Resource contains an unmodeled policy variable'] };
+    if (principalMatch === 'unknown' && cond.result !== false) {
+      cond = {
+        ...cond,
+        result: 'unknown',
+        invalidValues: [...(cond.invalidValues || []), 'Add a principal to check who this applies to'],
+      };
+    }
+    if (resourceMatch === 'unknown' && cond.result !== false) {
+      cond = {
+        ...cond,
+        result: 'unknown',
+        invalidValues: [...(cond.invalidValues || []), 'Resource contains an unmodeled policy variable'],
+      };
+    }
     const rec = { id: s.id, doc: s.doc, line: s.line, sid: s.sid, condition: s.conditions, cond };
+    if (principalMatch === 'unknown') {
+      rec.note = 'Add a principal to check who this applies to';
+    }
 
     if (s.effect === 'Deny') {
       if (cond.result === true) denyMatches.push(rec);
-      else if (cond.result === 'unknown') { rec.note = 'This Deny may apply; resolve missing context or unsupported conditions before relying on access.'; unknowns.push({ ...rec, effect: 'Deny' }); }
+      else if (cond.result === 'unknown') { rec.note = rec.note || 'This Deny may apply; resolve missing context or unsupported conditions before relying on access.'; unknowns.push({ ...rec, effect: 'Deny' }); }
       continue;
     }
     // Allow
     if (cond.result === true) allowMatches.push(rec);
-    else if (cond.result === 'unknown') { rec.note = 'This Allow depends on unresolved context or condition semantics.'; conditionalAllows.push(rec); unknowns.push({ ...rec, effect: 'Allow' }); }
+    else if (cond.result === 'unknown') {
+      rec.note = rec.note || 'This Allow depends on unresolved context or condition semantics.';
+      conditionalAllows.push(rec);
+      unknowns.push({ ...rec, effect: 'Allow' });
+    }
     // cond.result === false → statement does not apply under this context
   }
 
@@ -270,4 +370,11 @@ function explain(decision, m) {
   return 'Implicitly denied — no statement allows this action/resource under the given context.';
 }
 
-module.exports = { evaluateRequest, evaluateCondition, ipInCidr, OPS };
+module.exports = {
+  evaluateRequest,
+  evaluateCondition,
+  matchesPrincipal,
+  substitutePolicyVariables,
+  ipInCidr,
+  OPS,
+};

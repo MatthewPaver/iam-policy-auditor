@@ -30,6 +30,8 @@ jobs:
       - run: npm run benchmark
       - name: Install browser for journey checks
         run: npx playwright install --with-deps chromium
+      - name: Build the static demo used by the newly-allowed journeys
+        run: npm run build:demo
       - name: Check change-review journeys
         run: npm run test:browser
       - name: Check interactive walkthrough journeys

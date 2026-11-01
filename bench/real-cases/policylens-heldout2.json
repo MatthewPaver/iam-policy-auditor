@@ -1,0 +1,1420 @@
+[
+ {
+  "id": "PLH2-A01",
+  "title": "AWSFaultInjectionSimulatorSSMAccess v1 -> v2 (Jun 2023): ssm:SendCommand on every instance with any document",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/173745fc481d406d5bf1742c9f9f7859399373f7/policies/AWSFaultInjectionSimulatorSSMAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AWSFaultInjectionSimulatorSSMAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v1",
+    "createDate": "2022-10-26T15:33:44Z",
+    "commit": "3884a4c4b8de4ceb865adb8ae5a1e93d4003108a",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/3884a4c4b8de4ceb865adb8ae5a1e93d4003108a/policies/AWSFaultInjectionSimulatorSSMAccess"
+   },
+   "after": {
+    "versionId": "v2",
+    "createDate": "2023-06-02T22:55:18Z",
+    "commit": "173745fc481d406d5bf1742c9f9f7859399373f7",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/173745fc481d406d5bf1742c9f9f7859399373f7/policies/AWSFaultInjectionSimulatorSSMAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": "arn:aws:iam::*:role/*",
+     "Condition": {
+      "StringEquals": {
+       "iam:PassedToService": "ssm.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:StartAutomationExecution"
+     ],
+     "Resource": [
+      "arn:aws:ssm:*:*:automation-definition/*:*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:GetAutomationExecution",
+      "ssm:StopAutomationExecution"
+     ],
+     "Resource": [
+      "arn:aws:ssm:*:*:automation-execution/*"
+     ]
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": "arn:aws:iam::*:role/*",
+     "Condition": {
+      "StringEquals": {
+       "iam:PassedToService": "ssm.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:StartAutomationExecution"
+     ],
+     "Resource": [
+      "arn:aws:ssm:*:*:automation-definition/*:*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:GetAutomationExecution",
+      "ssm:StopAutomationExecution"
+     ],
+     "Resource": [
+      "arn:aws:ssm:*:*:automation-execution/*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": "ssm:SendCommand",
+     "Resource": [
+      "arn:aws:ec2:*:*:instance/*",
+      "arn:aws:ssm:*:*:document/*"
+     ]
+    },
+    {
+     "Effect": "Allow",
+     "Action": [
+      "ssm:ListCommands",
+      "ssm:CancelCommand"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "expect": {
+   "status": "stop",
+   "why": "v1 allows only SSM Automation (StartAutomationExecution on automation-definition/*, Get/StopAutomationExecution) plus iam:PassRole limited to iam:PassedToService = ssm.amazonaws.com. v2 adds an unconditioned statement: ssm:SendCommand on arn:aws:ec2:*:*:instance/* and arn:aws:ssm:*:*:document/*. That allows running any SSM document, including AWS-RunShellScript, on every managed instance. SendCommand goes ImplicitDeny -> Allow. Running arbitrary commands on instances gives code execution with each instance profile's credentials."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html",
+   "https://docs.aws.amazon.com/service-authorization/latest/reference/list_awssystemsmanager.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "principal": "arn:aws:iam::111122223333:role/fis-experiment-role"
+ },
+ {
+  "id": "PLH2-A02",
+  "title": "AmazonRDSPerformanceInsightsReadOnly v2 -> v3 (Oct 2023): Sid added to every statement, nothing else",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/43e8956d63e67cfb2dad195d04379a81d13f82eb/policies/AmazonRDSPerformanceInsightsReadOnly",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AmazonRDSPerformanceInsightsReadOnly",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2023-08-16T18:42:54Z",
+    "commit": "b0ac855721534173e1d1a4cc8a6281bf0c60d15d",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/b0ac855721534173e1d1a4cc8a6281bf0c60d15d/policies/AmazonRDSPerformanceInsightsReadOnly"
+   },
+   "after": {
+    "versionId": "v3",
+    "createDate": "2023-10-23T21:17:06Z",
+    "commit": "43e8956d63e67cfb2dad195d04379a81d13f82eb",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/43e8956d63e67cfb2dad195d04379a81d13f82eb/policies/AmazonRDSPerformanceInsightsReadOnly"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": "rds:DescribeDBInstances",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "rds:DescribeDBClusters",
+     "Resource": "*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:DescribeDimensionKeys",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:GetDimensionKeyDetails",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:GetResourceMetadata",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:GetResourceMetrics",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:ListAvailableResourceDimensions",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:ListAvailableResourceMetrics",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:GetPerformanceAnalysisReport",
+     "Resource": "arn:aws:pi:*:*:perf-reports/rds/*/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:ListPerformanceAnalysisReports",
+     "Resource": "arn:aws:pi:*:*:perf-reports/rds/*/*"
+    },
+    {
+     "Effect": "Allow",
+     "Action": "pi:ListTagsForResource",
+     "Resource": "arn:aws:pi:*:*:*/rds/*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "AmazonRDSDescribeDBInstances",
+     "Effect": "Allow",
+     "Action": "rds:DescribeDBInstances",
+     "Resource": "*"
+    },
+    {
+     "Sid": "AmazonRDSDescribeDBClusters",
+     "Effect": "Allow",
+     "Action": "rds:DescribeDBClusters",
+     "Resource": "*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsDescribeDimensionKeys",
+     "Effect": "Allow",
+     "Action": "pi:DescribeDimensionKeys",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsGetDimensionKeyDetails",
+     "Effect": "Allow",
+     "Action": "pi:GetDimensionKeyDetails",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsGetResourceMetadata",
+     "Effect": "Allow",
+     "Action": "pi:GetResourceMetadata",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsGetResourceMetrics",
+     "Effect": "Allow",
+     "Action": "pi:GetResourceMetrics",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsListAvailableResourceDimensions",
+     "Effect": "Allow",
+     "Action": "pi:ListAvailableResourceDimensions",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsListAvailableResourceMetrics",
+     "Effect": "Allow",
+     "Action": "pi:ListAvailableResourceMetrics",
+     "Resource": "arn:aws:pi:*:*:metrics/rds/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsGetPerformanceAnalysisReport",
+     "Effect": "Allow",
+     "Action": "pi:GetPerformanceAnalysisReport",
+     "Resource": "arn:aws:pi:*:*:perf-reports/rds/*/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsListPerformanceAnalysisReports",
+     "Effect": "Allow",
+     "Action": "pi:ListPerformanceAnalysisReports",
+     "Resource": "arn:aws:pi:*:*:perf-reports/rds/*/*"
+    },
+    {
+     "Sid": "AmazonRDSPerformanceInsightsListTagsForResource",
+     "Effect": "Allow",
+     "Action": "pi:ListTagsForResource",
+     "Resource": "arn:aws:pi:*:*:*/rds/*"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "The only differences between v2 and v3 are eleven new Sid values (and VersionId/CreateDate). Sid is an optional identifier with no effect on evaluation, so every request has the same decision before and after."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_sid.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "Cosmetic-change test: every statement's text differs."
+ },
+ {
+  "id": "PLH2-A03",
+  "title": "SageMakerStudioUserIAMConsolePolicy v2 -> v3 (Nov 2025): conditioned iam:PassRole statement removed",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/fcf21967d6af68a8b73cc1887d8c25bb46a03ab9/policies/SageMakerStudioUserIAMConsolePolicy",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/SageMakerStudioUserIAMConsolePolicy",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2025-11-10T22:19:10Z",
+    "commit": "c306031da7666e56e8555073a0cf37b5773cd3c3",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/c306031da7666e56e8555073a0cf37b5773cd3c3/policies/SageMakerStudioUserIAMConsolePolicy"
+   },
+   "after": {
+    "versionId": "v3",
+    "createDate": "2025-11-14T22:49:06Z",
+    "commit": "fcf21967d6af68a8b73cc1887d8c25bb46a03ab9",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/fcf21967d6af68a8b73cc1887d8c25bb46a03ab9/policies/SageMakerStudioUserIAMConsolePolicy"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "datazone:ListDomains",
+      "datazone:GetDomain",
+      "datazone:GetUserProfile",
+      "datazone:ListProjects",
+      "datazone:ListProjectProfiles",
+      "datazone:CreateProject",
+      "datazone:GetProject",
+      "datazone:DeleteProject",
+      "datazone:GetIamPortalLoginUrl",
+      "datazone:ListEnvironmentBlueprints",
+      "datazone:ListEnvironments",
+      "datazone:GetEnvironment",
+      "datazone:GetEnvironmentCredentials",
+      "datazone:GetGroupProfile",
+      "datazone:SearchGroupProfiles",
+      "datazone:SearchUserProfiles",
+      "datazone:ListProjectMemberships"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Allow",
+     "Sid": "AmazonDataZoneStatement"
+    },
+    {
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRole",
+      "iam:GetUser"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Allow",
+     "Sid": "ReadOnlyStatement"
+    },
+    {
+     "Action": "iam:PassRole",
+     "Resource": [
+      "arn:aws:iam::*:role/service-role/AmazonSageMaker*"
+     ],
+     "Effect": "Allow",
+     "Condition": {
+      "StringEquals": {
+       "iam:passedToService": "datazone.amazonaws.com"
+      }
+     },
+     "Sid": "IAMPassRoleStatement"
+    },
+    {
+     "Action": [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+     ],
+     "Resource": "*",
+     "Effect": "Allow",
+     "Condition": {
+      "ForAnyValue:StringEquals": {
+       "kms:EncryptionContextKeys": "aws:datazone:domainId"
+      },
+      "StringLike": {
+       "kms:ViaService": "datazone.*.amazonaws.com"
+      }
+     },
+     "Sid": "DataZoneKMSPermissions"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "datazone:ListDomains",
+      "datazone:GetDomain",
+      "datazone:GetUserProfile",
+      "datazone:ListProjects",
+      "datazone:ListProjectProfiles",
+      "datazone:CreateProject",
+      "datazone:GetProject",
+      "datazone:DeleteProject",
+      "datazone:GetIamPortalLoginUrl",
+      "datazone:ListEnvironmentBlueprints",
+      "datazone:ListEnvironments",
+      "datazone:GetEnvironment",
+      "datazone:GetEnvironmentCredentials",
+      "datazone:GetGroupProfile",
+      "datazone:SearchGroupProfiles",
+      "datazone:SearchUserProfiles",
+      "datazone:ListProjectMemberships"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Allow",
+     "Sid": "AmazonDataZoneStatement"
+    },
+    {
+     "Action": [
+      "iam:ListRoles",
+      "iam:GetRole",
+      "iam:GetUser"
+     ],
+     "Resource": [
+      "*"
+     ],
+     "Effect": "Allow",
+     "Sid": "ReadOnlyStatement"
+    },
+    {
+     "Action": [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+     ],
+     "Resource": "*",
+     "Effect": "Allow",
+     "Condition": {
+      "ForAnyValue:StringEquals": {
+       "kms:EncryptionContextKeys": "aws:datazone:domainId"
+      },
+      "StringLike": {
+       "kms:ViaService": "datazone.*.amazonaws.com"
+      }
+     },
+     "Sid": "DataZoneKMSPermissions"
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "v3 is v2 minus the IAMPassRoleStatement (iam:PassRole on role/service-role/AmazonSageMaker* with iam:passedToService = datazone.amazonaws.com). The remaining statements are unchanged. Removing an Allow cannot allow anything new."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ]
+ },
+ {
+  "id": "PLH2-A04",
+  "title": "NeptuneFullAccess v3 -> v4 (Feb 2020): iam:PassRole moved from an unconditioned statement into a new one limited to rds.amazonaws.com",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/979724dc1ba4bb4650a32c523347878aec48855e/policies/NeptuneFullAccess",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/NeptuneFullAccess",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v3",
+    "createDate": "2018-11-06T21:21:19Z",
+    "commit": "49aa1d038b9f1370cb7d70085f3f2543267ae915",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/49aa1d038b9f1370cb7d70085f3f2543267ae915/policies/NeptuneFullAccess"
+   },
+   "after": {
+    "versionId": "v4",
+    "createDate": "2020-02-12T23:28:19Z",
+    "commit": "979724dc1ba4bb4650a32c523347878aec48855e",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/979724dc1ba4bb4650a32c523347878aec48855e/policies/NeptuneFullAccess"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "rds:CreateDBCluster",
+      "rds:CreateDBInstance"
+     ],
+     "Resource": [
+      "arn:aws:rds:*"
+     ],
+     "Condition": {
+      "StringEquals": {
+       "rds:DatabaseEngine": "graphdb"
+      }
+     }
+    },
+    {
+     "Action": [
+      "rds:AddRoleToDBCluster",
+      "rds:AddSourceIdentifierToSubscription",
+      "rds:AddTagsToResource",
+      "rds:ApplyPendingMaintenanceAction",
+      "rds:CopyDBClusterParameterGroup",
+      "rds:CopyDBClusterSnapshot",
+      "rds:CopyDBParameterGroup",
+      "rds:CreateDBClusterParameterGroup",
+      "rds:CreateDBClusterSnapshot",
+      "rds:CreateDBParameterGroup",
+      "rds:CreateDBSubnetGroup",
+      "rds:CreateEventSubscription",
+      "rds:DeleteDBCluster",
+      "rds:DeleteDBClusterParameterGroup",
+      "rds:DeleteDBClusterSnapshot",
+      "rds:DeleteDBInstance",
+      "rds:DeleteDBParameterGroup",
+      "rds:DeleteDBSubnetGroup",
+      "rds:DeleteEventSubscription",
+      "rds:DescribeAccountAttributes",
+      "rds:DescribeCertificates",
+      "rds:DescribeDBClusterParameterGroups",
+      "rds:DescribeDBClusterParameters",
+      "rds:DescribeDBClusterSnapshotAttributes",
+      "rds:DescribeDBClusterSnapshots",
+      "rds:DescribeDBClusters",
+      "rds:DescribeDBEngineVersions",
+      "rds:DescribeDBInstances",
+      "rds:DescribeDBLogFiles",
+      "rds:DescribeDBParameterGroups",
+      "rds:DescribeDBParameters",
+      "rds:DescribeDBSecurityGroups",
+      "rds:DescribeDBSubnetGroups",
+      "rds:DescribeEngineDefaultClusterParameters",
+      "rds:DescribeEngineDefaultParameters",
+      "rds:DescribeEventCategories",
+      "rds:DescribeEventSubscriptions",
+      "rds:DescribeEvents",
+      "rds:DescribeOptionGroups",
+      "rds:DescribeOrderableDBInstanceOptions",
+      "rds:DescribePendingMaintenanceActions",
+      "rds:DescribeValidDBInstanceModifications",
+      "rds:DownloadDBLogFilePortion",
+      "rds:FailoverDBCluster",
+      "rds:ListTagsForResource",
+      "rds:ModifyDBCluster",
+      "rds:ModifyDBClusterParameterGroup",
+      "rds:ModifyDBClusterSnapshotAttribute",
+      "rds:ModifyDBInstance",
+      "rds:ModifyDBParameterGroup",
+      "rds:ModifyDBSubnetGroup",
+      "rds:ModifyEventSubscription",
+      "rds:PromoteReadReplicaDBCluster",
+      "rds:RebootDBInstance",
+      "rds:RemoveRoleFromDBCluster",
+      "rds:RemoveSourceIdentifierFromSubscription",
+      "rds:RemoveTagsFromResource",
+      "rds:ResetDBClusterParameterGroup",
+      "rds:ResetDBParameterGroup",
+      "rds:RestoreDBClusterFromSnapshot",
+      "rds:RestoreDBClusterToPointInTime"
+     ],
+     "Effect": "Allow",
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Action": [
+      "cloudwatch:GetMetricStatistics",
+      "cloudwatch:ListMetrics",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcAttribute",
+      "ec2:DescribeVpcs",
+      "iam:PassRole",
+      "kms:ListAliases",
+      "kms:ListKeyPolicies",
+      "kms:ListKeys",
+      "kms:ListRetirableGrants",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "sns:ListSubscriptions",
+      "sns:ListTopics",
+      "sns:Publish"
+     ],
+     "Effect": "Allow",
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Action": "iam:CreateServiceLinkedRole",
+     "Effect": "Allow",
+     "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+     "Condition": {
+      "StringLike": {
+       "iam:AWSServiceName": "rds.amazonaws.com"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Action": [
+      "rds:CreateDBCluster",
+      "rds:CreateDBInstance"
+     ],
+     "Resource": [
+      "arn:aws:rds:*:*:*"
+     ],
+     "Condition": {
+      "StringEquals": {
+       "rds:DatabaseEngine": "graphdb"
+      }
+     }
+    },
+    {
+     "Action": [
+      "rds:AddRoleToDBCluster",
+      "rds:AddSourceIdentifierToSubscription",
+      "rds:AddTagsToResource",
+      "rds:ApplyPendingMaintenanceAction",
+      "rds:CopyDBClusterParameterGroup",
+      "rds:CopyDBClusterSnapshot",
+      "rds:CopyDBParameterGroup",
+      "rds:CreateDBClusterParameterGroup",
+      "rds:CreateDBClusterSnapshot",
+      "rds:CreateDBParameterGroup",
+      "rds:CreateDBSubnetGroup",
+      "rds:CreateEventSubscription",
+      "rds:DeleteDBCluster",
+      "rds:DeleteDBClusterParameterGroup",
+      "rds:DeleteDBClusterSnapshot",
+      "rds:DeleteDBInstance",
+      "rds:DeleteDBParameterGroup",
+      "rds:DeleteDBSubnetGroup",
+      "rds:DeleteEventSubscription",
+      "rds:DescribeAccountAttributes",
+      "rds:DescribeCertificates",
+      "rds:DescribeDBClusterParameterGroups",
+      "rds:DescribeDBClusterParameters",
+      "rds:DescribeDBClusterSnapshotAttributes",
+      "rds:DescribeDBClusterSnapshots",
+      "rds:DescribeDBClusters",
+      "rds:DescribeDBEngineVersions",
+      "rds:DescribeDBInstances",
+      "rds:DescribeDBLogFiles",
+      "rds:DescribeDBParameterGroups",
+      "rds:DescribeDBParameters",
+      "rds:DescribeDBSecurityGroups",
+      "rds:DescribeDBSubnetGroups",
+      "rds:DescribeEngineDefaultClusterParameters",
+      "rds:DescribeEngineDefaultParameters",
+      "rds:DescribeEventCategories",
+      "rds:DescribeEventSubscriptions",
+      "rds:DescribeEvents",
+      "rds:DescribeOptionGroups",
+      "rds:DescribeOrderableDBInstanceOptions",
+      "rds:DescribePendingMaintenanceActions",
+      "rds:DescribeValidDBInstanceModifications",
+      "rds:DownloadDBLogFilePortion",
+      "rds:FailoverDBCluster",
+      "rds:ListTagsForResource",
+      "rds:ModifyDBCluster",
+      "rds:ModifyDBClusterParameterGroup",
+      "rds:ModifyDBClusterSnapshotAttribute",
+      "rds:ModifyDBInstance",
+      "rds:ModifyDBParameterGroup",
+      "rds:ModifyDBSubnetGroup",
+      "rds:ModifyEventSubscription",
+      "rds:PromoteReadReplicaDBCluster",
+      "rds:RebootDBInstance",
+      "rds:RemoveRoleFromDBCluster",
+      "rds:RemoveSourceIdentifierFromSubscription",
+      "rds:RemoveTagsFromResource",
+      "rds:ResetDBClusterParameterGroup",
+      "rds:ResetDBParameterGroup",
+      "rds:RestoreDBClusterFromSnapshot",
+      "rds:RestoreDBClusterToPointInTime"
+     ],
+     "Effect": "Allow",
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Action": [
+      "cloudwatch:GetMetricStatistics",
+      "cloudwatch:ListMetrics",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeAvailabilityZones",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcAttribute",
+      "ec2:DescribeVpcs",
+      "kms:ListAliases",
+      "kms:ListKeyPolicies",
+      "kms:ListKeys",
+      "kms:ListRetirableGrants",
+      "logs:DescribeLogStreams",
+      "logs:GetLogEvents",
+      "sns:ListSubscriptions",
+      "sns:ListTopics",
+      "sns:Publish"
+     ],
+     "Effect": "Allow",
+     "Resource": [
+      "*"
+     ]
+    },
+    {
+     "Action": "iam:PassRole",
+     "Effect": "Allow",
+     "Resource": "*",
+     "Condition": {
+      "StringEquals": {
+       "iam:passedToService": "rds.amazonaws.com"
+      }
+     }
+    },
+    {
+     "Action": "iam:CreateServiceLinkedRole",
+     "Effect": "Allow",
+     "Resource": "arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+     "Condition": {
+      "StringLike": {
+       "iam:AWSServiceName": "rds.amazonaws.com"
+      }
+     }
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "In v3, iam:PassRole sits in the big statement on Resource \"*\" with no condition. v4 removes it there and adds a separate statement: iam:PassRole on \"*\" with StringEquals iam:passedToService = rds.amazonaws.com. Every PassRole that v4 allows was already allowed by v3, and passing roles to other services is now denied by default. The only other edit changes the CreateDBCluster/CreateDBInstance resource from arn:aws:rds:* to arn:aws:rds:*:*:*, which is equal or narrower (a trailing * in an ARN segment can match across colons). The change is narrower."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#ck_PassedToService",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "False-positive test: a text diff shows a new 'iam:PassRole on *' statement, but it is a restriction."
+ },
+ {
+  "id": "PLH2-A05",
+  "title": "AmazonEventBridgeApiDestinationsServiceRolePolicy v2 -> v3 (May 2025): aws:ResourceAccount = ${aws:PrincipalAccount} added to the Secrets Manager statement",
+  "source": "https://github.com/zoph-io/IAMTrail/blob/6f6bafcf143560db77687910f67c2d6ee87c2ed9/policies/AmazonEventBridgeApiDestinationsServiceRolePolicy",
+  "kind": "real",
+  "sourceDetail": {
+   "policyArn": "arn:aws:iam::aws:policy/AmazonEventBridgeApiDestinationsServiceRolePolicy",
+   "repo": "https://github.com/zoph-io/IAMTrail (formerly zoph-io/MAMIP)",
+   "before": {
+    "versionId": "v2",
+    "createDate": "2025-03-28T20:07:07Z",
+    "commit": "280fd158524ea1fed568ae372cf985e6052b9882",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/280fd158524ea1fed568ae372cf985e6052b9882/policies/AmazonEventBridgeApiDestinationsServiceRolePolicy"
+   },
+   "after": {
+    "versionId": "v3",
+    "createDate": "2025-05-29T21:22:07Z",
+    "commit": "6f6bafcf143560db77687910f67c2d6ee87c2ed9",
+    "url": "https://github.com/zoph-io/IAMTrail/blob/6f6bafcf143560db77687910f67c2d6ee87c2ed9/policies/AmazonEventBridgeApiDestinationsServiceRolePolicy"
+   },
+   "note": "before/after are the PolicyVersion.Document objects from the MAMIP files, unchanged."
+  },
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue"
+     ],
+     "Resource": "arn:aws:secretsmanager:*:*:secret:events!connection/*",
+     "Effect": "Allow"
+    },
+    {
+     "Action": [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:GenerateDataKey"
+     ],
+     "Resource": "arn:aws:kms:*:*:key/*",
+     "Effect": "Allow",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/EventBridgeApiDestinations": "true"
+      },
+      "StringLike": {
+       "kms:EncryptionContext:SecretARN": [
+        "arn:aws:secretsmanager:*:*:secret:events!connection/*"
+       ],
+       "kms:ViaService": "secretsmanager.*.amazonaws.com"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Action": [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue"
+     ],
+     "Resource": "arn:aws:secretsmanager:*:*:secret:events!connection/*",
+     "Effect": "Allow",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceAccount": "${aws:PrincipalAccount}"
+      }
+     }
+    },
+    {
+     "Action": [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:GenerateDataKey"
+     ],
+     "Resource": "arn:aws:kms:*:*:key/*",
+     "Effect": "Allow",
+     "Condition": {
+      "StringEquals": {
+       "aws:ResourceTag/EventBridgeApiDestinations": "true"
+      },
+      "StringLike": {
+       "kms:EncryptionContext:SecretARN": [
+        "arn:aws:secretsmanager:*:*:secret:events!connection/*"
+       ],
+       "kms:ViaService": "secretsmanager.*.amazonaws.com"
+      }
+     }
+    }
+   ]
+  },
+  "expect": {
+   "status": "pass",
+   "why": "The secretsmanager statement (CreateSecret, GetSecretValue, PutSecretValue, ... on secret:events!connection/*) gains Condition StringEquals aws:ResourceAccount = ${aws:PrincipalAccount}. Adding a condition to an Allow can only remove matches. Same-account requests are unchanged; secrets in other accounts are no longer covered. The KMS statement is unchanged."
+  },
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-resourceaccount",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "False-positive test: the text diff touches a statement containing secretsmanager:GetSecretValue."
+ },
+ {
+  "id": "PLH2-A06",
+  "title": "Rhino method 5: iam:CreateLoginProfile added on user/*",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 5,
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "OnboardConsoleUsers",
+     "Effect": "Allow",
+     "Action": "iam:CreateLoginProfile",
+     "Resource": "arn:aws:iam::111122223333:user/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "iam:CreateLoginProfile on user/* goes ImplicitDeny -> Allow. The holder can set a console password for any IAM user that has none (for example an admin user who works only through access keys), sign in as that user and inherit their permissions. Rhino method 5."
+  }
+ },
+ {
+  "id": "PLH2-A07",
+  "title": "Rhino method 6: self-service password statement widened from user/${aws:username} to user/*",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 6,
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder. Before is modelled on AWS's 'allow users to change their own password' examples.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_iam_credentials_console.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ViewAccountPasswordRequirements",
+     "Effect": "Allow",
+     "Action": "iam:GetAccountPasswordPolicy",
+     "Resource": "*"
+    },
+    {
+     "Sid": "ChangeOwnPassword",
+     "Effect": "Allow",
+     "Action": [
+      "iam:GetUser",
+      "iam:ChangePassword",
+      "iam:UpdateLoginProfile"
+     ],
+     "Resource": "arn:aws:iam::111122223333:user/${aws:username}"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "ViewAccountPasswordRequirements",
+     "Effect": "Allow",
+     "Action": "iam:GetAccountPasswordPolicy",
+     "Resource": "*"
+    },
+    {
+     "Sid": "ChangeOwnPassword",
+     "Effect": "Allow",
+     "Action": [
+      "iam:GetUser",
+      "iam:ChangePassword",
+      "iam:UpdateLoginProfile"
+     ],
+     "Resource": "arn:aws:iam::111122223333:user/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "Before, ${aws:username} limits iam:UpdateLoginProfile (and ChangePassword) to the caller's own user. After, the resource is user/*, so resetting the console password of any other IAM user goes ImplicitDeny -> Allow. The holder can then sign in as that user. Rhino method 6."
+  }
+ },
+ {
+  "id": "PLH2-A08",
+  "title": "Rhino method 8: iam:AttachGroupPolicy added on the user's own group",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 8,
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#ck_PolicyARN"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ManageTeamGroupPolicies",
+     "Effect": "Allow",
+     "Action": [
+      "iam:AttachGroupPolicy",
+      "iam:DetachGroupPolicy"
+     ],
+     "Resource": "arn:aws:iam::111122223333:group/developers"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "The principal is a member of group 'developers'. iam:AttachGroupPolicy on that group, with no iam:PolicyARN condition, lets them attach any managed policy, including arn:aws:iam::aws:policy/AdministratorAccess, to their own group and so to themselves. ImplicitDeny -> Allow. Rhino method 8."
+  },
+  "context": {
+   "groupMembership": [
+    "arn:aws:iam::111122223333:group/developers"
+   ]
+  }
+ },
+ {
+  "id": "PLH2-A09",
+  "title": "Rhino method 11: iam:PutGroupPolicy added on group/*",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 11,
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "IamReadOnly",
+     "Effect": "Allow",
+     "Action": [
+      "iam:Get*",
+      "iam:List*"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "ManageGroupInlinePolicies",
+     "Effect": "Allow",
+     "Action": [
+      "iam:PutGroupPolicy",
+      "iam:GetGroupPolicy"
+     ],
+     "Resource": "arn:aws:iam::111122223333:group/*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "iam:PutGroupPolicy on group/* lets the holder write an inline policy (for example Action * on Resource *) into any group, including one they belong to. ImplicitDeny -> Allow. Rhino method 11."
+  },
+  "context": {
+   "groupMembership": [
+    "arn:aws:iam::111122223333:group/developers"
+   ]
+  }
+ },
+ {
+  "id": "PLH2-A10",
+  "title": "Rhino method 20: iam:PassRole on * added next to an existing cloudformation:CreateStack",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+  "kind": "modelled",
+  "rhinoMethod": 20,
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
+   "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "DeployAppStacks",
+     "Effect": "Allow",
+     "Action": [
+      "cloudformation:CreateStack",
+      "cloudformation:UpdateStack",
+      "cloudformation:DescribeStacks"
+     ],
+     "Resource": "arn:aws:cloudformation:eu-west-1:111122223333:stack/app-*/*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "DeployAppStacks",
+     "Effect": "Allow",
+     "Action": [
+      "cloudformation:CreateStack",
+      "cloudformation:UpdateStack",
+      "cloudformation:DescribeStacks"
+     ],
+     "Resource": "arn:aws:cloudformation:eu-west-1:111122223333:stack/app-*/*"
+    },
+    {
+     "Sid": "PassStackRole",
+     "Effect": "Allow",
+     "Action": "iam:PassRole",
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "Before, CreateStack runs with the caller's own permissions, so a stack can only create what the caller already could. After, iam:PassRole on \"*\" (no iam:PassedToService condition) lets the caller hand CloudFormation any existing role that trusts cloudformation.amazonaws.com. A template can then create any resource, including IAM users and policies, with that role's permissions. PassRole goes ImplicitDeny -> Allow. Rhino method 20."
+  }
+ },
+ {
+  "id": "PLH2-A11",
+  "title": "Rhino part 2: lambda:UpdateFunctionConfiguration added on every function (layer / environment hijack)",
+  "source": "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation-part-2/",
+  "kind": "modelled",
+  "rhinoMethod": "part2-lambda-layers",
+  "note": "Modelled: Rhino publishes permission combinations, not policies. Before/after are minimal identity policies attached to the principal. Account 111122223333 is an AWS documentation placeholder.",
+  "sources": [
+   "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation-part-2/",
+   "https://docs.aws.amazon.com/lambda/latest/api/API_UpdateFunctionConfiguration.html",
+   "https://plerion.com/blog/without-passrole-it-fine-lambda-edition"
+  ],
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "LambdaRead",
+     "Effect": "Allow",
+     "Action": [
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "LambdaRead",
+     "Effect": "Allow",
+     "Action": [
+      "lambda:GetFunction",
+      "lambda:GetFunctionConfiguration",
+      "lambda:ListFunctions"
+     ],
+     "Resource": "*"
+    },
+    {
+     "Sid": "TuneFunctions",
+     "Effect": "Allow",
+     "Action": "lambda:UpdateFunctionConfiguration",
+     "Resource": "arn:aws:lambda:eu-west-1:111122223333:function:*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:user/dev-bob",
+  "expect": {
+   "status": "stop",
+   "why": "lambda:UpdateFunctionConfiguration on function:* goes ImplicitDeny -> Allow. Without iam:PassRole it cannot change a function's role, but it can attach layers and change environment variables. Rhino part 2 shows a malicious layer overriding an imported library, so attacker code runs with the function's execution role on the next invocation."
+  },
+  "doubt": "Exploitation depends on the runtime and the libraries the function imports; Plerion (2026) reports one layer technique failing for Python, while Rhino documents a working one. The grant itself is the documented escalation path."
+ },
+ {
+  "id": "PLH2-A12",
+  "title": "KMS key policy: cryptographic use opened to another AWS account",
+  "source": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
+  "kind": "modelled",
+  "policyType": "KMS key policy",
+  "sources": [
+   "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
+   "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/kms-controls.html"
+  ],
+  "note": "Before is the default key policy statement for account 111122223333. After adds the AWS doc's external-account statement verbatim (placeholders resolved).",
+  "before": {
+   "Version": "2012-10-17",
+   "Id": "key-default-1",
+   "Statement": [
+    {
+     "Sid": "Enable IAM User Permissions",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:root"
+     },
+     "Action": "kms:*",
+     "Resource": "*"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Id": "key-default-1",
+   "Statement": [
+    {
+     "Sid": "Enable IAM User Permissions",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": "arn:aws:iam::111122223333:root"
+     },
+     "Action": "kms:*",
+     "Resource": "*"
+    },
+    {
+     "Sid": "Allow an external account to use this KMS key",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": [
+       "arn:aws:iam::444455556666:root"
+      ]
+     },
+     "Action": [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+     ],
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::444455556666:role/any-role-in-partner-account",
+  "expect": {
+   "status": "stop",
+   "why": "Before, only account 111122223333 (through its IAM policies) can use the key. After, kms:Decrypt, ReEncrypt*, GenerateDataKey* and Encrypt are allowed for account 444455556666, whose IAM admins can delegate them to any of their users or roles. Cross-account Decrypt goes ImplicitDeny -> Allow, so anything encrypted under the key, such as S3 objects, EBS snapshots or secrets, becomes readable by another account. The KMS doc says the key policy 'determines who can have access'."
+  }
+ },
+ {
+  "id": "PLH2-A13",
+  "title": "SQS queue policy made public: anonymous sqs:ReceiveMessage added",
+  "source": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+  "kind": "modelled",
+  "policyType": "SQS queue policy",
+  "sources": [
+   "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-basic-examples-of-sqs-policies.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html#principal-anonymous",
+   "https://docs.aws.amazon.com/securityhub/latest/userguide/sqs-controls.html"
+  ],
+  "note": "Before is SQS doc Example 1. After adds the statement from Example 5 ('Grant a permission to all users'), re-pointed at the same queue.",
+  "before": {
+   "Version": "2012-10-17",
+   "Id": "Queue1_Policy_UUID",
+   "Statement": [
+    {
+     "Sid": "Queue1_SendMessage",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": [
+       "111122223333"
+      ]
+     },
+     "Action": "sqs:SendMessage",
+     "Resource": "arn:aws:sqs:us-east-2:444455556666:queue1"
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Id": "Queue1_Policy_UUID",
+   "Statement": [
+    {
+     "Sid": "Queue1_SendMessage",
+     "Effect": "Allow",
+     "Principal": {
+      "AWS": [
+       "111122223333"
+      ]
+     },
+     "Action": "sqs:SendMessage",
+     "Resource": "arn:aws:sqs:us-east-2:444455556666:queue1"
+    },
+    {
+     "Sid": "Queue1_AnonymousAccess_ReceiveMessage",
+     "Effect": "Allow",
+     "Principal": "*",
+     "Action": "sqs:ReceiveMessage",
+     "Resource": "arn:aws:sqs:us-east-2:444455556666:queue1"
+    }
+   ]
+  },
+  "principal": "anonymous",
+  "expect": {
+   "status": "stop",
+   "why": "Principal \"*\" with no condition grants sqs:ReceiveMessage to everyone, including anonymous callers. Anyone can read the queue's messages and, by receiving them, hide them from the real consumer for the visibility timeout. Anonymous ReceiveMessage goes ImplicitDeny -> Allow. The Principal doc: a wildcard with Allow grants public access."
+  }
+ },
+ {
+  "id": "PLH2-A14",
+  "title": "Service-role trust policy: aws:SourceAccount and aws:SourceArn conditions dropped (EventBridge Scheduler execution role)",
+  "source": "https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html",
+  "kind": "modelled",
+  "policyType": "role trust policy",
+  "sources": [
+   "https://docs.aws.amazon.com/scheduler/latest/UserGuide/cross-service-confused-deputy-prevention.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceaccount"
+  ],
+  "note": "Before is the Scheduler doc's confused-deputy example (placeholders filled as printed). After is the plain trust policy from the Scheduler set-up page, which the docs say to harden for production.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Principal": {
+      "Service": "scheduler.amazonaws.com"
+     },
+     "Action": "sts:AssumeRole",
+     "Condition": {
+      "StringEquals": {
+       "aws:SourceAccount": "123456789012",
+       "aws:SourceArn": "arn:aws:scheduler:us-west-2:123456789012:schedule-group/your-schedule-group"
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Effect": "Allow",
+     "Principal": {
+      "Service": "scheduler.amazonaws.com"
+     },
+     "Action": "sts:AssumeRole"
+    }
+   ]
+  },
+  "principal": "scheduler.amazonaws.com (acting for aws:SourceAccount 999999999999)",
+  "expect": {
+   "status": "stop",
+   "why": "Before, Scheduler can assume the role only for schedules in schedule-group/your-schedule-group of account 123456789012. After, AssumeRole by scheduler.amazonaws.com is allowed whatever the source account or schedule, so a request on behalf of another account's schedule goes ImplicitDeny -> Allow. That is the cross-service confused-deputy exposure the Scheduler and IAM docs tell you to block with these keys."
+  },
+  "doubt": "Whether another account can actually point a schedule at this role also depends on Scheduler's own checks (such as iam:PassRole in the caller's account). By policy semantics the trust broadens; a reviewer focused on exploitability might say 'review'."
+ },
+ {
+  "id": "PLH2-A15",
+  "title": "Region guardrail removed: Deny NotAction ... aws:RequestedRegion statement deleted next to an ec2:* grant",
+  "source": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_deny-requested-region.html",
+  "kind": "modelled",
+  "sources": [
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_deny-requested-region.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-requestedregion",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_notaction.html",
+   "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  ],
+  "note": "The deny statement is the IAM doc example verbatim (placeholders filled as printed). In practice it is often a separate attached policy or an SCP; here it is merged into one identity policy with a modelled ec2:* grant.",
+  "before": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "AllowEC2",
+     "Effect": "Allow",
+     "Action": "ec2:*",
+     "Resource": "*"
+    },
+    {
+     "Sid": "DenyAllOutsideRequestedRegions",
+     "Effect": "Deny",
+     "NotAction": [
+      "cloudfront:*",
+      "iam:*",
+      "organizations:*",
+      "route53:*",
+      "support:*"
+     ],
+     "Resource": "*",
+     "Condition": {
+      "StringNotEquals": {
+       "aws:RequestedRegion": [
+        "eu-central-1",
+        "eu-west-1",
+        "eu-west-2",
+        "eu-west-3"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  "after": {
+   "Version": "2012-10-17",
+   "Statement": [
+    {
+     "Sid": "AllowEC2",
+     "Effect": "Allow",
+     "Action": "ec2:*",
+     "Resource": "*"
+    }
+   ]
+  },
+  "principal": "arn:aws:iam::111122223333:role/platform-engineer",
+  "expect": {
+   "status": "stop",
+   "why": "Before, any non-global action requested outside eu-central-1/eu-west-1/eu-west-2/eu-west-3 hits the explicit Deny (NotAction excludes only CloudFront, IAM, Organizations, Route 53 and Support), which overrides the ec2:* Allow. After, for example ec2:RunInstances in us-east-1 goes ExplicitDeny -> Allow. A preventive guardrail is removed, and EC2 actions are allowed in every Region."
+  },
+  "doubt": "This is a governance/data-residency guardrail rather than a privilege boundary; a reviewer could call it 'review'. Labelled 'stop' for consistency with other guard removals (a request goes ExplicitDeny -> Allow)."
+ }
+]

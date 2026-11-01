@@ -139,11 +139,27 @@ check('IPv6 and variable-bearing Denies cannot prove preservation', () => {
     assert.equal(result.verified, false);
   }
 });
-check('a variable resource grant stays unresolved, not implicitly denied', () => {
-  const candidate = { ...destroy, Resource: 'arn:aws:rds:eu-west-1:111122223333:db:${aws:PrincipalTag/database}' };
-  const result = verifyCorrection({ proposed: policy(read, destroy), candidate: policy(read, candidate), riskRequest: { ...risk, context: { 'aws:PrincipalTag/database': 'prod-1' } }, requiredAccess: [required] });
-  assert.equal(result.risk.candidate.decision, 'ConditionalAllow');
-  assert.equal(result.verified, false);
+check('modelled policy variables resolve from context; unknown ones stay ConditionalAllow', () => {
+  // Task 2: aws:PrincipalTag/<key> is substituted, so a matching tag is a real Allow.
+  const tagged = { ...destroy, Resource: 'arn:aws:rds:eu-west-1:111122223333:db:${aws:PrincipalTag/database}' };
+  const resolved = verifyCorrection({
+    proposed: policy(read, destroy),
+    candidate: policy(read, tagged),
+    riskRequest: { ...risk, context: { 'aws:PrincipalTag/database': 'prod-1' } },
+    requiredAccess: [required],
+  });
+  assert.equal(resolved.risk.candidate.decision, 'Allow');
+
+  // Anything we do not model must still surface as ConditionalAllow, never ImplicitDeny.
+  const unknownVar = { ...destroy, Resource: 'arn:aws:rds:eu-west-1:111122223333:db:${aws:ResourceTag/Name}' };
+  const unresolved = verifyCorrection({
+    proposed: policy(read, destroy),
+    candidate: policy(read, unknownVar),
+    riskRequest: { ...risk, context: { 'aws:ResourceTag/Name': 'prod-1' } },
+    requiredAccess: [required],
+  });
+  assert.equal(unresolved.risk.candidate.decision, 'ConditionalAllow');
+  assert.equal(unresolved.verified, false);
 });
 check('ARN conditions compare case and each component separately', () => {
   assert.equal(evaluateCondition({ ArnLike: { 'aws:SourceArn': 'arn:aws:s3:::reports/*' } }, { 'aws:SourceArn': 'arn:aws:s3:::reports/a' }).result, true);
