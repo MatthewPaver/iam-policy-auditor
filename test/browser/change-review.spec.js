@@ -10,6 +10,24 @@ async function sample(page) {
   await expect(page.locator('#compareResult')).toContainText('Stop and review');
 }
 
+test('AI-off review exposes engine explanations and unapplied MFA JSON', async ({ page }) => {
+  await sample(page);
+  const result = page.locator('#compareResult');
+  const candidate = await page.locator('#candidateBox').inputValue();
+  await result.getByText('Decision evidence', { exact: true }).click();
+  const before = result.locator('p').filter({ hasText: 'Current policy:' });
+  const after = result.locator('p').filter({ hasText: 'Proposed policy:' });
+  await expect(before).toBeVisible();
+  await expect(before).toContainText('Implicitly denied');
+  await expect(after).toBeVisible();
+  await expect(after).toContainText('Allowed by');
+  await result.getByText('Rule findings and suggested corrections', { exact: true }).click();
+  await expect(result.locator('pre').filter({ hasText: 'aws:MultiFactorAuthPresent' })).toBeVisible();
+  await expect(result).toContainText('Suggested JSON (not applied)');
+  await expect(result.locator('.review-explanation')).toHaveCount(0);
+  await expect(page.locator('#candidateBox')).toHaveValue(candidate);
+});
+
 test('proposal, correction, export, stale edits and source identity', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

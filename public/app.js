@@ -513,14 +513,17 @@ $('#compareBtn').onclick = async () => {
     }).join('') || '<p>No newly allowed grants under the local rule set.</p>';
     const accessHtml = `<div class="verdict ${accessTone}"><p>${esc(r.verdict.sentence || r.verdict.reason)}</p><span>${esc(r.verdict.label)}</span>${r.access ? `<b>${esc(r.access.before.decision)} → ${esc(r.access.after.decision)}</b>` : '<b>Request-free review</b>'}</div>`;
     const decisionHtml = r.access ? `<details><summary>Decision evidence</summary>
-      ${r.access.after.decision === 'ConditionalAllow' ? `<p>${esc(r.access.after.explanation)}</p>` : ''}
+      <p><strong>Current policy:</strong> ${esc(r.access.before.explanation || 'No engine explanation supplied.')}</p>
+      <p><strong>Proposed policy:</strong> ${esc(r.access.after.explanation || 'No engine explanation supplied.')}</p>
       <ul class="grant-evidence">${(r.evidence || []).length ? r.evidence.map((item) => {
         const statement = r.statements.after.find((s) => s.id === item.id);
         return `<li><code>${esc(item.id)}</code> ${esc(item.doc)}:${esc(item.line)} · ${esc(item.sid || 'Unnamed statement')}${statement ? `<pre>${esc(JSON.stringify({ Sid: statement.sid, Effect: statement.effect, Action: statement.actions, Resource: statement.resources, ...(statement.notActions?.length ? { NotAction: statement.notActions } : {}), ...(statement.notResources?.length ? { NotResource: statement.notResources } : {}), ...(Object.keys(statement.conditions || {}).length ? { Condition: statement.conditions } : {}) }, null, 2))}</pre>` : ''}</li>`;
       }).join('') : '<li>No matching allow or deny statement for this request.</li>'}</ul></details>` : '';
+    const correctionExamples = (r.suggestedCorrections || []).filter(item => item.rewrite).map(item =>
+      `<p class="fineprint">Suggested JSON (not applied): ${esc(item.title)}</p><pre>${esc(item.rewrite)}</pre>`).join('');
     $('#compareResult').classList.remove('stale');
     $('#compareResult').innerHTML = `${accessHtml}<h3 class="result-subhead">What this change newly allows</h3>${newlyHtml}${r.newlyAllowed?.capped ? '<p>Action expansion is incomplete; inspect the supplied policies.</p>' : ''}
-      ${decisionHtml}<details><summary>Rule findings and suggested corrections</summary>${md((r.suggestedCorrections || []).map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${(r.findings.introduced || []).map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
+      ${decisionHtml}<details><summary>Rule findings and suggested corrections</summary>${md((r.suggestedCorrections || []).map(item => `- ${item.title}: ${item.summary || 'Inspect the introduced statement.'}`).join('\n') || 'No automatic rewrite is offered.')}${correctionExamples}${(r.findings.introduced || []).map(f => `<p>${esc(f.ruleId)}: ${esc(f.title)}</p>`).join('')}</details>
       <p class="input-identity">Input SHA-256 <code>${esc(inputIdentity)}</code></p>
       ${r.ai ? `<details class="review-explanation"><summary>Optional AI explanation · ${esc(r.ai.model)}</summary>${md(r.ai.text)}</details>` : r.aiError ? `<p class="ai-error">Optional AI explanation unavailable: ${esc(r.aiError)} Engine result remains available.</p>` : ''}`;
     $('#changeStatus').textContent = inputs.action
