@@ -16,7 +16,8 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Benches finish fast; browser install needs headroom when apt retries.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -31,7 +32,15 @@ jobs:
       # Fails if any set drops below floors.json (set 5 is 21/30 today).
       - run: npm run bench:real
       - name: Install browser for journey checks
-        run: npx playwright install --with-deps chromium
+        run: |
+          for attempt in 1 2 3; do
+            if npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "Chromium install attempt ${attempt} failed; waiting before retry"
+            sleep 20
+          done
+          exit 1
       - name: Build the static demo used by the newly-allowed journeys
         run: npm run build:demo
       - name: Check change-review journeys

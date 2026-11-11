@@ -9,9 +9,12 @@ permissions:
 concurrency:
   group: demo-${{ github.ref }}
   cancel-in-progress: true
+# Build + upload the static demo without waiting on Playwright. Browser checks
+# stay in a sibling job with apt retries so one DNS flake cannot strand Pages.
 jobs:
   verify-demo:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -20,12 +23,34 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:demo
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser -- --config=playwright.static.config.js
       - if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: site
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:demo
+      - name: Install Chromium
+        run: |
+          for attempt in 1 2 3; do
+            if npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+            echo "Chromium install attempt ${attempt} failed; waiting before retry"
+            sleep 20
+          done
+          exit 1
+      - run: npm run test:browser -- --config=playwright.static.config.js
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: verify-demo
