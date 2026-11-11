@@ -11,7 +11,7 @@ aws iam get-policy-version --policy-arn "$POLICYLENS_POLICY_ARN" --version-id v2
 node bin/policylens.js review --before before.json --after after.json --format text
 ```
 
-**Measured accuracy:** set 4: **15/15, seen**; set 5: **pending, not supplied or scored**. Sets 1-4 shaped these rules and are regression evidence. A separate set 5 must supply the next unseen headline score. See the [real-case benchmark](bench/real-cases/), including public sources and unchanged floors. A pass is not production approval.
+**Measured results (reproduce with `npm run bench:real`):** set 4 is **15/15** on cases that shaped the rules (regression evidence, not independent accuracy). Set 5 is **21/30** on the committed fixture [`bench/real-cases/policylens-heldout5.json`](bench/real-cases/policylens-heldout5.json); the floor is 21. Named miss: case **PLH5-A21** expected **Stop** on a modelled role-trust change that lets a named user assume a role without MFA, and the engine returned **Pass**. Sets 1–4 informed the rules. A pass is not production approval. Cases and sources: [bench/real-cases/](bench/real-cases/).
 
 Prefer the browser? [Review your own policies](https://matthewpaver.github.io/iam-policy-auditor/?view=review), or select **Try a real AWS incident**. Read the sentences first, then inspect actions and line links. **Copy review for a pull request** copies the verdict and stop items. The example uses the public AWS Support policy change described in [AWS-2021-007](https://aws.amazon.com/security/security-bulletins/AWS-2021-007/); AWS says its support systems could not use the inadvertently added permission.
 
@@ -19,7 +19,7 @@ The [own-policy guide](docs/USE_ON_YOUR_OWN_POLICIES.md) covers accepted formats
 
 **Case study:** [The problem, review journey and before-and-after design](https://matthewpaver.github.io/work/policylens/).
 
-**Technical evidence:** [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
+**Technical evidence:** [Evidence and limits](docs/EVIDENCE-AND-LIMITS.md) · [How the checks work](#how-it-works) · [Results](#results) · [Tests](#repository-layout-and-tests) · [Run locally](#quickstart) · [Limits](#limits-and-non-goals)
 
 **Interactive walkthrough:** [Block the deletion and keep the report](https://matthewpaver.github.io/iam-policy-auditor/impact/): compare three choices using the real engine, inspect the source and export the record. [Walkthrough evidence and limits](docs/SIMULATION_EVIDENCE.md).
 

@@ -28,6 +28,8 @@ jobs:
       - run: npm test
       - run: npm run eval
       - run: npm run benchmark
+      # Fails if any set drops below floors.json (set 5 is 21/30 today).
+      - run: npm run bench:real
       - name: Install browser for journey checks
         run: npx playwright install --with-deps chromium
       - name: Build the static demo used by the newly-allowed journeys

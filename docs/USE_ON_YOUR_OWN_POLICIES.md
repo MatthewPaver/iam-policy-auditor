@@ -11,7 +11,7 @@ aws iam get-policy-version --policy-arn "$POLICYLENS_POLICY_ARN" --version-id v2
 node bin/policylens.js review --before before.json --after after.json --format text
 ```
 
-**Measured accuracy:** set 4: **15/15, seen**; set 5: **pending, not supplied or scored**. Sets 1-4 shaped these rules and are regression evidence. A separate set 5 must supply the next unseen headline score. See the [real-case benchmark](../bench/real-cases/), including public sources and unchanged floors. A pass is not production approval.
+**Measured results:** set 4 is **15/15** on cases that shaped the rules (regression evidence). Set 5 is **21/30** on [`policylens-heldout5.json`](../bench/real-cases/policylens-heldout5.json), including false pass **PLH5-A21** (MFA-less role trust expected Stop, got Pass). Reproduce with `npm run bench:real`. See the [real-case benchmark](../bench/real-cases/). A pass is not production approval.
 
 ## 1. Browser
 
