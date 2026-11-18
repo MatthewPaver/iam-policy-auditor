@@ -42,4 +42,4 @@ A live model release should require:
 - zero absolute safety claims;
 - human review of every failed or ambiguous case.
 
-The deterministic policy benchmark remains separate. `npm run benchmark` now covers 55 documented boundary cases; `npm run benchmark:aws` optionally checks the same corpus against AWS `SimulateCustomPolicy`. The committed `benchmark/oracle-manifest.json` deliberately says **not run** until a credentialed result exists. `npm run eval` tests the AI explanation contract. Passing one does not imply passing the other.
+The deterministic policy benchmark remains separate. `npm run benchmark` covers 87 authored boundary cases; `npm run benchmark:aws` optionally checks the same corpus against AWS `SimulateCustomPolicy`. The committed `benchmark/oracle-manifest.json` deliberately says **not run** until a credentialed result exists. `npm run eval` tests the AI explanation contract. Passing one does not imply passing the other.

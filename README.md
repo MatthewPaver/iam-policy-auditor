@@ -119,7 +119,7 @@ These checks run offline in CI. The sandbox run on 30 October 2026 passed the en
 |---|---|---|---|
 | Unit and contract tests | `npm test` | Engine and contract checks pass; HTTP demo test blocked in the sandbox | Behaviour on real account data; the fixtures are synthetic. |
 | AI grounding contract | `npm run eval` | 6/6 expectations met: 2 grounded explanations accepted; 4 bad ones rejected (invented citation, uncited permission claim, "safe" overclaim, wrong verdict) | Live model quality. These are captured outputs that test the gate, not the model. `npm run eval:live` records real runs, but no results are committed. |
-| Authored regression corpus | `npm run benchmark` | Engine agrees with 86/86 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
+| Authored regression corpus | `npm run benchmark` | Engine agrees with 87/87 cases | Independent accuracy. The author wrote the expected answers from AWS documentation, so this guards against regressions only. |
 
 The independent check is `npm run benchmark:aws`, which compares the engine with AWS's `iam:SimulateCustomPolicy`. It needs credentials with that permission and **has not been run**; [docs/AWS_SIMULATOR_STATUS.md](docs/AWS_SIMULATOR_STATUS.md) records the status and what a run must report. An explicit AWS run fails closed if the CLI, credentials or any comparison is missing, so an offline pass cannot make it green. [docs/AI_EVALS.md](docs/AI_EVALS.md) sets out the pass bar for a live model release.
 
