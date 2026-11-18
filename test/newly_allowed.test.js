@@ -604,4 +604,17 @@ for (const [Action, Resource, Condition, expected] of [
   assert.equal(publicRead.newlyAllowed.items.length, 1, 'do not repeat the same grant as identity and principal access');
 }
 
+// The in-app incident note states both line numbers; keep them tied to the engine and the raw AWS file.
+{
+  const examples = path.join(__dirname, '..', 'examples', 'policies');
+  const raw = (version) => fs.readFileSync(path.join(examples, `AWSSupportServiceRolePolicy.v${version}.json`), 'utf8');
+  const review = reviewChange({ before: raw('19'), after: raw('20') });
+  const getObject = review.newlyAllowed.items.find((item) => /^s3:getobject$/i.test(item.action));
+  assert.equal(getObject.line, 1640, 'engine line in the normalised copy');
+  assert.match(raw('20').split('\n')[1642 - 1], /"s3:getObject"/, 'raw AWS file line');
+  const note = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8').match(/<p[^>]*id="incidentNote"[^>]*>([\s\S]*?)<\/p>/)[1];
+  assert.match(note, /Line 1640 is the line in PolicyLens’s normalised copy/);
+  assert.match(note, /raw AWS policy file[\s\S]*line 1642/);
+}
+
 console.log('newly-allowed — passed');

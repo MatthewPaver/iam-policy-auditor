@@ -12,11 +12,12 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="./product.css">
-<link rel="preload" href="./assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./assets/fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='13' cy='13' r='8.5' fill='none' stroke='%234da3ff' stroke-width='3.5'/><path d='M19.5 19.5 28 28' stroke='%234da3ff' stroke-width='4' stroke-linecap='round'/></svg>">
 </head>
 <body class="product-home">
 <a class="skip-link" href="#productContent">Skip to content</a>
+<p class="portfolio-strip"><a href="https://matthewpaver.github.io/">&larr; Matthew Paver · portfolio</a><span>Made-up example · plus one real AWS policy change</span></p>
 <div id="hostedBanner" class="hosted-banner" hidden>
   Shared demo. Analysis is deterministic. <b>Do not paste production secrets or customer policies.</b>
   Use made-up example data, or run PolicyLens locally from the GitHub repo.
@@ -255,9 +256,9 @@
       </div>
       <div class="change-actions"><button id="compareBtn" class="btn primary" type="button">Check my policies</button><button id="loadChangeExample" class="btn secondary" type="button">Load the example</button><button id="loadIncident" class="btn secondary" type="button">Try a real AWS incident</button><button id="copyReview" class="btn secondary" type="button" disabled>Copy review for a pull request</button><button id="exportChange" class="btn secondary" type="button" disabled>Export review JSON</button></div>
       <p id="changeStatus" class="change-status" role="status">Add both policies, load the made-up example or try the real AWS policy change.</p>
-      <p class="fineprint" id="incidentNote" hidden>AWSSupportServiceRolePolicy v19 to v20. AWS says the added permission was reverted and could not be used by its support systems. <a id="incidentSource" href="https://aws.amazon.com/security/security-bulletins/AWS-2021-007/" target="_blank" rel="noopener">AWS security bulletin AWS-2021-007</a>.</p>
+      <p class="fineprint" id="incidentNote" hidden>AWSSupportServiceRolePolicy v19 to v20. Line 1640 is the line in PolicyLens’s normalised copy of v20; in the raw AWS policy file the same <code>s3:getObject</code> permission is on line 1642. AWS says the added permission was reverted and could not be used by its support systems. <a id="incidentSource" href="https://aws.amazon.com/security/security-bulletins/AWS-2021-007/" target="_blank" rel="noopener">AWS security bulletin AWS-2021-007</a>.</p>
       <div class="change-workbench">
-        <section aria-labelledby="originalTitle"><h2 id="originalTitle" class="workbench-title">Original proposal</h2><div id="compareResult"><p class="empty">The verdict and newly allowed access will appear here.</p></div><details id="afterEvidence" hidden><summary>Policy source for this line (normalised)</summary><pre id="afterSource" class="source-code" tabindex="0" aria-label="Policy source"></pre></details></section>
+        <section aria-labelledby="originalTitle"><h2 id="originalTitle" class="workbench-title">Original proposal</h2><div id="compareResult"><p class="empty">The verdict and newly allowed access will appear here.</p></div><details id="afterEvidence" hidden><summary>Policy source for this line (normalised copy; line numbers can differ from the raw file)</summary><pre id="afterSource" class="source-code" tabindex="0" aria-label="Policy source"></pre></details></section>
         <section aria-labelledby="candidateTitle"><h2 id="candidateTitle" class="workbench-title">Corrected candidate</h2><p id="candidateHint" class="empty">Review the proposal first, then verify a correction. The original result stays visible.</p>
           <details id="correctionCheck" class="correction-check" hidden open>
             <summary>Edit and verify correction</summary>

@@ -564,9 +564,10 @@ $('#copyReview').onclick = async () => {
   } catch { $('#changeStatus').textContent = 'Clipboard unavailable. Use Export review JSON or select and copy the review text.'; }
 };
 
-$('#loadIncident').onclick = async () => {
-  if (changeBusy) return;
-  if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the public AWS policy example?')) return;
+// Deep link (?view=review&example=aws-incident) loads at boot with empty boxes, so it skips the replace prompt.
+async function loadIncident({ confirmReplace = true, reveal = false } = {}) {
+  if (changeBusy || $('#loadIncident').disabled) return;
+  if (confirmReplace && $('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the public AWS policy example?')) return;
   const revision = changeRevision;
   const button = $('#loadIncident'); button.disabled = true;
   try {
@@ -581,10 +582,18 @@ $('#loadIncident').onclick = async () => {
     for (const id of ['compareAction', 'compareResource', 'comparePrincipal', 'candidateBox', 'requiredAction', 'requiredResource']) $(`#${id}`).value = '';
     $('#compareContext').value = '{}'; $('#contextComplete').checked = false; $('#changeUseAI').checked = false;
     await $('#compareBtn').onclick();
-    if (changeRecord) $('#incidentNote').hidden = false;
+    if (changeRecord) {
+      $('#incidentNote').hidden = false;
+      if (reveal) {
+        $('#incidentNote').scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+        const verdict = $('#compareResult .verdict');
+        if (verdict) { verdict.tabIndex = -1; verdict.focus({ preventScroll: true }); }
+      }
+    }
   } catch (error) { changeError(error.message); }
   finally { button.disabled = false; }
-};
+}
+$('#loadIncident').onclick = () => loadIncident();
 
 $('#loadChangeExample').onclick = async () => {
   if ($('#beforeBox').value.trim() && !confirm('Replace the policies and request fields with the made-up example?')) return;
@@ -878,6 +887,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => activateTab
   const params = new URLSearchParams(location.search);
   const wantDemo = !window.PolicyLensLocalAPI && (params.has('demo') || params.get('auto') === '1');
   activateTab(!window.PolicyLensLocalAPI && (wantDemo || params.get('view') === 'org') ? 'org' : 'compare');
+  if (params.get('view') === 'review' && params.get('example') === 'aws-incident') loadIncident({ confirmReplace: false, reveal: true });
 
   try {
     const h = await api('/api/health');

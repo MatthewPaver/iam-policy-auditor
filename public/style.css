@@ -326,6 +326,7 @@ table.stmt tr.flash { animation: flash 1.6s; }
 
 .spin { display: inline-block; animation: rot 1s linear infinite; }
 @keyframes rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin, table.stmt tr.flash { animation: none; } }
 
 /* Blast-radius: grant-scope banner (Ask) + Grants column (Statements) */
 .scope-banner {

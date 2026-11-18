@@ -52,6 +52,26 @@ test('real AWS incident opens with Stop, explains S3 reading and highlights its 
   await expect(page.locator('#incidentSource')).toHaveAttribute('href', /AWS-2021-007/);
 });
 
+test('deep link opens the AWS incident result without a prompt or the product home', async ({ page }) => {
+  let dialogs = 0;
+  page.on('dialog', (dialog) => { dialogs += 1; dialog.dismiss(); });
+  let incidentFetches = 0;
+  page.on('request', (req) => { if (/AWSSupportServiceRolePolicy\.v20\.json$/.test(req.url())) incidentFetches += 1; });
+  await page.goto('/?view=review&example=aws-incident');
+  await expect(page.locator('#productHome')).toBeHidden();
+  const result = page.locator('#compareResult');
+  await expect(result.locator('.verdict').first()).toContainText('Stop:');
+  await expect(result.locator('[data-policy-line="1640"]').first()).toBeVisible();
+  await expect(page.locator('#incidentNote')).toBeVisible();
+  await expect(page.locator('#incidentNote')).toContainText('Line 1640');
+  await expect(page.locator('#incidentNote')).toContainText('line 1642');
+  await expect(result.locator('.verdict').first()).toBeFocused();
+  expect(dialogs).toBe(0);
+  expect(incidentFetches).toBe(1);
+  await page.goto('/index.html?view=review&example=aws-incident');
+  await expect(page.locator('#compareResult .verdict').first()).toContainText('Stop:');
+});
+
 test('copy review includes the Stop sentence and line 1640, then edits disable copying', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/?view=review');

@@ -1,6 +1,5 @@
-@font-face{font-family:'Atkinson Hyperlegible Next';font-style:normal;font-weight:400 700;font-display:swap;src:url('./assets/fonts/atkinson-next-latin.woff2') format('woff2')}
-@font-face{font-family:'Atkinson Hyperlegible Next';font-style:normal;font-weight:400 700;font-display:swap;src:url('./assets/fonts/atkinson-next-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-:root{--product-font:'Atkinson Hyperlegible Next',sans-serif;--product-gutter:clamp(18px,3.19vw,60px);--muted:#b4c2d4;--accent:#66b5ff;--product-action:#146dca;--product-surface:#141b24;--product-risk:#ff929c;--product-line:#344150;--r-headline-font:52px;--r-headline-weight:700;--r-brand-font:23px;--r-introduction-font:24px;--r-consequence-font:35px;--r-evidence-heading-font:33px;color-scheme:dark}
+@font-face{font-family:'Hanken Grotesk Local';font-style:normal;font-weight:100 900;font-display:swap;src:url('./assets/fonts/hanken-grotesk-latin-wght-normal.woff2') format('woff2')}
+:root{--product-font:'Hanken Grotesk Local','Helvetica Neue',Arial,sans-serif;--product-gutter:clamp(18px,3.19vw,60px);--muted:#b4c2d4;--accent:#66b5ff;--product-action:#146dca;--product-surface:#141b24;--product-risk:#ff929c;--product-line:#344150;--r-headline-font:52px;--r-headline-weight:700;--r-brand-font:23px;--r-introduction-font:24px;--r-consequence-font:35px;--r-evidence-heading-font:33px;color-scheme:dark}
 [hidden]{display:none!important}
 body{font-family:var(--product-font);font-size:16px;background:#0d1117;color:#e6edf3}
 button,input,select,textarea{font:inherit}
@@ -8,6 +7,8 @@ a{color:var(--accent);text-underline-offset:4px}
 button,a,input,textarea,summary{touch-action:manipulation}
 .skip-link{position:fixed;top:8px;left:8px;padding:12px;background:#fff;color:#0d1117;z-index:10;transform:translateY(-150%)}
 .skip-link:focus{transform:none}
+.portfolio-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;margin:0;padding:8px max(5.5vw,24px);font-size:13px;line-height:1.4;color:var(--muted);background:#0d1117;border-bottom:1px solid #2d3646}
+.portfolio-strip a{display:inline-flex;align-items:center;min-height:24px;color:var(--accent);text-underline-offset:3px}
 .product-header{height:52px;padding:8px max(5.5vw,24px);background:#0d1117;gap:20px}
 .product-header .brand{color:var(--text);text-decoration:none;gap:16px}
 .brand-name{font-size:var(--r-brand-font);font-weight:700;line-height:1}
@@ -27,7 +28,7 @@ body.product-home #tools,body.product-home #hero,body:not(.product-home) #produc
 .landing-actions .primary{width:277px}
 .landing-actions .product-button:not(.primary){width:236px}
 .product-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:51px;padding:11px 14px;border:1px solid #6c7f94;border-radius:6px;background:transparent;color:#f5f7fa;font-family:var(--product-font);font-size:18px;font-weight:400;text-decoration:none;cursor:pointer;line-height:1.5;white-space:nowrap}
-.product-button.primary{background:#2086f4;border-color:#2086f4;color:#fff;font-size:19px;font-weight:700}
+.product-button.primary{background:#1a6fd0;border-color:#1a6fd0;color:#fff;font-size:19px;font-weight:700}
 .product-button:hover{background:#202d3c;border-color:#9db1c8}
 .product-button.primary:hover{background:#0b5db5;border-color:#0b5db5}
 .product-button:disabled{background:#242f3b;border-color:#465462;color:#b4c2d4;cursor:not-allowed}

@@ -14,22 +14,22 @@ colors:
   amber: "#f5c542"
 typography:
   display:
-    fontFamily: "Atkinson, sans-serif"
+    fontFamily: "Hanken Grotesk Local, sans-serif"
     fontSize: "clamp(28px,3vw,40px)"
     fontWeight: 700
     lineHeight: 1.1
     letterSpacing: "-.025em"
   body:
-    fontFamily: "Atkinson, sans-serif"
+    fontFamily: "Hanken Grotesk Local, sans-serif"
     fontSize: "17px"
     lineHeight: 1.5
   title:
-    fontFamily: "Atkinson, sans-serif"
+    fontFamily: "Hanken Grotesk Local, sans-serif"
     fontSize: "22px"
     fontWeight: 700
     lineHeight: 1.3
   label:
-    fontFamily: "Atkinson, sans-serif"
+    fontFamily: "Hanken Grotesk Local, sans-serif"
     fontSize: "15px"
   source:
     fontFamily: "ui-monospace, monospace"
@@ -71,7 +71,7 @@ components:
 
 The default walkthrough is a compact 2D request view. A five-chapter silent guide exposes proposed deletion access, removes the deletion grant, then repeats both checked tasks. The existing deterministic engine supplies every verdict; a separately labelled in-memory sandbox reveals a sample report or clears fictional rows only for definite Allow.
 
-Dark slate, self-hosted Atkinson lettering, blue controls and written outcomes retain PolicyLens’s operational world. This contract applies only to the interactive walkthrough; the engine, account-analysis views and historical previews remain outside its scope. No human impact, enterprise coverage or production approval is claimed.
+Dark slate, self-hosted Hanken Grotesk lettering, blue controls and written outcomes retain PolicyLens’s operational world. This contract applies only to the interactive walkthrough; the engine, account-analysis views and historical previews remain outside its scope. No human impact, enterprise coverage or production approval is claimed.
 
 **Key Characteristics:**
 - One caption and one current result precede the working visual.
@@ -95,7 +95,7 @@ Semantic green and pink describe success or failure relative to each task: repor
 
 ## Typography
 
-Atkinson aliases self-hosted Atkinson Hyperlegible Next. The display is compact and fluid; phone uses 29px. Body contracts from 17px to 16px. Captions use 19px with 1.35 line height, contracting to 17px on phone. The current result uses 23px, or 21px on phone. Policy JSON and exact engine records use the recorded monospace role. Tables use tabular numerals and readable labels.
+Hanken aliases self-hosted Hanken Grotesk (shared with the portfolio). The display is compact and fluid; phone uses 29px. Body contracts from 17px to 16px. Captions use 19px with 1.35 line height, contracting to 17px on phone. The current result uses 23px, or 21px on phone. Policy JSON and exact engine records use the recorded monospace role. Tables use tabular numerals and readable labels.
 
 ## Layout
 

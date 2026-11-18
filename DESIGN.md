@@ -11,7 +11,7 @@ colors:
   text: "#e6edf3"
   muted: "#b4c2d4"
   accent: "#66b5ff"
-  action: "#2086f4"
+  action: "#1a6fd0"
   action-hover: "#0b5db5"
   risk: "#ff929c"
   verified: "#90dbb3"
@@ -35,50 +35,50 @@ colors:
   verified-line: "#4b9274"
 typography:
   display:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "52px"
     fontWeight: 700
     lineHeight: 1.06
     letterSpacing: "-.025em"
   headline:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "32px"
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "-.02em"
   body:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "16px"
     lineHeight: 1.5
   introduction:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "24px"
     lineHeight: 1.2
   evidence-heading:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "33px"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "-.02em"
   brand:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "23px"
     fontWeight: 700
     lineHeight: 1
   statement-title:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "22px"
     lineHeight: 1.3
   statement-group:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "17px"
     fontWeight: 600
   evidence-label:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "14px"
     lineHeight: 1.6
   statement-name:
-    fontFamily: "'Atkinson Hyperlegible Next', sans-serif"
+    fontFamily: "'Hanken Grotesk Local', sans-serif"
     fontSize: "15px"
   secondary-control:
     fontFamily: "Arial, sans-serif"
@@ -160,7 +160,7 @@ Risk pink marks the proposed granting statement and introduced deletion access. 
 
 ## Typography
 
-Display and body use self-hosted Atkinson Hyperlegible Next, with sans-serif fallback. Font files and their OFL licence live under `public/assets/fonts/`. Product buttons use Arial; retain this deliberate ordinary-control voice. Policy documents, actions, ARNs, source lines and hashes use the existing monospace stack.
+Display and body use self-hosted Hanken Grotesk (one variable woff2, the same file as the portfolio site), with sans-serif fallback. The font file and its OFL licence live under `public/assets/fonts`. Code and policy text keep the system monospace stack.
 
 The frontmatter records desktop roles. Landing display contracts to 46px at 1100px and 36px at 760px. Chapter headings contract from 32px to 28px and then 26px. Introductory prose uses 24px, 20px and 18px across those widths. Supporting explanations use 17–19px; compact evidence uses 13–15px. Long explanation blocks are generally bounded at 65–75ch.
 
